@@ -1,6 +1,7 @@
-from .core import make, Env
+from .core import make, Env, EnvState
 
 __all__ = [
     "make",
     "Env",
+    "EnvState",
 ]
