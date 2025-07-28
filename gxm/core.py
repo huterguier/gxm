@@ -8,27 +8,44 @@ from typing import (
 )
 
 
-TEnvState = TypeVar("TEnvState", bound="EnvState")
+TState = TypeVar("TState", bound="State")
+
+@jax.tree_util.register_dataclass
+@dataclass
+class State:
+    time: int
+
 
 @jax.tree_util.register_dataclass
 @dataclass
 class EnvState:
-    time: int
+    state: State
+    obs: jax.Array
+    reward: jax.Array
+    done: jax.Array
+    info: Any
+
+    def __getitem__(self, item):
+        return (self.state, self.obs, self.reward, self.done, self.info)[item]
+
+    def __iter__(self):
+        return iter((self.state, self.obs, self.reward, self.done, self.info))
 
 
-class Env(Generic[TEnvState]):
+
+class Env(Generic[TState]):
     """Base class for environments in gxm."""
 
     def step(
         self,
         key: jax.Array,
-        state: tuple | TEnvState,
+        state: tuple | TState,
         action: jax.Array,
-    ) -> tuple[TEnvState, Any, jax.Array, jax.Array, Any]:
+    ) -> EnvState:
         """Perform a step in the environment given an action."""
         raise NotImplementedError("This method should be implemented by subclasses.")
 
-    def reset(self, key: jax.Array) -> tuple[TEnvState, Any, jax.Array, jax.Array, Any]:
+    def reset(self, key: jax.Array) -> EnvState:
         """Reset the environment to its initial state."""
         raise NotImplementedError("This method should be implemented by subclasses.")
 
@@ -40,11 +57,11 @@ class Env(Generic[TEnvState]):
 
 @jax.tree_util.register_dataclass
 @dataclass
-class GymnaxEnvState(EnvState):
+class GymnaxState(State):
     env_state: gymnax.EnvState
 
 
-class GymnaxEnv(Env[GymnaxEnvState]):
+class GymnaxEnv(Env[GymnaxState]):
     """Base class for Gymnax environments."""
     env: gymnax.environments.environment.Environment
     env_params = gymnax.EnvParams
@@ -55,18 +72,32 @@ class GymnaxEnv(Env[GymnaxEnvState]):
     def step(
         self, 
         key: jax.Array, 
-        state: tuple | GymnaxEnvState, 
+        state: EnvState | GymnaxState, 
         action: jax.Array
-    ) -> tuple[GymnaxEnvState, Any, jax.Array, jax.Array, Any]:
-        state = state[0] if isinstance(state, tuple) else state
+    ) -> EnvState:
+        state = state.state if isinstance(state, EnvState) else state
         obs, env_state, reward, done, info = self.env.step(key, state.env_state, action)
-        state = GymnaxEnvState(time=state.time+1, env_state=env_state)
-        return state, obs, reward, done, info
+        state = GymnaxState(time=state.time+1, env_state=env_state)
+        env_state = EnvState(
+            state=state,
+            obs=obs,
+            reward=jax.numpy.array([reward], dtype=jax.numpy.float32),
+            done=jax.numpy.array([done], dtype=jax.numpy.bool_),
+            info=info
+        )
+        return env_state
 
-    def reset(self, key: jax.Array):
+    def reset(self, key: jax.Array) -> EnvState:
         obs, env_state = self.env.reset(key)
-        state = GymnaxEnvState(time=0, env_state=env_state)
-        return state, obs, jax.numpy.zeros((1,), dtype=jax.numpy.float32), jax.numpy.zeros((1,), dtype=jax.numpy.bool_), {}
+        state = GymnaxState(time=0, env_state=env_state)
+        env_state = EnvState(
+            state=state,
+            obs=obs,
+            reward=jax.numpy.zeros((1,), dtype=jax.numpy.float32),
+            done=jax.numpy.zeros((1,), dtype=jax.numpy.bool_),
+            info={}
+        )
+        return env_state
 
     @property
     def num_actions(self) -> int:
@@ -89,12 +120,12 @@ if __name__ == "__main__":
                 break
 
     def rollout2(env, key, num_steps):
-        state = env.reset(key)
+        env_state = env.reset(key)
         for _ in range(num_steps):
             action = jax.random.randint(key, (1,), 0, env.num_actions)[0]
-            state = env.step(key, state, action)
-            _, obs, reward, done, info = state
-            print(f"Step: {state[0].time}, Action: {action}, Reward: {reward}, Done: {done}")
+            env_state = env.step(key, env_state, action)
+            _, obs, reward, done, info = env_state
+            print(f"Step: {env_state[0].time}, Action: {action}, Reward: {reward}, Done: {done}")
             if done:
                 break
 
