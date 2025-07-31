@@ -1,9 +1,10 @@
 import jax
+
 from gxm.wrappers import GymnaxEnv
 
 
-def make(env_id, **kwargs):
-    return GymnaxEnv(env_id, **kwargs)
+def make(id, **kwargs):
+    return GymnaxEnv(id, **kwargs)
 
 
 if __name__ == "__main__":
@@ -13,7 +14,9 @@ if __name__ == "__main__":
         for _ in range(num_steps):
             action = jax.random.randint(key, (1,), 0, env.num_actions)[0]
             state, obs, reward, done, info = env.step(key, state, action)
-            print(f"Step: {state.time}, Action: {action}, Reward: {reward}, Done: {done}")
+            print(
+                f"Step: {state.time}, Action: {action}, Reward: {reward}, Done: {done}"
+            )
             if done:
                 break
 
@@ -23,7 +26,9 @@ if __name__ == "__main__":
             action = jax.random.randint(key, (1,), 0, env.num_actions)[0]
             env_state = env.step(key, env_state, action)
             _, obs, reward, done, info = env_state
-            print(f"Step: {env_state[0].time}, Action: {action}, Reward: {reward}, Done: {done}")
+            print(
+                f"Step: {env_state[0].time}, Action: {action}, Reward: {reward}, Done: {done}"
+            )
             if done:
                 break
 
