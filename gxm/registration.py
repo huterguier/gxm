@@ -1,13 +1,19 @@
 import jax
 
-from gxm.wrappers import GymnaxEnv
+from gxm.wrappers import GymnaxEnv, NavixEnv
 
 
 def make(id, **kwargs):
-    return GymnaxEnv(id, **kwargs)
+    wrapper, id = id.split("/", 1)
+    Wrapper = {
+        "Gymnax": GymnaxEnv,
+        "Navix": NavixEnv,
+    }[wrapper]
+    return Wrapper(id, **kwargs)
 
 
 if __name__ == "__main__":
+    import gymnax
 
     def rollout1(env, key, num_steps):
         state, obs, reward, done, info = env.reset(key)
@@ -32,7 +38,7 @@ if __name__ == "__main__":
             if done:
                 break
 
-    env = make("CartPole-v1")
+    env = make("Gymnax/CartPole-v1")
     print(env.num_actions)
     key = jax.random.PRNGKey(0)
     num_steps = 100
