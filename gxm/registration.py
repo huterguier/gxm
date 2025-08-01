@@ -2,8 +2,8 @@ import jax
 from gxm.wrappers import GymnaxEnv
 
 
-def make(env_id, **kwargs):
-    return GymnaxEnv(env_id, **kwargs)
+def make(id, **kwargs):
+    return GymnaxEnv(id, **kwargs)
 
 
 if __name__ == "__main__":
