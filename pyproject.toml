@@ -3,7 +3,7 @@ name = "gxm"
 version = "0.1.0"
 description = "Reinforcement Learning Environemts in JAX"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = "==3.10"
 license = "MIT"
 authors = [
   { name = "huterguier", email = "huterguier@gmail.com" }
