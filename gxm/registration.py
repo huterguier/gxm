@@ -13,12 +13,12 @@ def make(id, **kwargs):
 
 
 if __name__ == "__main__":
-    import gymnax
+    import navix
 
-    env = make("Navix/Navix-FourRooms-v0")
+    env = make("Navix/Navix-FourRooms-v0", observation_fn=navix.observations.rgb)
 
     @jax.jit
-    def rollout1(key, num_steps=100000):
+    def rollout1(key, num_steps=100):
 
         def step(state, key):
             key_action, key_step = jax.random.split(key)
@@ -33,16 +33,21 @@ if __name__ == "__main__":
 
     @jax.jit
     def rollout2(key, num_steps=100):
+
+        def step(env_state, key):
+            key_action, key_step = jax.random.split(key)
+            action = jax.random.randint(key_action, (1,), 0, env.num_actions)[0]
+            env_state = env.step(key_step, env_state, action)
+            return env_state, None
+
         env_state = env.reset(key)
-        for _ in range(num_steps):
-            action = jax.random.randint(key, (1,), 0, env.num_actions)[0]
-            env_state = env.step(key, env_state, action)
-            _, obs, reward, done, info = env_state
-            print(
-                f"Step: {env_state[0].time}, Action: {action}, Reward: {reward}, Done: {done}"
-            )
+        keys = jax.random.split(key, num_steps)
+        env_state, _ = jax.lax.scan(step, env_state, keys)
+
+        return env_state
 
     print(env.num_actions)
     key = jax.random.PRNGKey(0)
     num_steps = 100
     rollout1(key)
+    rollout2(key)
