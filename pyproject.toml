@@ -9,7 +9,7 @@ authors = [
   { name = "huterguier", email = "huterguier@gmail.com" }
 ]
 dependencies = [
-  "jax>=0.5.0",
+  "jax[cuda12]>=0.5.0",
   "gymnax>=0.0.9",
   "navix>=0.7.0",
 ]

@@ -19,7 +19,7 @@ class NavixEnv(Env[NavixState]):
     env: navix.environments.Environment
 
     def __init__(self, env_id: str, **kwargs):
-        self.env, self.env_params = navix.make(env_id, **kwargs)
+        self.env = navix.make(env_id, **kwargs)
 
     def step(
         self, key: jax.Array, state: EnvState | NavixState, action: jax.Array
@@ -30,20 +30,24 @@ class NavixEnv(Env[NavixState]):
         env_state = EnvState(
             state=state,
             obs=state_navix.observation,
-            reward=timestep.reward,
-            done=timestep.done,
+            reward=state_navix.reward,
+            done=state_navix.is_done(),
             info={},
         )
         return env_state
 
     def reset(self, key: jax.Array) -> EnvState:
         timestep = self.env.reset(key)
-        state = NavixState(time=0, state_navix=timestep.state)
+        state = NavixState(time=0, state_navix=timestep)
         env_state = EnvState(
-            state=state, obs=obs, reward=jnp.float32(0.0), done=jnp.bool(False), info={}
+            state=state,
+            obs=timestep.observation,
+            reward=timestep.reward,
+            done=timestep.is_done(),
+            info={},
         )
         return env_state
 
     @property
     def num_actions(self) -> int:
-        return self.env.num_actions
+        return len(self.env.action_set)
