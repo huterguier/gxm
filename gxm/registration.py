@@ -15,18 +15,24 @@ def make(id, **kwargs):
 if __name__ == "__main__":
     import gymnax
 
-    def rollout1(env, key, num_steps):
-        state, obs, reward, done, info = env.reset(key)
-        for _ in range(num_steps):
-            action = jax.random.randint(key, (1,), 0, env.num_actions)[0]
-            state, obs, reward, done, info = env.step(key, state, action)
-            print(
-                f"Step: {state.time}, Action: {action}, Reward: {reward}, Done: {done}"
-            )
-            if done:
-                break
+    env = make("Navix/Navix-FourRooms-v0")
 
-    def rollout2(env, key, num_steps):
+    @jax.jit
+    def rollout1(key, num_steps=100000):
+
+        def step(state, key):
+            key_action, key_step = jax.random.split(key)
+            action = jax.random.randint(key_action, (1,), 0, env.num_actions)[0]
+            state, obs, reward, done, info = env.step(key_step, state, action)
+            return state, None
+
+        state, obs, reward, done, info = env.reset(key)
+        keys = jax.random.split(key, num_steps)
+        state, _ = jax.lax.scan(step, state, keys)
+        return state
+
+    @jax.jit
+    def rollout2(key, num_steps=100):
         env_state = env.reset(key)
         for _ in range(num_steps):
             action = jax.random.randint(key, (1,), 0, env.num_actions)[0]
@@ -35,12 +41,8 @@ if __name__ == "__main__":
             print(
                 f"Step: {env_state[0].time}, Action: {action}, Reward: {reward}, Done: {done}"
             )
-            if done:
-                break
 
-    env = make("Gymnax/CartPole-v1")
     print(env.num_actions)
     key = jax.random.PRNGKey(0)
     num_steps = 100
-    rollout1(env, key, num_steps)
-    rollout2(env, key, num_steps)
+    rollout1(key)
