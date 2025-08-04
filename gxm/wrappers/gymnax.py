@@ -19,8 +19,8 @@ class GymnaxEnv(Env[GymnaxState]):
     env: gymnax.environments.environment.Environment
     env_params = gymnax.EnvParams
 
-    def __init__(self, env_id: str, **kwargs):
-        self.env, self.env_params = gymnax.make(env_id, **kwargs)
+    def __init__(self, id: str, **kwargs):
+        self.env, self.env_params = gymnax.make(id, **kwargs)
 
     def step(
         self, key: jax.Array, state: EnvState | GymnaxState, action: jax.Array
