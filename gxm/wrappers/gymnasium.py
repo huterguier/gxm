@@ -4,6 +4,7 @@ from typing import Any
 import gymnasium
 import jax
 import jax.numpy as jnp
+import numpy as np
 
 from gxm.core import Env, EnvState, State
 
@@ -14,7 +15,7 @@ current_env_id = 0
 @jax.tree_util.register_dataclass
 @dataclass
 class GymnasiumState(State):
-    id: jax.Array
+    env_id: jax.Array
 
 
 class GymnasiumEnv(Env):
@@ -28,7 +29,7 @@ class GymnasiumEnv(Env):
         obs, _ = env.reset()
         obs, reward, terminated, truncated, info = env.step(env.action_space.sample())
         env_state = EnvState(
-            state=GymnasiumState(time=jnp.int32(0), id=jnp.int32(0)),
+            state=GymnasiumState(time=jnp.int32(0), env_id=jnp.int32(0)),
             obs=jnp.array(obs),
             reward=jnp.array(reward),
             done=jnp.array(terminated or truncated),
@@ -47,8 +48,43 @@ class GymnasiumEnv(Env):
             state = env_state.state
 
         def callback(key: jax.Array, state: GymnasiumState, action: jax.Array):
-            env = envs.get(str(state.id), None)
-            import numpy as np
+            def flatten(x, batch_shape):
+                return jnp.reshape(x, (-1,) + x.shape[len(batch_shape) :])
+
+            def unflatten(x_flat, batch_shape):
+                return jnp.reshape(x_flat, batch_shape + x_flat.shape[1:])
+
+            batch_shape = key.shape[:-1]
+            keys = flatten(key, batch_shape)
+            state = jax.tree.map(lambda x: flatten(x, batch_shape), state)
+            action = flatten(action, batch_shape)
+            env_ids = state.env_id
+
+            obss, rewardss, dones, infoss = [], [], [], []
+            for action, env_id in zip(action, env_ids):
+                env = envs.get(str(env_id), None)
+                if env is None:
+                    raise ValueError(f"Environment with id {env_id} not found.")
+                obs, reward, terminated, truncated, info = env.step(np.array(action))
+                obss.append(obs)
+                rewardss.append(reward)
+                dones.append(terminated or truncated)
+                infoss.append(info)
+
+            env_state = EnvState(
+                state=GymnasiumState(
+                    time=state.time + 1,
+                    env_id=env_ids,
+                ),
+                obs=jnp.stack(obss),
+                reward=jnp.array(rewardss),
+                done=jnp.array(dones),
+                info=jax.tree.map(lambda x: jnp.stack(x), infoss),
+            )
+
+            return jax.tree.map(lambda x: unflatten(x, batch_shape), env_state)
+
+            env = envs.get(str(state.env_id), None)
 
             obs, reward, terminated, truncated, info = env.step(np.array(action))
             obs = jax.numpy.array(obs)
@@ -59,6 +95,7 @@ class GymnasiumEnv(Env):
                 done=jnp.array(terminated or truncated),
                 info=info,
             )
+
             return env_state
 
         env_state = jax.pure_callback(
@@ -74,24 +111,44 @@ class GymnasiumEnv(Env):
 
     def reset(self, key: jax.Array) -> EnvState:
         def callback(key: jax.Array):
-            env = gymnasium.make("CartPole-v1")
-            env = gymnasium.wrappers.Autoreset(env)
+            def flatten(x, batch_shape):
+                return jnp.reshape(x, (-1,) + x.shape[len(batch_shape) :])
+
+            def unflatten(x_flat, batch_shape):
+                return jnp.reshape(x_flat, batch_shape + x_flat.shape[1:])
+
+            batch_shape = key.shape[:-1]
+            keys = flatten(key, batch_shape)
+
             global current_env_id
-            env_id = current_env_id
-            current_env_id += 1
-
-            envs[str(env_id)] = env
-            obs, info = env.reset()
-            obs = jnp.array(obs)
-            env_state = EnvState(
-                state=GymnasiumState(time=jnp.int32(0), id=jnp.int32(env_id)),
-                obs=jnp.array(obs),
-                reward=jnp.array(0.0),
-                done=jnp.array(False),
-                info=info,
+            env_ids = jnp.arange(
+                current_env_id, current_env_id + len(keys), dtype=jnp.int32
             )
-            return env_state
+            current_env_id += len(keys)
+            obss, infoss = [], []
+            for env_id in env_ids:
+                env = gymnasium.make(self.id)
+                env = gymnasium.wrappers.Autoreset(env)
+                envs[str(env_id)] = env
+                obs, info = env.reset()
+                obss.append(obs)
+                infoss.append(info)
 
+            state = GymnasiumState(
+                time=jnp.zeros((len(keys),), dtype=jnp.int32),
+                env_id=env_ids,
+            )
+            env_state = EnvState(
+                state=state,
+                obs=jnp.stack(obss),
+                reward=jnp.zeros((len(keys),), dtype=jnp.float32),
+                done=jnp.zeros((len(keys),), dtype=jnp.bool),
+                info=jax.tree.map(lambda x: jnp.stack(x), infoss),
+            )
+
+            return jax.tree.map(lambda x: unflatten(x, batch_shape), env_state)
+
+        batch_shape = key.shape[:-1]
         env_state = jax.pure_callback(
             callback,
             self.env_state_shape_dtype,
