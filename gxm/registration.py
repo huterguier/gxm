@@ -1,24 +1,23 @@
 import jax
 
-from gxm.wrappers import GymnaxEnv, NavixEnv
+from gxm.wrappers import GymnasiumEnv, GymnaxEnv, NavixEnv
 
 
 def make(id, **kwargs):
     wrapper, id = id.split("/", 1)
-    Wrapper = {
-        "Gymnax": GymnaxEnv,
-        "Navix": NavixEnv,
-    }[wrapper]
+    Wrapper = {"Gymnax": GymnaxEnv, "Navix": NavixEnv, "Gymnasium": GymnasiumEnv}[
+        wrapper
+    ]
     return Wrapper(id, **kwargs)
 
 
 if __name__ == "__main__":
     import navix
 
-    env = make("Navix/Navix-FourRooms-v0", observation_fn=navix.observations.rgb)
+    env = make("Gymnasium/CartPole-v1")
 
     @jax.jit
-    def rollout1(key, num_steps=100):
+    def rollout1(key, num_steps=1000):
 
         def step(state, key):
             key_action, key_step = jax.random.split(key)
@@ -32,7 +31,7 @@ if __name__ == "__main__":
         return state
 
     @jax.jit
-    def rollout2(key, num_steps=100):
+    def rollout2(key, num_steps=1000):
 
         def step(env_state, key):
             key_action, key_step = jax.random.split(key)
