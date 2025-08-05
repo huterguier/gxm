@@ -105,66 +105,61 @@ class GymnasiumEnv(Env):
         return self.n_actions
 
 
-env = GymnasiumEnv("CartPole-v1")
-env_state = env.reset(jax.random.key(0))
-env_state = env.step(jax.random.key(0), env_state, jax.numpy.array(0))
+if __name__ == "__main__":
+    env = GymnasiumEnv("CartPole-v1")
+    env_state = env.reset(jax.random.key(0))
+    env_state = env.step(jax.random.key(0), env_state, jax.numpy.array(0))
 
-n_steps = 10000
-key = jax.random.key(0)
+    n_steps = 10000
+    key = jax.random.key(0)
 
+    @jax.jit
+    def f(x, key):
+        key, subkey = jax.random.split(key)
+        x += jax.random.normal(subkey, x.shape)
+        return x, key
 
-@jax.jit
-def f(x, key):
-    key, subkey = jax.random.split(key)
-    x += jax.random.normal(subkey, x.shape)
-    return x, key
+    import numpy as np
 
+    @jax.jit
+    def f(x, key):
+        key, subkey = jax.random.split(key)
+        x += jax.random.normal(subkey, x.shape)
+        return x, key
 
-import numpy as np
+    def rollout_for(key):
+        env = gymnasium.make("CartPole-v1")
+        env = gymnasium.wrappers.Autoreset(env)
+        obs, info = env.reset()
+        x = jnp.array(0.0)
+        for i in range(n_steps):
+            obs, reward, termination, trunction, info = env.step(
+                np.array(jax.random.randint(key, (), 0, env.action_space.n))
+            )
+            x, key = f(x, key)
+        return obs
 
+    @jax.jit
+    def rollout_scan(key):
+        def step(env_state, key):
+            action = jax.random.randint(key, (), 0, env.num_actions)
+            return env.step(key, env_state, action), None
 
-@jax.jit
-def f(x, key):
-    key, subkey = jax.random.split(key)
-    x += jax.random.normal(subkey, x.shape)
-    return x, key
+        env_state = env.reset(key)
+        keys = jax.random.split(key, n_steps)
+        env_state, _ = jax.lax.scan(step, env_state, keys)
+        return env_state.obs
 
+    import time
 
-def rollout_for(key):
-    env = gymnasium.make("CartPole-v1")
-    env = gymnasium.wrappers.Autoreset(env)
-    obs, info = env.reset()
-    x = jnp.array(0.0)
-    for i in range(n_steps):
-        obs, reward, termination, trunction, info = env.step(
-            np.array(jax.random.randint(key, (), 0, env.action_space.n))
-        )
-        x, key = f(x, key)
-    return obs
+    start = time.time()
+    obs_for = rollout_for(key)
+    print("Time for rollout_for:", time.time() - start)
 
+    start = time.time()
+    obs_scan = rollout_scan(key)
+    print("Time for rollout_scan:", time.time() - start)
 
-@jax.jit
-def rollout_scan(key):
-    def step(env_state, key):
-        action = jax.random.randint(key, (), 0, env.num_actions)
-        return env.step(key, env_state, action), None
-
-    env_state = env.reset(key)
-    keys = jax.random.split(key, n_steps)
-    env_state, _ = jax.lax.scan(step, env_state, keys)
-    return env_state.obs
-
-
-import time
-
-start = time.time()
-obs_for = rollout_for(key)
-print("Time for rollout_for:", time.time() - start)
-
-start = time.time()
-obs_scan = rollout_scan(key)
-print("Time for rollout_scan:", time.time() - start)
-
-start = time.time()
-obs_scan = rollout_scan(key)
-print("Time for rollout_scan again:", time.time() - start)
+    start = time.time()
+    obs_scan = rollout_scan(key)
+    print("Time for rollout_scan again:", time.time() - start)
