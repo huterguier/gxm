@@ -12,11 +12,15 @@ dependencies = [
   "jax[cuda12]>=0.5.0",
   "gymnax>=0.0.9",
   "navix>=0.7.0",
-  "gymnasium[all]",
 ]
 classifiers = [
   "Programming Language :: Python :: 3",
   "Operating System :: OS Independent",
+]
+
+[project.optional-dependencies]
+gymnasium = [
+  "gymnasium[all]",
 ]
 
 [project.urls]
