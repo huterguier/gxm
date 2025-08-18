@@ -3,7 +3,7 @@ name = "gxm"
 version = "0.1.0"
 description = "Reinforcement Learning Environemts in JAX"
 readme = "README.md"
-requires-python = "==3.10"
+requires-python = "==3.10.18"
 license = "MIT"
 authors = [
   { name = "huterguier", email = "huterguier@gmail.com" }
@@ -12,6 +12,7 @@ dependencies = [
   "jax[cuda12]>=0.5.0",
   "gymnax>=0.0.9",
   "navix>=0.7.0",
+  "pgx>=2.6.0",
 ]
 classifiers = [
   "Programming Language :: Python :: 3",

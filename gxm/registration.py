@@ -1,20 +1,23 @@
 import jax
 
-from gxm.wrappers import GymnasiumEnv, GymnaxEnv, NavixEnv
+from gxm.wrappers import GymnasiumEnv, GymnaxEnv, NavixEnv, PgxEnv
 
 
 def make(id, **kwargs):
     wrapper, id = id.split("/", 1)
-    Wrapper = {"Gymnax": GymnaxEnv, "Navix": NavixEnv, "Gymnasium": GymnasiumEnv}[
-        wrapper
-    ]
+    Wrapper = {
+        "Gymnax": GymnaxEnv,
+        "Navix": NavixEnv,
+        "Gymnasium": GymnasiumEnv,
+        "Pgx": PgxEnv,
+    }[wrapper]
     return Wrapper(id, **kwargs)
 
 
 if __name__ == "__main__":
-    import navix
 
-    env = make("Gymnasium/CartPole-v1")
+    # env = make("Gymnasium/CartPole-v1")
+    env = make("Pgx/minatar-asterix")
 
     @jax.jit
     def rollout1(key, num_steps=1000):
