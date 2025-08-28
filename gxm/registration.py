@@ -1,13 +1,12 @@
 import jax
 
-from gxm.wrappers import GymnasiumEnv, GymnaxEnv, NavixEnv, PgxEnv
+from gxm.wrappers import GymnasiumEnv, GymnaxEnv, PgxEnv
 
 
 def make(id, **kwargs):
     wrapper, id = id.split("/", 1)
     Wrapper = {
         "Gymnax": GymnaxEnv,
-        "Navix": NavixEnv,
         "Gymnasium": GymnasiumEnv,
         "Pgx": PgxEnv,
     }[wrapper]
