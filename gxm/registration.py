@@ -1,14 +1,14 @@
 import jax
 
-from gxm.wrappers import GymnaxEnvironment, PgxEnvironment
+from gxm.wrappers import GymnaxEnvironment, PgxEnvironment, EnvpoolEnvironment
 
 
 def make(id, **kwargs):
     wrapper, id = id.split("/", 1)
     Wrapper = {
         "Gymnax": GymnaxEnvironment,
-        # "Gymnasium": GymnasiumEnvironment,
         "Pgx": PgxEnvironment,
+        "Envpool": EnvpoolEnvironment,
     }[wrapper]
     return Wrapper(id, **kwargs)
 
@@ -16,7 +16,7 @@ def make(id, **kwargs):
 if __name__ == "__main__":
 
     # env = make("Gymnax/CartPole-v1")
-    env = make("Pgx/minatar-breakout")
+    env = make("Envpool/Pong-v5")
 
     @jax.jit
     def rollout(key, num_steps=1000):
@@ -28,7 +28,7 @@ if __name__ == "__main__":
             jax.debug.print("{}", env_state.done)
             return env_state, None
 
-        env_state = env.reset(key)
+        env_state = env.init(key)
         keys = jax.random.split(key, num_steps)
         env_state, _ = jax.lax.scan(step, env_state, keys)
 

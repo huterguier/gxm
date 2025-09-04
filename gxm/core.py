@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from typing import Any
 
 import jax
-from jax import Array
 
 
 @jax.tree_util.register_dataclass
@@ -24,20 +23,20 @@ class EnvironmentState:
 class Environment:
     """Base class for environments in gxm."""
 
-    def init(self, key: Array) -> EnvironmentState:
+    def init(self, key: jax.Array) -> EnvironmentState:
         """Initialize the environment and return the initial state."""
         raise NotImplementedError("This method should be implemented by subclasses.")
 
     def step(
         self,
-        key: Array,
+        key: jax.Array,
         env_state: EnvironmentState,
-        action: Array,
+        action: jax.Array,
     ) -> EnvironmentState:
         """Perform a step in the environment given an action."""
         raise NotImplementedError("This method should be implemented by subclasses.")
 
-    def reset(self, key: Array) -> EnvironmentState:
+    def reset(self, key: jax.Array, env_state: EnvironmentState) -> EnvironmentState:
         """Reset the environment to its initial state."""
         raise NotImplementedError("This method should be implemented by subclasses.")
 

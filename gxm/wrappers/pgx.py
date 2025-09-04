@@ -14,9 +14,6 @@ class PgxEnvironment(Environment):
         self.env = pgx.make(env_id, **kwargs)
 
     def init(self, key: jax.Array) -> EnvironmentState:
-        return self.reset(key)
-
-    def reset(self, key: jax.Array) -> EnvironmentState:
         state = self.env.init(key)
         env_state = EnvironmentState(
             state=state,
@@ -26,6 +23,10 @@ class PgxEnvironment(Environment):
             info={},
         )
         return env_state
+
+    def reset(self, key: jax.Array, env_state: EnvironmentState) -> EnvironmentState:
+        del env_state
+        return self.init(key)
 
     def step(
         self, key: jax.Array, env_state: EnvironmentState, action: jax.Array

@@ -21,12 +21,9 @@ class GymnaxEnvironment(Environment):
         )
         return env_state
 
-    def reset(self, key: jax.Array) -> EnvironmentState:
-        obs, state = self.env.reset(key, self.env_params)
-        env_state = EnvironmentState(
-            state=state, obs=obs, reward=jnp.float32(0.0), done=jnp.bool(False), info={}
-        )
-        return env_state
+    def reset(self, key: jax.Array, env_state: EnvironmentState) -> EnvironmentState:
+        del env_state
+        return self.init(key)
 
     def step(
         self, key: jax.Array, env_state: EnvironmentState, action: jax.Array
