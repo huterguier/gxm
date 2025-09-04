@@ -1,24 +1,14 @@
-import jax
 from dataclasses import dataclass
-from typing import (
-    Any,
-    Generic,
-    TypeVar,
-)
+from typing import Any
 
-
-TState = TypeVar("TState", bound="State")
-
-@jax.tree_util.register_dataclass
-@dataclass
-class State:
-    time: int
+import jax
+from jax import Array
 
 
 @jax.tree_util.register_dataclass
 @dataclass
-class EnvState:
-    state: State
+class EnvironmentState:
+    state: Any
     obs: jax.Array
     reward: float | jax.Array
     done: bool | jax.Array
@@ -31,20 +21,23 @@ class EnvState:
         return iter((self.state, self.obs, self.reward, self.done, self.info))
 
 
-
-class Env(Generic[TState]):
+class Environment:
     """Base class for environments in gxm."""
+
+    def init(self, key: Array) -> EnvironmentState:
+        """Initialize the environment and return the initial state."""
+        raise NotImplementedError("This method should be implemented by subclasses.")
 
     def step(
         self,
-        key: jax.Array,
-        state: EnvState | TState,
-        action: jax.Array,
-    ) -> EnvState:
+        key: Array,
+        env_state: EnvironmentState,
+        action: Array,
+    ) -> EnvironmentState:
         """Perform a step in the environment given an action."""
         raise NotImplementedError("This method should be implemented by subclasses.")
 
-    def reset(self, key: jax.Array) -> EnvState:
+    def reset(self, key: Array) -> EnvironmentState:
         """Reset the environment to its initial state."""
         raise NotImplementedError("This method should be implemented by subclasses.")
 
@@ -52,6 +45,3 @@ class Env(Generic[TState]):
     def num_actions(self) -> int:
         """Return the number of actions available in the environment."""
         raise NotImplementedError("This method should be implemented by subclasses.")
-
-
-

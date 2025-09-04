@@ -1,19 +1,11 @@
-from dataclasses import dataclass
-
 import gymnax
 import jax
 import jax.numpy as jnp
 
-from gxm.core import Env, EnvState, State
+from gxm.core import Environment, EnvironmentState
 
 
-@jax.tree_util.register_dataclass
-@dataclass
-class GymnaxState(State):
-    state_gymnax: gymnax.EnvState
-
-
-class GymnaxEnv(Env[GymnaxState]):
+class GymnaxEnvironment(Environment):
     """Base class for Gymnax environments."""
 
     env: gymnax.environments.environment.Environment
@@ -22,22 +14,28 @@ class GymnaxEnv(Env[GymnaxState]):
     def __init__(self, id: str, **kwargs):
         self.env, self.env_params = gymnax.make(id, **kwargs)
 
-    def step(
-        self, key: jax.Array, state: EnvState | GymnaxState, action: jax.Array
-    ) -> EnvState:
-        state = state.state if isinstance(state, EnvState) else state
-        obs, state_gymnax, reward, done, _ = self.env.step(
-            key, state.state_gymnax, action, self.env_params
+    def init(self, key: jax.Array) -> EnvironmentState:
+        obs, state = self.env.reset(key, self.env_params)
+        env_state = EnvironmentState(
+            state=state, obs=obs, reward=jnp.float32(0.0), done=jnp.bool(False), info={}
         )
-        state = GymnaxState(time=state.time + 1, state_gymnax=state_gymnax)
-        env_state = EnvState(state=state, obs=obs, reward=reward, done=done, info={})
         return env_state
 
-    def reset(self, key: jax.Array) -> EnvState:
-        obs, state_gymnax = self.env.reset(key)
-        state = GymnaxState(time=0, state_gymnax=state_gymnax)
-        env_state = EnvState(
+    def reset(self, key: jax.Array) -> EnvironmentState:
+        obs, state = self.env.reset(key, self.env_params)
+        env_state = EnvironmentState(
             state=state, obs=obs, reward=jnp.float32(0.0), done=jnp.bool(False), info={}
+        )
+        return env_state
+
+    def step(
+        self, key: jax.Array, env_state: EnvironmentState, action: jax.Array
+    ) -> EnvironmentState:
+        obs, state, reward, done, _ = self.env.step(
+            key, env_state.state, action, self.env_params
+        )
+        env_state = EnvironmentState(
+            state=state, obs=obs, reward=reward, done=done, info={}
         )
         return env_state
 

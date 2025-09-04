@@ -1,12 +1,10 @@
-from .gymnasium import GymnasiumEnv, GymnasiumState
-from .gymnax import GymnaxEnv, GymnaxState
-from .pgx import PgxEnv, PgxState
+# from .gymnasium import GymnasiumEnv, GymnasiumState
+from .gymnax import GymnaxEnvironment
+from .pgx import PgxEnvironment
 
 __all__ = [
-    "GymnasiumEnv",
-    "GymnasiumState",
+    # "GymnasiumEnv",
+    # "GymnasiumState",
     "GymnaxEnv",
-    "GymnaxState",
     "PgxEnv",
-    "PgxState",
 ]

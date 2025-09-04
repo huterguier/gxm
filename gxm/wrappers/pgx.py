@@ -1,19 +1,11 @@
-from dataclasses import dataclass
-
 import jax
 import pgx
 from pgx.experimental import auto_reset
 
-from gxm.core import Env, EnvState, State
+from gxm.core import Environment, EnvironmentState
 
 
-@jax.tree_util.register_dataclass
-@dataclass
-class PgxState(State):
-    state_pgx: pgx.State
-
-
-class PgxEnv(Env[PgxState]):
+class PgxEnvironment(Environment):
     """Base class for Gymnax environments."""
 
     env: pgx.Env
@@ -21,32 +13,29 @@ class PgxEnv(Env[PgxState]):
     def __init__(self, env_id: pgx.EnvId, **kwargs):
         self.env = pgx.make(env_id, **kwargs)
 
-    def step(
-        self, key: jax.Array, state: EnvState | PgxState, action: jax.Array
-    ) -> EnvState:
-        state = state.state if isinstance(state, EnvState) else state
-        state_pgx = auto_reset(self.env.step, self.env.init)(
-            state.state_pgx, action, key
-        )
+    def init(self, key: jax.Array) -> EnvironmentState:
+        return self.reset(key)
 
-        state = PgxState(time=state.time + 1, state_pgx=state_pgx)
-        env_state = EnvState(
+    def reset(self, key: jax.Array) -> EnvironmentState:
+        state = self.env.init(key)
+        env_state = EnvironmentState(
             state=state,
-            obs=state_pgx.observation,
-            reward=state_pgx.rewards[state_pgx.current_player],
-            done=state_pgx.terminated,
+            obs=state.observation,
+            reward=state.rewards[state.current_player],
+            done=state.terminated or state.truncated,
             info={},
         )
         return env_state
 
-    def reset(self, key: jax.Array) -> EnvState:
-        state_pgx = self.env.init(key)
-        state = PgxState(time=0, state_pgx=state_pgx)
-        env_state = EnvState(
+    def step(
+        self, key: jax.Array, env_state: EnvironmentState, action: jax.Array
+    ) -> EnvironmentState:
+        state = auto_reset(self.env.step, self.env.init)(env_state.state, action, key)
+        env_state = EnvironmentState(
             state=state,
-            obs=state_pgx.observation,
-            reward=state_pgx.rewards[state_pgx.current_player],
-            done=state_pgx.terminated or state_pgx.truncated,
+            obs=state.observation,
+            reward=state.rewards[state.current_player],
+            done=state.terminated,
             info={},
         )
         return env_state
