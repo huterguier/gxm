@@ -1,7 +1,7 @@
+import time
 from dataclasses import dataclass
 from typing import Any
 
-import time
 import envpool
 import jax
 import jax.numpy as jnp
@@ -22,10 +22,11 @@ class EnvpoolEnvironment(Environment):
     id: str
     env_state_shape_dtype: Any
     _num_actions: int
+    kwargs: Any
 
-    def __init__(self, id: str):
+    def __init__(self, id: str, **kwargs):
         self.id = id
-        env = envpool.make(self.id, env_type="gym", num_envs=1, seed=0)
+        env = envpool.make(self.id, env_type="gym", num_envs=1, **kwargs)
         obs, _ = env.reset()
         obs, reward, terminated, truncated, _ = env.step(np.zeros(1, dtype=int))
         env_state = EnvironmentState(
@@ -39,6 +40,7 @@ class EnvpoolEnvironment(Environment):
             lambda x: jax.ShapeDtypeStruct(x.shape[1:], x.dtype), env_state
         )
         self._num_actions = int(env.action_space.n)
+        self.kwargs = kwargs
 
     def init(self, key: jax.Array) -> EnvironmentState:
         def callback(key):
@@ -46,12 +48,16 @@ class EnvpoolEnvironment(Environment):
             shape = key.shape[:-1]
             keys_flat = jnp.reshape(key, (-1, key.shape[-1]))
             num_envs = keys_flat.shape[0]
-            envs = envpool.make(self.id, env_type="gym", num_envs=num_envs)
+            envs = envpool.make(
+                self.id, env_type="gym", num_envs=num_envs, **self.kwargs
+            )
             obs, _ = envs.reset()
             env_id = len(envs_envpool)
             envs_envpool[env_id] = envs
             env_state = EnvironmentState(
-                state=EnvpoolState(env_id=jnp.full((num_envs,), env_id, dtype=jnp.int32)),
+                state=EnvpoolState(
+                    env_id=jnp.full((num_envs,), env_id, dtype=jnp.int32)
+                ),
                 obs=jnp.asarray(obs),
                 reward=jnp.zeros((num_envs,), dtype=jnp.float32),
                 done=jnp.zeros((num_envs,), dtype=jnp.bool),
@@ -78,9 +84,7 @@ class EnvpoolEnvironment(Environment):
             shape = env_id.shape
             envs = envs_envpool[np.ravel(env_id)[0]]
             actions = np.reshape(np.asarray(action), (-1,))
-            obs, reward, terminated, truncated, _ = envs.step(
-                actions
-            )
+            obs, reward, terminated, truncated, _ = envs.step(actions)
             done = np.logical_or(terminated, truncated)
             env_state = EnvironmentState(
                 state=EnvpoolState(env_id=env_id),
@@ -147,7 +151,6 @@ if __name__ == "__main__":
             action = np.random.randint(0, env.action_space.n, size=(n_envs,))
             obs, reward, terminated, truncated, _ = env.step(action)
         return reward
-
 
     @jax.jit
     def rollout_scan(key):
