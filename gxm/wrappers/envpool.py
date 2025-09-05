@@ -25,7 +25,7 @@ class EnvpoolEnvironment(Environment):
 
     def __init__(self, id: str):
         self.id = id
-        env = envpool.make(self.id, env_type="gymnasium", num_envs=1)
+        env = envpool.make(self.id, env_type="gym", num_envs=1, seed=0)
         obs, _ = env.reset()
         obs, reward, terminated, truncated, _ = env.step(np.zeros(1, dtype=int))
         env_state = EnvironmentState(
@@ -46,7 +46,7 @@ class EnvpoolEnvironment(Environment):
             shape = key.shape[:-1]
             keys_flat = jnp.reshape(key, (-1, key.shape[-1]))
             num_envs = keys_flat.shape[0]
-            envs = envpool.make(self.id, env_type="gymnasium", num_envs=num_envs)
+            envs = envpool.make(self.id, env_type="gym", num_envs=num_envs)
             obs, _ = envs.reset()
             env_id = len(envs_envpool)
             envs_envpool[env_id] = envs
@@ -77,9 +77,9 @@ class EnvpoolEnvironment(Environment):
             global envs_envpool
             shape = env_id.shape
             envs = envs_envpool[np.ravel(env_id)[0]]
-            actions = np.reshape(action, (-1,))
+            actions = np.reshape(np.asarray(action), (-1,))
             obs, reward, terminated, truncated, _ = envs.step(
-                np.reshape(np.asarray(action), (-1,))
+                actions
             )
             done = np.logical_or(terminated, truncated)
             env_state = EnvironmentState(
@@ -133,11 +133,11 @@ class EnvpoolEnvironment(Environment):
 
 
 if __name__ == "__main__":
-    env = EnvpoolEnvironment("Pong-v5")
+    env = EnvpoolEnvironment("CartPole-v1")
     env_state = env.init(jax.random.key(0))
     env_state = env.step(jax.random.key(0), env_state, jax.numpy.array(0))
 
-    n_envs = 32
+    n_envs = 8
     n_steps = 1000
 
     def rollout_for():
@@ -167,12 +167,8 @@ if __name__ == "__main__":
 
     start = time.time()
     obs_scan = jax.vmap(rollout_scan)(keys)
-    print("Time for rollout_scan again:", time.time() - start)
-
-    start = time.time()
-    obs_scan = jax.vmap(rollout_scan)(keys)
-    print("Time for rollout_scan again:", time.time() - start)
+    print("Time for rollout_scan:", time.time() - start)
 
     start = time.time()
     obs_for = rollout_for()
-    print("Time for rollout_for again:", time.time() - start)
+    print("Time for rollout_for:", time.time() - start)

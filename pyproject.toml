@@ -13,6 +13,7 @@ dependencies = [
   "gymnax>=0.0.9",
   "pgx>=2.6.0",
   "envpool",
+  "numpy<2",
 ]
 classifiers = [
   "Programming Language :: Python :: 3",
