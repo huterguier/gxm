@@ -11,7 +11,7 @@ env_state = env.init(key)
 env_state = env.step(env_state, key, action)
 ```
 
-# Supported Environments
+## Supported Environments
 Currently Gxm supports the following Libraries:
 - [Gymnax](https://github.com/RobertTLange/gymnax) (Classic Control, bsuite and MinAtar)
 - [Pgx](https://github.com/sotetsuk/pgx) (Boardgames and MinAtar)
