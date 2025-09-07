@@ -1,7 +1,7 @@
 [project]
 name = "gxm"
 version = "0.1.0"
-description = "Reinforcement Learning Environemts in JAX"
+description = "Reinforcement Learning Environemts in JAX."
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
@@ -12,8 +12,6 @@ dependencies = [
   "jax[cuda12]>=0.5.0",
   "gymnax>=0.0.9",
   "pgx>=2.6.0",
-  "envpool",
-  "numpy<2",
 ]
 classifiers = [
   "Programming Language :: Python :: 3",
@@ -26,6 +24,7 @@ gymnasium = [
 ]
 envpool = [
   "envpool",
+  "numpy<2",
 ]
 
 [project.urls]
@@ -34,7 +33,3 @@ Homepage = "https://github.com/huterguier/gxm"
 [tool.setuptools.packages.find]
 include = ["gxm"]
 exclude = ["images"]
-
-[build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"

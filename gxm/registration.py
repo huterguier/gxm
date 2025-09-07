@@ -1,6 +1,6 @@
 import jax
 
-from gxm.wrappers import EnvpoolEnvironment, GymnaxEnvironment, PgxEnvironment
+from gxm.environments import EnvpoolEnvironment, GymnaxEnvironment, PgxEnvironment
 
 
 def make(id, **kwargs):
