@@ -1,10 +1,14 @@
+import gxm.environments as environments
 import gxm.wrappers as wrappers
-from gxm.core import Environment, EnvironmentState
+from gxm.core import Environment, EnvironmentState, Timestep, Trajectory
 from gxm.registration import make
 
 __all__ = [
-    "make",
+    "environments",
+    "wrappers",
     "Environment",
     "EnvironmentState",
-    "wrappers",
+    "Timestep",
+    "Trajectory",
+    "make",
 ]
