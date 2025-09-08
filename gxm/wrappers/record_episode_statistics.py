@@ -117,7 +117,7 @@ class RecordEpisodeStatistics(Wrapper):
         done = env_state.done
         reward = env_state.reward
 
-        current_return = episode_stats._episodic_return + reward
+        current_return = episode_stats.current_return + reward
         current_discounted_return = (
             episode_stats._discounted_episodic_return
             + reward * self.gamma**episode_stats._length
