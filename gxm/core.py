@@ -58,6 +58,11 @@ class Trajectory:
     truncated: Array
     info: dict[str, Any]
 
+    @property
+    def done(self) -> Array:
+        """Return whether the episode has ended (either terminated or truncated)."""
+        return jnp.logical_or(self.terminated, self.truncated)
+
     def __len__(self):
         """Return the length of the trajectory."""
         assert (
