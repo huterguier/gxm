@@ -9,6 +9,8 @@ from jax import Array
 @jax.tree_util.register_dataclass
 @dataclass
 class Timestep:
+    """Class representing a single timestep in an environment."""
+
     obs: Array
     true_obs: Array
     reward: Array
@@ -45,10 +47,16 @@ class Timestep:
 
 @jax.tree_util.register_dataclass
 @dataclass
-class Trajectory(Timestep):
+class Trajectory:
     """Class representing a trajectory of timesteps in an environment."""
 
+    obs: Array
+    true_obs: Array
     action: Array
+    reward: Array
+    terminated: Array
+    truncated: Array
+    info: dict[str, Any]
 
     def __len__(self):
         """Return the length of the trajectory."""
