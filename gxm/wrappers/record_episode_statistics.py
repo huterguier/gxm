@@ -119,8 +119,8 @@ class RecordEpisodeStatistics(Wrapper):
 
         current_return = episode_stats.current_return + reward
         current_discounted_return = (
-            episode_stats._discounted_episodic_return
-            + reward * self.gamma**episode_stats._length
+            episode_stats.current_discounted_return
+            + reward * self.gamma**episode_stats.current_length
         )
         current_length = episode_stats.current_length + 1
 
