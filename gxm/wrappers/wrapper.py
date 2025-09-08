@@ -8,6 +8,10 @@ class Wrapper(Environment):
 
     env: Environment
 
+    @property
+    def num_actions(self) -> int:
+        return self.env.num_actions
+
     def __getattr__(self, name: str) -> Any:
         if name in self.__dict__:
             return self.__dict__[name]
