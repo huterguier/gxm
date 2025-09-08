@@ -155,6 +155,8 @@ class RecordEpisodeStatistics(Wrapper):
             info=env_state.info
             | {
                 "current_return": episode_stats.current_return,
+                "current_discounted_return": episode_stats.current_discounted_return,
+                "current_length": episode_stats.current_length,
                 "episodic_return": episode_stats.episodic_return,
                 "discounted_episodic_return": episode_stats.discounted_episodic_return,
                 "length": episode_stats.length,
