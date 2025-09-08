@@ -31,5 +31,4 @@ envpool = [
 Homepage = "https://github.com/huterguier/gxm"
 
 [tool.setuptools.packages.find]
-include = ["gxm"]
 exclude = ["images"]
