@@ -18,8 +18,10 @@ class PgxEnvironment(Environment):
         env_state = EnvironmentState(
             state=state,
             obs=state.observation,
+            true_obs=state.observation,
             reward=state.rewards[state.current_player],
-            done=state.terminated or state.truncated,
+            terminated=state.terminated,
+            truncated=state.truncated,
             info={},
         )
         return env_state
@@ -35,8 +37,10 @@ class PgxEnvironment(Environment):
         env_state = EnvironmentState(
             state=state,
             obs=state.observation,
+            true_obs=state.observation,
             reward=state.rewards[state.current_player],
-            done=state.terminated,
+            terminated=state.terminated,
+            truncated=state.truncated,
             info={},
         )
         return env_state

@@ -17,7 +17,13 @@ class GymnaxEnvironment(Environment):
     def init(self, key: jax.Array) -> EnvironmentState:
         obs, state = self.env.reset(key, self.env_params)
         env_state = EnvironmentState(
-            state=state, obs=obs, reward=jnp.float32(0.0), done=jnp.bool(False), info={}
+            state=state,
+            obs=obs,
+            true_obs=obs,
+            reward=jnp.float32(0.0),
+            terminated=jnp.bool(False),
+            truncated=jnp.bool(False),
+            info={},
         )
         return env_state
 
@@ -32,7 +38,13 @@ class GymnaxEnvironment(Environment):
             key, env_state.state, action, self.env_params
         )
         env_state = EnvironmentState(
-            state=state, obs=obs, reward=reward, done=done, info={}
+            state=state,
+            obs=obs,
+            true_obs=obs,
+            reward=reward,
+            terminated=done,
+            truncated=done,
+            info={},
         )
         return env_state
 

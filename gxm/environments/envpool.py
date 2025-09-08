@@ -32,8 +32,10 @@ class EnvpoolEnvironment(Environment):
         env_state = EnvironmentState(
             state=EnvpoolState(env_id=jnp.int32(0)),
             obs=jnp.array(obs),
+            true_obs=jnp.array(obs),
             reward=jnp.array(reward),
-            done=jnp.array(terminated or truncated),
+            terminated=jnp.array(terminated),
+            truncated=jnp.array(truncated),
             info={},
         )
         self.env_state_shape_dtype = jax.tree.map(
@@ -55,16 +57,13 @@ class EnvpoolEnvironment(Environment):
             env_id = len(envs_envpool)
             envs_envpool[env_id] = envs
             env_state = EnvironmentState(
-                state=EnvpoolState(
-                    env_id=jnp.full((num_envs,), env_id, dtype=jnp.int32)
-                ),
-                obs=jnp.asarray(obs),
-                reward=jnp.zeros((num_envs,), dtype=jnp.float32),
-                done=jnp.zeros((num_envs,), dtype=jnp.bool),
+                state=EnvpoolState(env_id=jnp.full(shape, env_id, dtype=jnp.int32)),
+                obs=jnp.reshape(obs, shape + obs.shape[1:]),
+                true_obs=jnp.reshape(obs, shape + obs.shape[1:]),
+                reward=jnp.zeros(shape, dtype=jnp.float32),
+                terminated=jnp.zeros(shape, dtype=jnp.bool),
+                truncated=jnp.zeros(shape, dtype=jnp.bool),
                 info={},
-            )
-            env_state = jax.tree.map(
-                lambda x: jnp.reshape(x, shape + x.shape[1:]), env_state
             )
             return env_state
 
@@ -88,9 +87,11 @@ class EnvpoolEnvironment(Environment):
             done = np.logical_or(terminated, truncated)
             env_state = EnvironmentState(
                 state=EnvpoolState(env_id=env_id),
-                obs=np.reshape(obs, shape + obs.shape[1:]),
-                reward=np.reshape(reward, shape),
-                done=np.reshape(done, shape),
+                obs=jnp.reshape(obs, shape + obs.shape[1:]),
+                true_obs=jnp.reshape(obs, shape + obs.shape[1:]),
+                reward=jnp.reshape(reward, shape),
+                terminated=jnp.reshape(terminated, shape),
+                truncated=jnp.reshape(truncated, shape),
                 info={},
             )
             return env_state
@@ -112,10 +113,12 @@ class EnvpoolEnvironment(Environment):
             envs = envs_envpool[np.ravel(env_id)[0]]
             obs = envs.reset()
             env_state = EnvironmentState(
-                state=EnvpoolState(env_id=env_id),
-                obs=np.reshape(obs, shape + obs.shape[1:]),
-                reward=np.zeros(shape, dtype=jnp.float32),
-                done=jnp.zeros(shape, dtype=jnp.bool_),
+                state=EnvpoolState(env_id=jnp.full(shape, env_id, dtype=jnp.int32)),
+                obs=jnp.reshape(obs, shape + obs.shape[1:]),
+                true_obs=jnp.reshape(obs, shape + obs.shape[1:]),
+                reward=jnp.zeros(shape, dtype=jnp.float32),
+                terminated=jnp.zeros(shape, dtype=jnp.bool),
+                truncated=jnp.zeros(shape, dtype=jnp.bool),
                 info={},
             )
             env_state = jax.tree.map(
