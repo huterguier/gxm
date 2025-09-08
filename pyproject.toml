@@ -12,19 +12,12 @@ dependencies = [
   "jax[cuda12]>=0.5.0",
   "gymnax>=0.0.9",
   "pgx>=2.6.0",
+  "envpool",
+  "numpy<2",
 ]
 classifiers = [
   "Programming Language :: Python :: 3",
   "Operating System :: OS Independent",
-]
-
-[project.optional-dependencies]
-gymnasium = [
-  "gymnasium[all]",
-]
-envpool = [
-  "envpool",
-  "numpy<2",
 ]
 
 [project.urls]
