@@ -23,8 +23,38 @@ class Timestep:
         """Return whether the episode has ended (either terminated or truncated)."""
         return jnp.logical_or(self.terminated, self.truncated)
 
+    def transition(
+        self,
+        prev_obs: Any,
+        prev_info: dict[str, Any],
+        action: Array,
+        next_timestep: "Timestep",
+    ) -> "Transition":
+        """Convert the current and next timesteps into a transition.
+        Args:
+            prev_obs: The observation at the previous timestep.
+            prev_info: The info at the previous timestep.
+            action: The action taken at the current timestep.
+        Returns:
+            A Transition object containing the current and next timesteps.
+        """
+        return Transition(
+            obs=self.obs,
+            action=action,
+            reward=self.reward,
+            terminated=self.terminated,
+            truncated=self.truncated,
+            next_obs=next_timestep.obs,
+            info=self.info,
+            next_info=next_timestep.info,
+        )
+
     def trajectory(self, first_obs: Any, action: Array) -> "Trajectory":
-        """Convert a sequence of timesteps into a trajectory.
+        """
+        Convert a sequence of timesteps $(r_i, d_i, s_{i+1})_{i\in \{1...n\}$,
+            the first observation $s_1$,
+            and a sequence of actions $(a_i)_{i\in \{1...n\}$ into a trajectory.
+
         Args:
             first_obs: The observation at the first timestep.
             action: The action taken at each timestep.
@@ -43,6 +73,26 @@ class Timestep:
             info=self.info,
             action=action,
         )
+
+
+@jax.tree_util.register_dataclass
+@dataclass
+class Transition:
+    """Class representing a single transition in an environment."""
+
+    obs: Array
+    action: Array
+    reward: Array
+    terminated: Array
+    truncated: Array
+    next_obs: Array
+    info: dict[str, Any]
+    next_info: dict[str, Any]
+
+    @property
+    def done(self) -> Array:
+        """Return whether the episode has ended (either terminated or truncated)."""
+        return jnp.logical_or(self.terminated, self.truncated)
 
 
 @jax.tree_util.register_dataclass
