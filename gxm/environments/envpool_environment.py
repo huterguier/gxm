@@ -111,7 +111,7 @@ class EnvpoolEnvironment(Environment):
             global envs_envpool
             shape = env_id.shape
             envs = envs_envpool[np.ravel(env_id)[0]]
-            obs, info = envs.reset()
+            obs, _ = envs.reset()
             env_state = EnvironmentState(
                 state=EnvpoolState(env_id=jnp.full(shape, env_id, dtype=jnp.int32)),
                 obs=jnp.reshape(obs, shape + obs.shape[1:]),
