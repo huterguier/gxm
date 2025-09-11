@@ -10,14 +10,34 @@ authors = [
 ]
 dependencies = [
   "jax[cuda12]>=0.5.0",
-  "gymnax>=0.0.9",
-  "pgx>=2.6.0",
-  "envpool",
-  "numpy<2",
 ]
 classifiers = [
   "Programming Language :: Python :: 3",
   "Operating System :: OS Independent",
+]
+
+[project.optional-dependencies]
+dev = [
+  "black",
+  "isort",
+]
+gymnax = [
+  "gymnax>=0.0.9",
+]
+envpool = [
+  "envpool",
+]
+pgx = [
+  "pgx>=2.6.0",
+]
+craftax = [
+  "craftax",
+]
+all = [
+  "gymnax>=0.0.9",
+  "envpool",
+  "pgx>=2.6.0",
+  "craftax",
 ]
 
 [project.urls]

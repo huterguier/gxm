@@ -11,11 +11,11 @@ from jax import Array
 class Timestep:
     """Class representing a single timestep in an environment."""
 
-    obs: Array
-    true_obs: Array
     reward: Array
     terminated: Array
     truncated: Array
+    obs: Array
+    true_obs: Array
     info: dict[str, Any]
 
     @property
@@ -26,34 +26,35 @@ class Timestep:
     def transition(
         self,
         prev_obs: Any,
-        prev_info: dict[str, Any],
         action: Array,
-        next_timestep: "Timestep",
+        prev_info: dict[str, Any] = {},
     ) -> "Transition":
-        """Convert the current and next timesteps into a transition.
+        """Convert the current timestep :math:`(R_t, S_{t+1})` into a transition
+        :math:`(S_t, A_t, R_t, S_{t+1})` given the previous observation :math:`S_t`
+        and the action :math:`A_t`.
         Args:
             prev_obs: The observation at the previous timestep.
-            prev_info: The info at the previous timestep.
             action: The action taken at the current timestep.
+            prev_info: The info at the previous timestep.
         Returns:
             A Transition object containing the current and next timesteps.
         """
         return Transition(
-            obs=self.obs,
+            prev_obs=prev_obs,
+            prev_info=prev_info,
             action=action,
             reward=self.reward,
             terminated=self.terminated,
             truncated=self.truncated,
-            next_obs=next_timestep.obs,
+            obs=self.obs,
             info=self.info,
-            next_info=next_timestep.info,
         )
 
-    def trajectory(self, first_obs: Any, action: Array) -> "Trajectory":
-        """
-        Convert a sequence of timesteps $(r_i, d_i, s_{i+1})_{i\in \{1...n\}$,
-            the first observation $s_1$,
-            and a sequence of actions $(a_i)_{i\in \{1...n\}$ into a trajectory.
+    def trajectory(self, first_obs: Any, action: Array, first_info: dict[str, Any] = {}) -> "Trajectory":
+        r"""
+        Convert a sequence of timesteps :math:`(R_0, S_1, ..., S_n)` with
+        the first observation :math:`S_0` and the actions :math:`(A_0, A_1, ..., A_{n-1})`
+        into a trajectory :math:`(S_0, A_0, R_0, S_1, ..., S_n)`.
 
         Args:
             first_obs: The observation at the first timestep.
@@ -80,14 +81,14 @@ class Timestep:
 class Transition:
     """Class representing a single transition in an environment."""
 
-    obs: Array
+    prev_obs: Array
+    prev_info: dict[str, Any]
     action: Array
     reward: Array
     terminated: Array
     truncated: Array
-    next_obs: Array
+    obs: Array
     info: dict[str, Any]
-    next_info: dict[str, Any]
 
     @property
     def done(self) -> Array:

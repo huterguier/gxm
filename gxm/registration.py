@@ -1,6 +1,11 @@
 import jax
 
-from gxm.environments import EnvpoolEnvironment, GymnaxEnvironment, PgxEnvironment
+from gxm.environments import (
+    CraftaxEnvironment,
+    EnvpoolEnvironment,
+    GymnaxEnvironment,
+    PgxEnvironment,
+)
 
 
 def make(id: str, **kwargs):
@@ -26,6 +31,7 @@ def make(id: str, **kwargs):
         "Gymnax": GymnaxEnvironment,
         "Pgx": PgxEnvironment,
         "Envpool": EnvpoolEnvironment,
+        "Craftax": CraftaxEnvironment,
     }[library]
     return Environment(id, **kwargs)
 
@@ -33,7 +39,7 @@ def make(id: str, **kwargs):
 if __name__ == "__main__":
 
     # env = make("Gymnax/CartPole-v1")
-    env = make("Envpool/Pong-v5")
+    env = make("Craftax/Craftax-Symbolic-v1")
 
     @jax.jit
     def rollout(key, num_steps=1000):
