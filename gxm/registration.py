@@ -2,10 +2,15 @@ import jax
 
 from gxm.environments import (
     CraftaxEnvironment,
-    EnvpoolEnvironment,
     GymnaxEnvironment,
     PgxEnvironment,
 )
+try:
+    from gxm.environments.envpool_environment import EnvpoolEnvironment
+except Exception:
+    EnvpoolEnvironment = None
+    print("EnvpoolEnvironment not available, skipping import.")
+
 
 
 def make(id: str, **kwargs):
