@@ -10,6 +10,7 @@ sphinx-design
 sphinxext-rediraffe
 myst-nb>=1.0.0
 sphinx-autodoc-typehints
+matplotlib
 #
 # # Packages used for CI tests.
 # flatbuffers
