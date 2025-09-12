@@ -13,11 +13,7 @@ authors = [
   { name = "huterguier", email = "huterguier@gmail.com" }
 ]
 dependencies = [
-  "jax>=0.5.0",
-  "gymnax>=0.0.9",
-  "envpool",
-  "pgx>=2.6.0",
-  "craftax",
+  "jax>=0.6.0",
 ]
 classifiers = [
   "Programming Language :: Python :: 3",
@@ -26,6 +22,28 @@ classifiers = [
 
 [project.optional-dependencies]
 dev = [
+  "black",
+  "isort",
+]
+gymnax = [
+  "gymnax>=0.0.9",
+]
+envpool = [
+  "envpool",
+  "numpy<2",
+]
+pgx = [
+  "pgx>=2.6.0",
+]
+craftax = [
+  "craftax",
+]
+all = [
+  "gymnax>=0.0.9",
+  "envpool",
+  "numpy<2",
+  "pgx>=2.6.0",
+  "craftax",
   "black",
   "isort",
 ]
