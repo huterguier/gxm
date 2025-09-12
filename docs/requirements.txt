@@ -10,10 +10,6 @@ sphinx-design
 sphinxext-rediraffe
 myst-nb>=1.0.0
 sphinx-autodoc-typehints
-<<<<<<< HEAD
-matplotlib
-=======
->>>>>>> 3eb799f (discard info)
 #
 # # Packages used for CI tests.
 # flatbuffers
