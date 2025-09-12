@@ -11,7 +11,10 @@ Core API
    gxm.Transition
    gxm.Trajectory
    gxm.EnvironmentState
+<<<<<<< HEAD
    gxm.Environment
+=======
+>>>>>>> 3eb799f (discard info)
 
 Wrappers
 -------------

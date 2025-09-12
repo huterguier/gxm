@@ -1,15 +1,23 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "gxm"
 version = "0.1.0"
 description = "Reinforcement Learning Environemts in JAX."
 readme = "README.md"
 requires-python = ">=3.10"
-license = "MIT"
+license = "Apache-2.0"
 authors = [
   { name = "huterguier", email = "huterguier@gmail.com" }
 ]
 dependencies = [
-  "jax[cuda12]>=0.5.0",
+  "jax>=0.5.0",
+  "gymnax>=0.0.9",
+  "envpool",
+  "pgx>=2.6.0",
+  "craftax",
 ]
 classifiers = [
   "Programming Language :: Python :: 3",
@@ -21,27 +29,10 @@ dev = [
   "black",
   "isort",
 ]
-gymnax = [
-  "gymnax>=0.0.9",
-]
-envpool = [
-  "envpool",
-]
-pgx = [
-  "pgx>=2.6.0",
-]
-craftax = [
-  "craftax",
-]
-all = [
-  "gymnax>=0.0.9",
-  "envpool",
-  "pgx>=2.6.0",
-  "craftax",
-]
 
 [project.urls]
 Homepage = "https://github.com/huterguier/gxm"
 
 [tool.setuptools.packages.find]
+include = ["gxm", "gxm.*"]
 exclude = ["images"]

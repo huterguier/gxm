@@ -40,6 +40,7 @@ html_css_files = [
 
 extensions = [
     "sphinx.ext.autodoc",
+<<<<<<< HEAD
     "sphinx.ext.autosummary",
     "sphinx.ext.intersphinx",
     "sphinx.ext.mathjax",
@@ -50,6 +51,13 @@ extensions = [
     "sphinx_copybutton",
     "sphinx_design",
     "sphinxext.rediraffe",
+=======
+    "sphinx.ext.napoleon",
+    "sphinx.ext.mathjax",
+    "sphinx.ext.autosummary",
+    'sphinx_autodoc_typehints',  # for type hints
+    "myst_nb",
+>>>>>>> 3eb799f (discard info)
 ]
 
 autosummary_generate = True
