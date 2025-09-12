@@ -50,7 +50,9 @@ class Timestep:
             info=self.info,
         )
 
-    def trajectory(self, first_obs: Any, action: Array, first_info: dict[str, Any] = {}) -> "Trajectory":
+    def trajectory(
+        self, first_obs: Any, action: Array, first_info: dict[str, Any] = {}
+    ) -> "Trajectory":
         r"""
         Convert a sequence of timesteps :math:`(R_0, S_1, ..., S_n)` with
         the first observation :math:`S_0` and the actions :math:`(A_0, A_1, ..., A_{n-1})`
@@ -122,30 +124,13 @@ class Trajectory:
         return self.reward.shape[0]
 
 
-@jax.tree_util.register_dataclass
-@dataclass
-class EnvironmentState(Timestep):
-    """Class representing the state of an environment."""
-
-    state: Any
-
-    @property
-    def timestep(self) -> Timestep:
-        """Convert the EnvironmentState to a Timestep."""
-        return Timestep(
-            obs=self.obs,
-            true_obs=self.obs,
-            reward=self.reward,
-            terminated=self.terminated,
-            truncated=self.truncated,
-            info=self.info,
-        )
+EnvironmentState = Any
 
 
 class Environment:
     """Base class for environments in gxm."""
 
-    def init(self, key: jax.Array) -> EnvironmentState:
+    def init(self, key: jax.Array) -> tuple[EnvironmentState, Timestep]:
         """Initialize the environment and return the initial state."""
         del key
         raise NotImplementedError("This method should be implemented by subclasses.")
@@ -155,12 +140,14 @@ class Environment:
         key: jax.Array,
         env_state: EnvironmentState,
         action: jax.Array,
-    ) -> EnvironmentState:
+    ) -> tuple[EnvironmentState, Timestep]:
         """Perform a step in the environment given an action."""
         del key, env_state, action
         raise NotImplementedError("This method should be implemented by subclasses.")
 
-    def reset(self, key: jax.Array, env_state: EnvironmentState) -> EnvironmentState:
+    def reset(
+        self, key: jax.Array, env_state: EnvironmentState
+    ) -> tuple[EnvironmentState, Timestep]:
         """Reset the environment to its initial state."""
         del key, env_state
         raise NotImplementedError("This method should be implemented by subclasses.")

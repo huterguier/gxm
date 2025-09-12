@@ -38,8 +38,8 @@ def make(id: str, **kwargs):
 
 if __name__ == "__main__":
 
-    # env = make("Gymnax/CartPole-v1")
-    env = make("Envpool/Breakout-v5")
+    env = make("Gymnax/CartPole-v1")
+    # env = make("Envpool/Breakout-v5")
 
     @jax.jit
     def rollout(key, num_steps=1000):
@@ -47,11 +47,11 @@ if __name__ == "__main__":
         def step(env_state, key):
             key_action, key_step = jax.random.split(key)
             action = jax.random.randint(key_action, (1,), 0, env.num_actions)[0]
-            env_state = env.step(key_step, env_state, action)
-            jax.debug.print("{}", env_state.done)
+            env_state, timestep = env.step(key_step, env_state, action)
+            jax.debug.print("{}", timestep.done)
             return env_state, None
 
-        env_state = env.init(key)
+        env_state, _ = env.init(key)
         keys = jax.random.split(key, num_steps)
         env_state, _ = jax.lax.scan(step, env_state, keys)
 

@@ -4,11 +4,11 @@ import jax
 import jax.numpy as jnp
 from craftax.craftax_env import make_craftax_env_from_name
 
-from gxm.core import Environment, EnvironmentState
+from gxm.core import Environment, EnvironmentState, Timestep
 
 
 class CraftaxEnvironment(Environment):
-    """Base class for Gymnax environments."""
+    """Base class for Craftax environments."""
 
     env: Any
     env_params = Any
@@ -17,10 +17,10 @@ class CraftaxEnvironment(Environment):
         self.env = make_craftax_env_from_name(id, auto_reset=True, **kwargs)
         self.env_params = self.env.default_params
 
-    def init(self, key: jax.Array) -> EnvironmentState:
-        obs, state = self.env.reset(key, self.env_params)
-        env_state = EnvironmentState(
-            state=state,
+    def init(self, key: jax.Array) -> tuple[EnvironmentState, Timestep]:
+        obs, craftax_state = self.env.reset(key, self.env_params)
+        env_state = craftax_state
+        timestep = Timestep(
             obs=obs,
             true_obs=obs,
             reward=jnp.float32(0.0),
@@ -28,20 +28,23 @@ class CraftaxEnvironment(Environment):
             truncated=jnp.bool(False),
             info={},
         )
-        return env_state
+        return env_state, timestep
 
-    def reset(self, key: jax.Array, env_state: EnvironmentState) -> EnvironmentState:
+    def reset(
+        self, key: jax.Array, env_state: EnvironmentState
+    ) -> tuple[EnvironmentState, Timestep]:
         del env_state
         return self.init(key)
 
     def step(
         self, key: jax.Array, env_state: EnvironmentState, action: jax.Array
     ) -> EnvironmentState:
-        obs, state, reward, done, _ = self.env.step(
-            key, env_state.state, action, self.env_params
+        craftax_state = env_state
+        obs, craftax_state, reward, done, _ = self.env.step(
+            key, craftax_state, action, self.env_params
         )
-        env_state = EnvironmentState(
-            state=state,
+        env_state = craftax_state
+        timestep = Timestep(
             obs=obs,
             true_obs=obs,
             reward=reward,
@@ -49,7 +52,7 @@ class CraftaxEnvironment(Environment):
             truncated=done,
             info={},
         )
-        return env_state
+        return env_state, timestep
 
     @property
     def num_actions(self) -> int:
