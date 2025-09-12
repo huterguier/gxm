@@ -26,7 +26,7 @@ class EnvpoolEnvironment(Environment):
 
     def __init__(self, id: str, **kwargs):
         self.id = id
-        env = envpool.make(self.id, env_type="gym", num_envs=1, **kwargs)
+        env = envpool.make(self.id, env_type="gymnasium", num_envs=1, **kwargs)
         obs, _ = env.reset()
         obs, reward, terminated, truncated, _ = env.step(np.zeros(1, dtype=int))
         env_state = EnvironmentState(
@@ -51,7 +51,7 @@ class EnvpoolEnvironment(Environment):
             keys_flat = jnp.reshape(key, (-1, key.shape[-1]))
             num_envs = keys_flat.shape[0]
             envs = envpool.make(
-                self.id, env_type="gym", num_envs=num_envs, **self.kwargs
+                self.id, env_type="gymnasium", num_envs=num_envs, **self.kwargs
             )
             obs, _ = envs.reset()
             env_id = len(envs_envpool)
