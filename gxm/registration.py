@@ -2,15 +2,10 @@ import jax
 
 from gxm.environments import (
     CraftaxEnvironment,
+    EnvpoolEnvironment,
     GymnaxEnvironment,
     PgxEnvironment,
 )
-try:
-    from gxm.environments.envpool_environment import EnvpoolEnvironment
-except Exception:
-    EnvpoolEnvironment = None
-    print("EnvpoolEnvironment not available, skipping import.")
-
 
 
 def make(id: str, **kwargs):
@@ -44,7 +39,7 @@ def make(id: str, **kwargs):
 if __name__ == "__main__":
 
     # env = make("Gymnax/CartPole-v1")
-    env = make("Craftax/Craftax-Symbolic-v1")
+    env = make("Envpool/Breakout-v5")
 
     @jax.jit
     def rollout(key, num_steps=1000):
