@@ -70,7 +70,7 @@ class EnvpoolEnvironment(Environment):
         env_state = jax.pure_callback(
             callback,
             self.env_state_shape_dtype,
-            key,
+            jax.random.key_data(key),
             vmap_method="broadcast_all",
         )
         return env_state
