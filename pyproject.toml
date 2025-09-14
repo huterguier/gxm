@@ -37,11 +37,15 @@ pgx = [
 craftax = [
   "craftax",
 ]
+navix = [
+  "navix",
+]
 all = [
   "gymnax>=0.0.9",
   "envpool",
   "pgx>=2.6.0",
   "craftax",
+  "navix",
   "black",
   "isort",
 ]

@@ -17,6 +17,7 @@ Currently Gxm supports the following Libraries:
 - [Pgx](https://github.com/sotetsuk/pgx) (Boardgames and MinAtar)
 - [Navix](https://github.com/epignatelli/navix) (Minigrid in JAX)
 - [Envpool](https://github.com/sail-sg/envpool) (Vectorized Gymnasium Environements)
+- [Craftax](https://github.com/MichaelTMatthews/Craftax) (Crafter in JAX)
 
 ## Installation
 ```
