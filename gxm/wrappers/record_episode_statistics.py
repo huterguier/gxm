@@ -41,16 +41,18 @@ class RecordEpisodeStatistics(Wrapper):
         )
         env_state = (env_state, episode_stats)
         timestep.info |= {
-                "current_return": episode_stats.current_return,
-                "current_discounted_return": episode_stats.current_discounted_return,
-                "current_length": episode_stats.current_length,
-                "episodic_return": episode_stats.episodic_return,
-                "discounted_episodic_return": episode_stats.discounted_episodic_return,
-                "length": episode_stats.length,
-            }
+            "current_return": episode_stats.current_return,
+            "current_discounted_return": episode_stats.current_discounted_return,
+            "current_length": episode_stats.current_length,
+            "episodic_return": episode_stats.episodic_return,
+            "discounted_episodic_return": episode_stats.discounted_episodic_return,
+            "length": episode_stats.length,
+        }
         return env_state, timestep
 
-    def reset(self, key: jax.Array, env_state: EnvironmentState) -> tuple[EnvironmentState, Timestep]:
+    def reset(
+        self, key: jax.Array, env_state: EnvironmentState
+    ) -> tuple[EnvironmentState, Timestep]:
         (env_state, episode_stats) = env_state
         env_state = self.env.reset(key, env_state)
         episode_stats = EpisodeStatistics(
@@ -87,10 +89,10 @@ class RecordEpisodeStatistics(Wrapper):
         action: jax.Array,
     ) -> tuple[EnvironmentState, Timestep]:
         (env_state, episode_stats) = env_state
-        env_state, timestep  = self.env.step(key, env_state, action)
+        env_state, timestep = self.env.step(key, env_state, action)
 
         done = timestep.done
-        reward = env_state.reward
+        reward = timestep.reward
 
         current_return = episode_stats.current_return + reward
         current_discounted_return = (
@@ -122,12 +124,12 @@ class RecordEpisodeStatistics(Wrapper):
         )
         env_state = (env_state, episode_stats)
         timestep.info |= {
-                "current_return": episode_stats.current_return,
-                "current_discounted_return": episode_stats.current_discounted_return,
-                "current_length": episode_stats.current_length,
-                "episodic_return": episode_stats.episodic_return,
-                "discounted_episodic_return": episode_stats.discounted_episodic_return,
-                "length": episode_stats.length,
-            }
-        
+            "current_return": episode_stats.current_return,
+            "current_discounted_return": episode_stats.current_discounted_return,
+            "current_length": episode_stats.current_length,
+            "episodic_return": episode_stats.episodic_return,
+            "discounted_episodic_return": episode_stats.discounted_episodic_return,
+            "length": episode_stats.length,
+        }
+
         return env_state, timestep
