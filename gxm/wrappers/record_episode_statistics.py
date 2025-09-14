@@ -3,7 +3,7 @@ from dataclasses import dataclass
 import jax
 import jax.numpy as jnp
 
-from gxm.core import Environment, EnvironmentState
+from gxm.core import Environment, EnvironmentState, Timestep
 from gxm.wrappers.wrapper import Wrapper
 
 
@@ -29,8 +29,8 @@ class RecordEpisodeStatistics(Wrapper):
         self.env = env
         self.gamma = gamma
 
-    def init(self, key: jax.Array) -> EnvironmentState:
-        env_state = self.env.init(key)
+    def init(self, key: jax.Array) -> tuple[EnvironmentState, Timestep]:
+        env_state, timestep = self.env.init(key)
         episode_stats = EpisodeStatistics(
             current_return=jnp.float32(0.0),
             episodic_return=jnp.float32(0.0),
@@ -39,36 +39,19 @@ class RecordEpisodeStatistics(Wrapper):
             length=jnp.int32(0.0),
             current_length=jnp.int32(0.0),
         )
-        env_state = EnvironmentState(
-            state=(env_state.state, episode_stats),
-            obs=env_state.obs,
-            true_obs=env_state.obs,
-            reward=env_state.reward,
-            terminated=env_state.terminated,
-            truncated=env_state.truncated,
-            info=env_state.info
-            | {
+        env_state = (env_state, episode_stats)
+        timestep.info |= {
                 "current_return": episode_stats.current_return,
                 "current_discounted_return": episode_stats.current_discounted_return,
                 "current_length": episode_stats.current_length,
                 "episodic_return": episode_stats.episodic_return,
                 "discounted_episodic_return": episode_stats.discounted_episodic_return,
                 "length": episode_stats.length,
-            },
-        )
-        return env_state
+            }
+        return env_state, timestep
 
-    def reset(self, key: jax.Array, env_state: EnvironmentState) -> EnvironmentState:
-        (state, episode_stats) = env_state.state
-        env_state = EnvironmentState(
-            state=state,
-            obs=env_state.obs,
-            true_obs=env_state.obs,
-            reward=env_state.reward,
-            terminated=env_state.terminated,
-            truncated=env_state.truncated,
-            info=env_state.info,
-        )
+    def reset(self, key: jax.Array, env_state: EnvironmentState) -> tuple[EnvironmentState, Timestep]:
+        (env_state, episode_stats) = env_state
         env_state = self.env.reset(key, env_state)
         episode_stats = EpisodeStatistics(
             current_return=jnp.float32(0.0),
@@ -78,8 +61,8 @@ class RecordEpisodeStatistics(Wrapper):
             length=jnp.int32(0.0),
             current_discounted_return=jnp.float32(0.0),
         )
-        env_state = EnvironmentState(
-            state=(env_state, episode_stats),
+        env_state = (env_state, episode_stats)
+        timestep = Timestep(
             obs=env_state.obs,
             true_obs=env_state.obs,
             reward=env_state.reward,
@@ -95,26 +78,18 @@ class RecordEpisodeStatistics(Wrapper):
                 "length": episode_stats.length,
             },
         )
-        return env_state
+        return env_state, timestep
 
     def step(
         self,
         key: jax.Array,
         env_state: EnvironmentState,
         action: jax.Array,
-    ) -> EnvironmentState:
-        (state, episode_stats) = env_state.state
-        env_state = EnvironmentState(
-            state=state,
-            obs=env_state.obs,
-            true_obs=env_state.obs,
-            reward=env_state.reward,
-            terminated=env_state.terminated,
-            truncated=env_state.truncated,
-            info=env_state.info,
-        )
-        env_state = self.env.step(key, env_state, action)
-        done = env_state.done
+    ) -> tuple[EnvironmentState, Timestep]:
+        (env_state, episode_stats) = env_state
+        env_state, timestep  = self.env.step(key, env_state, action)
+
+        done = timestep.done
         reward = env_state.reward
 
         current_return = episode_stats.current_return + reward
@@ -145,21 +120,14 @@ class RecordEpisodeStatistics(Wrapper):
             discounted_episodic_return=discounted_episodic_return,
             length=length,
         )
-        env_state = EnvironmentState(
-            state=(env_state.state, episode_stats),
-            obs=env_state.obs,
-            true_obs=env_state.obs,
-            reward=env_state.reward,
-            terminated=env_state.terminated,
-            truncated=env_state.truncated,
-            info=env_state.info
-            | {
+        env_state = (env_state, episode_stats)
+        timestep.info |= {
                 "current_return": episode_stats.current_return,
                 "current_discounted_return": episode_stats.current_discounted_return,
                 "current_length": episode_stats.current_length,
                 "episodic_return": episode_stats.episodic_return,
                 "discounted_episodic_return": episode_stats.discounted_episodic_return,
                 "length": episode_stats.length,
-            },
-        )
-        return env_state
+            }
+        
+        return env_state, timestep

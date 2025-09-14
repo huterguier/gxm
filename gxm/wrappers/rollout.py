@@ -3,7 +3,7 @@ from typing import Callable
 import jax
 from jax import Array
 
-from gxm.core import Environment, EnvironmentState, Trajectory
+from gxm.core import Environment, EnvironmentState, Timestep, Trajectory
 from gxm.wrappers.wrapper import Wrapper
 
 
@@ -13,10 +13,12 @@ class Rollout(Wrapper):
     def __init__(self, env: Environment):
         self.env = env
 
-    def init(self, key: Array) -> EnvironmentState:
+    def init(self, key: Array) -> tuple[EnvironmentState, Timestep]:
         return self.env.init(key)
 
-    def reset(self, key: Array, env_state: EnvironmentState) -> EnvironmentState:
+    def reset(
+        self, key: Array, env_state: EnvironmentState
+    ) -> tuple[EnvironmentState, Timestep]:
         return self.env.reset(key, env_state)
 
     def step(
@@ -24,22 +26,25 @@ class Rollout(Wrapper):
         key: Array,
         env_state: EnvironmentState,
         action: Array,
-    ) -> EnvironmentState:
+    ) -> tuple[EnvironmentState, Timestep]:
         return self.env.step(key, env_state, action)
 
     def rollout(
         self,
         key: Array,
         env_state: EnvironmentState,
-        pi: Callable[[Array, EnvironmentState], Array],
+        pi: Callable[[Array, Array], Array],
         num_steps: int,
     ) -> tuple[EnvironmentState, Trajectory]:
         def _step(carry, key):
-            key, env_state = carry
+            env_state, prev_obs = carry
             key_pi, key_step = jax.random.split(key)
-            action = pi(key_pi, env_state)
-            env_state = self.step(key_step, env_state, action)
-            return env_state, (env_state.timestep, action)
+            action = pi(
+                key_pi,
+                prev_obs,
+            )
+            env_state, timestep = self.step(key_step, env_state, action)
+            return (env_state, timestep.obs), (env_state.timestep, action)
 
         first_obs = env_state.obs
         keys = jax.random.split(key, num_steps)
