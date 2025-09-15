@@ -34,7 +34,7 @@ examples
 :caption: API
 
 design_decisions
-api
+api/gxm
 ```
 
 ```{toctree}

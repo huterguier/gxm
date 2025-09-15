@@ -21,6 +21,7 @@ class EpisodeStatistics:
 class RecordEpisodeStatistics(Wrapper):
     """
     A wrapper that records episode statistics such as episodic return, discounted episodic return, and length.
+    :math:`J(\\tau) = \\sum_{t=0}^{T} r_t` and discounted return :math:`G(\\tau) = \\sum_{t=0}^{T} \\gamma^t r_t`
     """
 
     gamma: float

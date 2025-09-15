@@ -11,10 +11,7 @@ Core API
    gxm.Transition
    gxm.Trajectory
    gxm.EnvironmentState
-<<<<<<< HEAD
    gxm.Environment
-=======
->>>>>>> 3eb799f (discard info)
 
 Wrappers
 -------------
@@ -23,6 +20,4 @@ Wrappers
    :toctree: _autosummary
 
    gxm.wrappers.RecordEpisodeStatistics
-   gxm.wrappers.FlattenObservation
-   gxm.wrappers.StackObservation
-   gxm.wrappers.Rollout
+   gxm.wrappers.Discretize

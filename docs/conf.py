@@ -48,6 +48,7 @@ extensions = [
 ]
 
 autosummary_generate = True
+add_module_names = False
 
 autodoc_default_options = {
     "members": True,
