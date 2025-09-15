@@ -5,7 +5,7 @@ title: 🔪The Sharp Bits🔪
 
 
 ## CPU-based Environments
-CPU-based environemnts like `envpool` and `gymnasium` are not actually functional.
+CPU-based environemnts like `envpool` and `gymnasium` are not actually functional under the hood.
 Hence, they can be used for sequential rollouts only.
 Trying to call the step function from the same state twice will result in an error or unexpected behavior.
 
@@ -38,5 +38,9 @@ This distinvtion is motivated by two reasons:
 ## Using ``envpool``
 Envpool is no longer maintained. The non-optional XLA-interface relies on JAX<0.4.27
 and importing envpool unavoidably leads to a an error due to breaking changes in JAX.
-In order to use 
+In order to use ``envpool``, you need to uncomment overwrite the following lines in ``envpool/python/xla_interface.py``:
+```python
+# import jaxlib.xla_extension as xla_extension
+# from jaxlib import xla_client as xla_extension
+```
 
