@@ -3,13 +3,34 @@ from dataclasses import dataclass
 from typing import Any
 
 import envpool
+import gymnasium
 import jax
 import jax.numpy as jnp
 import numpy as np
 
 from gxm.core import Environment, EnvironmentState, Timestep
+from gxm.spaces import Box, Discrete, Space, Tree
 
 envs_envpool = {}
+
+
+def envpool_to_gxm_space(envpool_space: Any) -> Space:
+    if isinstance(envpool_space, gymnasium.spaces.Discrete):
+        return Discrete(int(envpool_space.n))
+    elif isinstance(envpool_space, gymnasium.spaces.Box):
+        return Box(
+            jnp.asarray(envpool_space.low),
+            jnp.asarray(envpool_space.high),
+            envpool_space.shape,
+        )
+    elif isinstance(envpool_space, gymnasium.spaces.Dict):
+        return Tree(
+            {k: envpool_to_gxm_space(v) for k, v in envpool_space.spaces.items()}
+        )
+    elif isinstance(envpool_space, gymnasium.spaces.Tuple):
+        return Tree(tuple(envpool_to_gxm_space(s) for s in envpool_space.spaces))
+    else:
+        raise NotImplementedError(f"Envpool space {envpool_space} not supported.")
 
 
 @jax.tree_util.register_dataclass
@@ -21,7 +42,6 @@ class EnvpoolState:
 class EnvpoolEnvironment(Environment):
     id: str
     return_shape_dtype: Any
-    _num_actions: int
     kwargs: Any
 
     def __init__(self, id: str, **kwargs):
@@ -41,7 +61,7 @@ class EnvpoolEnvironment(Environment):
         self.return_shape_dtype = jax.tree.map(
             lambda x: jax.ShapeDtypeStruct(x.shape[1:], x.dtype), (env_state, timestep)
         )
-        self._num_actions = int(env.action_space.n)
+        self.action_space = envpool_to_gxm_space(env.action_space)
         self.kwargs = kwargs
 
     def init(self, key: jax.Array) -> tuple[EnvironmentState, Timestep]:
@@ -84,7 +104,6 @@ class EnvpoolEnvironment(Environment):
             envs = envs_envpool[np.ravel(env_id)[0]]
             actions = np.reshape(np.asarray(action), (-1,))
             obs, reward, terminated, truncated, _ = envs.step(actions)
-            done = np.logical_or(terminated, truncated)
             env_state = (EnvpoolState(env_id=env_id),)
             timestep = Timestep(
                 obs=jnp.reshape(obs, shape + obs.shape[1:]),
@@ -131,15 +150,35 @@ class EnvpoolEnvironment(Environment):
         )
         return env_state, timestep
 
-    @property
-    def num_actions(self):
-        return self._num_actions
+    @classmethod
+    def envpool_to_gxm_space(cls, envpool_space: Any) -> Space:
+        if isinstance(envpool_space, gymnasium.spaces.Discrete):
+            return Discrete(int(envpool_space.n))
+        elif isinstance(envpool_space, gymnasium.spaces.Box):
+            return Box(
+                jnp.asarray(envpool_space.low),
+                jnp.asarray(envpool_space.high),
+                envpool_space.shape,
+            )
+        elif isinstance(envpool_space, gymnasium.spaces.Dict):
+            return Tree(
+                {
+                    k: cls.envpool_to_gxm_space(v)
+                    for k, v in envpool_space.spaces.items()
+                }
+            )
+        elif isinstance(envpool_space, gymnasium.spaces.Tuple):
+            return Tree(
+                tuple(cls.envpool_to_gxm_space(s) for s in envpool_space.spaces)
+            )
+        else:
+            raise NotImplementedError(f"Envpool space {envpool_space} not supported.")
 
 
 if __name__ == "__main__":
-    env = EnvpoolEnvironment("CartPole-v1")
-    env_state = env.init(jax.random.key(0))
-    env_state = env.step(jax.random.key(0), env_state, jax.numpy.array(0))
+    env = EnvpoolEnvironment("Breakout-v5")
+    env_state, timestep = env.init(jax.random.key(0))
+    env_state, timestep = env.step(jax.random.key(0), env_state, jax.numpy.array(0))
 
     n_envs = 8
     n_steps = 1000
@@ -157,13 +196,13 @@ if __name__ == "__main__":
         def step(carry, _):
             env_state, key = carry
             key, key_action, key_step = jax.random.split(key, 3)
-            action = jax.random.randint(key_action, (1,), 0, env.num_actions)
-            env_state = env.step(key, env_state, action)
+            action = env.action_space.sample(key)
+            env_state, timestep = env.step(key, env_state, action)
             return (env_state, key), _
 
-        env_state = env.init(key)
+        env_state, timestep = env.init(key)
         (env_state, _), _ = jax.lax.scan(step, (env_state, key), length=n_steps)
-        return env_state.reward
+        return timestep.reward
 
     key = jax.random.key(0)
     keys = jax.random.split(key, n_envs)

@@ -1,10 +1,12 @@
 from typing import Any
 
+import gymnax.environments.spaces
 import jax
 import jax.numpy as jnp
 from craftax.craftax_env import make_craftax_env_from_name
 
 from gxm.core import Environment, EnvironmentState, Timestep
+from gxm.spaces import Box, Discrete, Space, Tree
 
 
 class CraftaxEnvironment(Environment):
@@ -54,6 +56,24 @@ class CraftaxEnvironment(Environment):
         )
         return env_state, timestep
 
-    @property
-    def num_actions(self) -> int:
-        return self.env.num_actions
+    @classmethod
+    def gymnax_to_gxm_space(cls, craftax_space) -> Space:
+        """Convert a Gymnax space to a Gxm space."""
+        if isinstance(craftax_space, gymnax.environments.spaces.Discrete):
+            return Discrete(craftax_space.n)
+        if isinstance(craftax_space, gymnax.environments.spaces.Box):
+            return Box(
+                low=craftax_space.low,
+                high=craftax_space.high,
+                shape=craftax_space.shape,
+            )
+        if isinstance(craftax_space, gymnax.environments.spaces.Dict):
+            return Tree(
+                {k: cls.gymnax_to_gxm_space(v) for k, v in craftax_space.spaces.items()}
+            )
+        if isinstance(craftax_space, gymnax.environments.spaces.Tuple):
+            return Tree([cls.gymnax_to_gxm_space(s) for s in craftax_space.spaces])
+        else:
+            raise NotImplementedError(
+                f"Gymnax space type {type(craftax_space)} not supported."
+            )

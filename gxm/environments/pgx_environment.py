@@ -3,6 +3,7 @@ import pgx
 from pgx.experimental import auto_reset
 
 from gxm.core import Environment, EnvironmentState, Timestep
+from gxm.spaces import Discrete
 
 
 class PgxEnvironment(Environment):
@@ -12,6 +13,7 @@ class PgxEnvironment(Environment):
 
     def __init__(self, env_id: pgx.EnvId, **kwargs):
         self.env = pgx.make(env_id, **kwargs)
+        self.action_space = Discrete(self.env.num_actions)
 
     def init(self, key: jax.Array) -> tuple[EnvironmentState, Timestep]:
         pgx_state = self.env.init(key)

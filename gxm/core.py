@@ -5,6 +5,8 @@ import jax
 import jax.numpy as jnp
 from jax import Array
 
+from gxm.spaces import Space
+
 
 @jax.tree_util.register_dataclass
 @dataclass
@@ -153,6 +155,9 @@ class Environment:
     ``init``, ``step``, ``reset``, and ``num_actions`` methods.
     """
 
+    action_space: Space
+    """The action space of the environment."""
+
     def init(self, key: jax.Array) -> tuple[EnvironmentState, Timestep]:
         """
         Initialize the environment and return the initial state.
@@ -197,7 +202,6 @@ class Environment:
         Returns:
             A tuple containing the reset environment state and the initial timestep.
         """
-
         del key, env_state
         raise NotImplementedError("This method should be implemented by subclasses.")
 
