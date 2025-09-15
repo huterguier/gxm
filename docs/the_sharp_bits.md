@@ -38,9 +38,8 @@ This distinvtion is motivated by two reasons:
 ## Using ``envpool``
 Envpool is no longer maintained. The non-optional XLA-interface relies on JAX<0.4.27
 and importing envpool unavoidably leads to a an error due to breaking changes in JAX.
-In order to use ``envpool``, you need to uncomment overwrite the following lines in ``envpool/python/xla_interface.py``:
+In order to use ``envpool``, you need to replace the entire content of ``envpool/python/xla_template.py`` with the following two lines.
 ```python
-# import jaxlib.xla_extension as xla_extension
-# from jaxlib import xla_client as xla_extension
+def make_xla(obj):
+    pass
 ```
-

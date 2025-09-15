@@ -35,19 +35,6 @@ By default only the `gymnax` backend is installed. To install additional backend
 pip install gxm[envpool,pgx,gymnasium,craftax,mjx,brax]
 ```
 
-## Citation
-If you use Gxm in your research, please cite the repository and the underlying environment libraries.
-```txt
-@misc{metternich2025gxm,
-      title={Gxm: Unified Functional Interface for RL Environments in JAX},
-      author={Henrik Metternich},
-      year={2024},
-      publisher={GitHub},
-      journal={GitHub repository},
-      howpublished={\url{https://arxiv.org/abs/2406.08352}},
-}
-```
-
 ```{toctree}
 :hidden:
 :maxdepth: 2
@@ -55,7 +42,6 @@ If you use Gxm in your research, please cite the repository and the underlying e
 
 quick_start
 the_sharp_bits
-examples
 ```
 
 ```{toctree}
