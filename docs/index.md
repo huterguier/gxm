@@ -11,6 +11,13 @@ env_state, timestep = env.step(env_state, key, action)
 env_state, timestep = gxm.reset(key, env_state)
 ```
 
+## Motivation
+There are many RL environments implemented in JAX, but they all have different APIs and ways of handling randomness.
+This makes it hard to switch between environments or use multiple environments in the same project.
+Gxm aims to solve this problem by providing a unified API for different environment backends.
+In addition, Gxm adds support for CPU-based environments, such as Envpool and Gymnasium, which are not implemented in JAX.
+
+
 ## Environments
 Currently Gxm supports the following Libraries:
 - [Gymnax](https://github.com/RobertTLange/gymnax) (Classic Control, bsuite and MinAtar)

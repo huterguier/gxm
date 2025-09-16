@@ -1,3 +1,5 @@
+"""Wrappers for ``gxm`` environments."""
+
 from gxm.wrappers.discretize import Discretize
 from gxm.wrappers.flatten_observation import FlattenObservation
 from gxm.wrappers.record_episode_statistics import RecordEpisodeStatistics

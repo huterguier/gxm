@@ -13,24 +13,24 @@ Core API
    gxm.EnvironmentState
    gxm.Environment
 
-Wrappers
+Modules
 --------
 
 .. autosummary::
-   :toctree: _autosummary
+   :toctree: _autosummary   # folder to generate the .rst files
+   :hidden:
 
-   gxm.wrappers.RecordEpisodeStatistics
-   gxm.wrappers.FlattenObservation
-   gxm.wrappers.StackObservations
-   gxm.wrappers.Discretize
-   gxm.wrappers.IgnoreTruncation
-
-Spaces
-------
+   gxm.wrappers
+   gxm.spaces
 
 .. autosummary::
-   :toctree: _autosummary
 
-   gxm.spaces.Discrete
-   gxm.spaces.Box
-   gxm.spaces.Tree
+   gxm.wrappers
+   gxm.spaces
+
+.. toctree::
+   :hidden:
+   :maxdepth: 2
+
+   wrappers
+   spaces
