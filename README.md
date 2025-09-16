@@ -20,6 +20,7 @@ Currently Gxm supports the following Libraries:
 - [Envpool](https://github.com/sail-sg/envpool) (Vectorized Gymnasium Environements)
 - [Craftax](https://github.com/MichaelTMatthews/Craftax) (Crafter in JAX)
 - [Gymnasium](https://github.com/Farama-Foundation/Gymnasium) (Classic Control, Atari, Box2D, MuJoCo, etc.)
+
 The following environments are planned to be supported in the future:
 - [Brax](https://github.com/google/brax) (Physics-based Environments in JAX)
 - [DeepMind Control Suite](https://github.com/google-deepmind/dm_control) (Physics-based Environments in Python)
