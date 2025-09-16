@@ -3,7 +3,7 @@ import jax
 from gxm import Environment
 
 
-def test_environmnet(env: Environment):
+def _test_environmnet(env: Environment):
     def test_init(env: Environment):
         key = jax.random.key(0)
         env_state, timestep = env.init(key)

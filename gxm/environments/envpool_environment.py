@@ -145,7 +145,7 @@ class EnvpoolEnvironment(Environment):
         env_state, timestep = jax.pure_callback(
             callback,
             self.return_shape_dtype,
-            env_state.state.env_id,
+            env_state.env_id,
             vmap_method="broadcast_all",
         )
         return env_state, timestep

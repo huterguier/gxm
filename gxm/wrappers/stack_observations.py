@@ -1,5 +1,3 @@
-from typing import Any
-
 import jax.numpy as jnp
 from jax import Array
 
@@ -7,7 +5,7 @@ from gxm.core import Environment, EnvironmentState, Timestep
 from gxm.wrappers.wrapper import Wrapper
 
 
-class StackObservation(Wrapper):
+class StackObservations(Wrapper):
     """Wrapper that stacks the observation along a new axis."""
 
     num_stack: int
@@ -40,7 +38,7 @@ class StackObservation(Wrapper):
             )
         else:
             raise ValueError(f"Unknown padding method: {self.padding}")
-        return env_state
+        return env_state, timestep
 
     def step(
         self,

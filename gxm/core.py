@@ -204,8 +204,3 @@ class Environment:
         """
         del key, env_state
         raise NotImplementedError("This method should be implemented by subclasses.")
-
-    @property
-    def num_actions(self) -> int:
-        """Return the number of actions available in the environment."""
-        raise NotImplementedError("This method should be implemented by subclasses.")

@@ -7,7 +7,7 @@ import gxm
 
 env = gxm.make("Envpool/Breakout-v5")
 env_state, timestep = env.init(key)
-env_state, timestep = env.step(env_state, key, action)
+env_state, timestep = env.step(key, env_state, action)
 env_state, timestep = gxm.reset(key, env_state)
 ```
 
