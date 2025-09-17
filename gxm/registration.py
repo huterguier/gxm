@@ -4,6 +4,7 @@ from gxm.environments import (
     CraftaxEnvironment,
     EnvpoolEnvironment,
     GymnaxEnvironment,
+    JAXArariEnvironment,
     PgxEnvironment,
 )
 
@@ -32,6 +33,7 @@ def make(id: str, **kwargs):
         "Pgx": PgxEnvironment,
         "Envpool": EnvpoolEnvironment,
         "Craftax": CraftaxEnvironment,
+        "JAXArari": JAXArariEnvironment,
     }[library]
     return Environment(id, **kwargs)
 
