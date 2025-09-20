@@ -46,7 +46,7 @@ all = [
   "pgx>=2.6.0",
   "craftax",
   "navix",
-  "jaxatari@git+https://github.com/k4ntz/JAXAtari",
+  "jaxatari@git+https://github.com/huterguier/JAXAtari",
   "black",
   "isort",
 ]
