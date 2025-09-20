@@ -33,7 +33,7 @@ def make(id: str, **kwargs):
         "Pgx": PgxEnvironment,
         "Envpool": EnvpoolEnvironment,
         "Craftax": CraftaxEnvironment,
-        "JAXArari": JAXArariEnvironment,
+        "JAXAtari": JAXAtariEnvironment,
     }[library]
     return Environment(id, **kwargs)
 

@@ -11,7 +11,7 @@ from gxm.core import Environment, EnvironmentState, Timestep
 from gxm.spaces import Box, Discrete, Space, Tree
 
 
-class JAXArariEnvironment(Environment):
+class JAXAtariEnvironment(Environment):
     """Base class for JAXAtari environments."""
 
     env: jaxatari.environment.JaxEnvironment
@@ -19,7 +19,7 @@ class JAXArariEnvironment(Environment):
 
     def __init__(self, id: str, **kwargs):
         self.env = jaxatari.core.make(id, **kwargs)
-        self.action_space = self.jaxatari_to_gxm_space(self.env.action_space)
+        self.action_space = self.jaxatari_to_gxm_space(self.env.action_space())
 
     def init(self, key: jax.Array) -> tuple[EnvironmentState, Timestep]:
         obs, jaxatari_state = self.env.reset(key)

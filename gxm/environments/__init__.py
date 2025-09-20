@@ -19,14 +19,14 @@ except (ImportError, AttributeError):
         )
     EnvpoolEnvironment = None
 try:
-    from gxm.environments.jaxatari_environmnet import JAXArariEnvironment
+    from gxm.environments.jaxatari_environmnet import JAXAtariEnvironment
 except ImportError:
-    JAXArariEnvironment = None
+    JAXAtariEnvironment = None
 
 __all__ = [
     "GymnaxEnvironment",
     "PgxEnvironment",
     "CraftaxEnvironment",
     "EnvpoolEnvironment",
-    "JAXArariEnvironment",
+    "JAXAtariEnvironment",
 ]
