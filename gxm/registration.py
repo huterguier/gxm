@@ -4,7 +4,7 @@ from gxm.environments import (
     CraftaxEnvironment,
     EnvpoolEnvironment,
     GymnaxEnvironment,
-    JAXArariEnvironment,
+    JAXAtariEnvironment,
     PgxEnvironment,
 )
 
