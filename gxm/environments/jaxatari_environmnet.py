@@ -6,6 +6,7 @@ import jax.numpy as jnp
 import jaxatari
 import jaxatari.core
 import jaxatari.environment
+import jaxatari.spaces
 
 from gxm.core import Environment, EnvironmentState, Timestep
 from gxm.spaces import Box, Discrete, Space, Tree
@@ -59,23 +60,21 @@ class JAXAtariEnvironment(Environment):
     @classmethod
     def jaxatari_to_gxm_space(cls, jaxatari_space) -> Space:
         """Convert a Gymnax space to a Gxm space."""
-        if isinstance(jaxatari_space, gymnax.environments.spaces.Discrete):
+        if isinstance(jaxatari_space, jaxatari.spaces.Discrete):
             return Discrete(jaxatari_space.n)
-        if isinstance(jaxatari_space, gymnax.environments.spaces.Box):
+        if isinstance(jaxatari_space, jaxatari.spaces.Box):
             return Box(
                 low=jaxatari_space.low,
                 high=jaxatari_space.high,
                 shape=jaxatari_space.shape,
             )
-        if isinstance(jaxatari_space, gymnax.environments.spaces.Dict):
+        if isinstance(jaxatari_space, jaxatari.spaces.Dict):
             return Tree(
                 {
                     k: cls.jaxatari_to_gxm_space(v)
                     for k, v in jaxatari_space.spaces.items()
                 }
             )
-        if isinstance(jaxatari_space, gymnax.environments.spaces.Tuple):
-            return Tree([cls.jaxatari_to_gxm_space(s) for s in jaxatari_space.spaces])
         else:
             raise NotImplementedError(
                 f"JAXAtari space type {type(jaxatari_space)} not supported."
