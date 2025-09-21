@@ -42,6 +42,7 @@ class EnvpoolState:
 class EnvpoolEnvironment(Environment):
     id: str
     return_shape_dtype: Any
+    action_space: Space
     kwargs: Any
 
     def __init__(self, id: str, **kwargs):
