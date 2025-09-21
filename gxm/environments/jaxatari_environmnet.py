@@ -1,12 +1,13 @@
 from typing import Any
 
-import gymnax.environments.spaces
 import jax
 import jax.numpy as jnp
 import jaxatari
 import jaxatari.core
 import jaxatari.environment
 import jaxatari.spaces
+import jaxatari.wrappers
+from jaxatari.wrappers import AtariWrapper, PixelObsWrapper
 
 from gxm.core import Environment, EnvironmentState, Timestep
 from gxm.spaces import Box, Discrete, Space, Tree
@@ -15,15 +16,19 @@ from gxm.spaces import Box, Discrete, Space, Tree
 class JAXAtariEnvironment(Environment):
     """Base class for JAXAtari environments."""
 
-    env: jaxatari.environment.JaxEnvironment
+    env: jaxatari.wrappers.JaxatariWrapper
     env_params: Any
 
     def __init__(self, id: str, **kwargs):
-        self.env = jaxatari.core.make(id, **kwargs)
+        env = jaxatari.core.make(id, **kwargs)
+        env = AtariWrapper(env)
+        self.env = PixelObsWrapper(env)
         self.action_space = self.jaxatari_to_gxm_space(self.env.action_space())
 
     def init(self, key: jax.Array) -> tuple[EnvironmentState, Timestep]:
         obs, jaxatari_state = self.env.reset(key)
+        obs = self.to_grayscale(obs)
+        obs = self.resize(obs)
         env_state = jaxatari_state
         timestep = Timestep(
             obs=obs,
@@ -46,6 +51,8 @@ class JAXAtariEnvironment(Environment):
     ) -> tuple[EnvironmentState, Timestep]:
         gymnax_state = env_state
         obs, gymnax_state, reward, done, _ = self.env.step(gymnax_state, action)
+        obs = self.to_grayscale(obs)
+        obs = self.resize(obs)
         env_state = gymnax_state
         timestep = Timestep(
             obs=obs,
@@ -56,6 +63,16 @@ class JAXAtariEnvironment(Environment):
             info={},
         )
         return env_state, timestep
+
+    @classmethod
+    def to_grayscale(cls, obs: jax.Array) -> jax.Array:
+        """Convert an RGB observation to grayscale."""
+        return jnp.dot(obs[..., :3], jnp.array([0.2989, 0.5870, 0.1140]))
+
+    @classmethod
+    def resize(cls, obs: jax.Array) -> jax.Array:
+        """Resize an observation to 84x84."""
+        return jax.image.resize(obs, (obs.shape[0], 84, 84), method="bilinear")
 
     @classmethod
     def jaxatari_to_gxm_space(cls, jaxatari_space) -> Space:
