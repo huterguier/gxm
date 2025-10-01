@@ -1,5 +1,5 @@
 <div align="center">
-    <img src="https://github.com/huterguier/gxm/blob/main/images/gxm.png" width="160">
+    <img src="https://github.com/huterguier/gxm/blob/main/images/gxm.png" width="170">
 </div>
 
 # Unified Functional Interface for RL Environments
