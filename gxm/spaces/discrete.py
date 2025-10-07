@@ -12,12 +12,11 @@ Shape = Tuple[int, ...]
 class Discrete(Space):
     """A discrete space consiting of :math:`\{0, 1, ..., n-1\}`."""
 
-    n: int
-    """Number of discrete actions :math:`n`."""
+    _n: int
 
     def __init__(self, n: int):
         assert n >= 0
-        self.n = n
+        self._n = n
 
     def sample(self, key: Array, shape: Shape = ()) -> Array:
         """
@@ -41,3 +40,10 @@ class Discrete(Space):
             Whether the object is contained in the space.
         """
         return jnp.logical_and(x >= 0, x < self.n)
+
+    @property
+    def n(self) -> int:
+        return self._n
+
+    def __repr__(self) -> str:
+        return f"Discrete({self.n})"

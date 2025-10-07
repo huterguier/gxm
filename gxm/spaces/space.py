@@ -15,3 +15,7 @@ class Space:
     def contains(self, x: Array) -> Any:
         del x
         raise NotImplementedError
+
+    @property
+    def n(self) -> int:
+        raise NotImplementedError

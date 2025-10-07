@@ -1,10 +1,11 @@
 import envpool
-from utils import _test_environmnet
+import pytest
+from test_environment import TestEnvironment
 
 import gxm
 
 
-def test_gymnax():
-    for id in envpool.list_all_envs()[:10]:
-        env = gxm.make("Envpool/" + id)
-        _test_environmnet(env)
+class TestGymnax(TestEnvironment):
+    @pytest.fixture(params=envpool.list_all_envs()[:10])
+    def env(self, request):
+        return gxm.make("Envpool/" + request.param)

@@ -10,11 +10,11 @@ Shape = Tuple[int, ...]
 
 
 class Box(Space):
-    """A bounded box in :math:`\mathbb{R}^n`."""
+    r"""A bounded box in :math:`\mathbb{R}^n`."""
 
-    low: Array | float
+    low: Array
     """Lower bound of the box."""
-    high: Array | float
+    high: Array
     """Upper bound of the box."""
     shape: Shape
     """Shape of the box."""
@@ -25,8 +25,8 @@ class Box(Space):
         high: Array | float,
         shape: Shape,
     ):
-        self.low = low
-        self.high = high
+        self.low = jnp.broadcast_to(jnp.asarray(low, dtype=jnp.float32), shape)
+        self.high = jnp.broadcast_to(jnp.asarray(high, dtype=jnp.float32), shape)
         self.shape = shape
 
     def sample(self, key: Array, shape: Shape = ()) -> Any:
@@ -54,3 +54,10 @@ class Box(Space):
         """
         range_cond = jnp.logical_and(jnp.all(x >= self.low), jnp.all(x <= self.high))
         return range_cond
+
+    @property
+    def n(self) -> int:
+        raise NotImplementedError("Box space does not have a single dimension 'n'.")
+
+    def __repr__(self) -> str:
+        return f"Box(low={self.low}, high={self.high}, shape={self.shape})"

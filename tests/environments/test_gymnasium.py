@@ -1,18 +1,17 @@
-import gymnasium
-from utils import _test_environmnet
+import pytest
+from test_environment import TestEnvironment
 
 import gxm
 
 
-def test_gymnasium():
-    # print("Testing Gymnax Environments")
-    # for id in gymnasium.registry.keys():
-    id = "LunarLander-v3"
-    env = gymnasium.make(id)
-
-    env = gxm.make("Gymnasium/" + id)
-    _test_environmnet(env)
-
-
-if __name__ == "__main__":
-    test_gymnasium()
+class TestGymnax(TestEnvironment):
+    @pytest.fixture(
+        params=[
+            "CartPole-v1",
+            "MountainCar-v0",
+            "Acrobot-v1",
+            "MountainCarContinuous-v0",
+        ]
+    )
+    def env(self, request):
+        return gxm.make("Gymnasium/" + request.param)

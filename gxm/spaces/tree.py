@@ -55,3 +55,12 @@ class Tree(Space):
             jax.tree.map(lambda space, y: space.contains(y), self.spaces, x),
             True,
         )
+
+    @property
+    def n(self) -> int:
+        return jax.tree.reduce(
+            lambda a, b: a * b,
+            self.spaces,
+            0,
+            lambda x: isinstance(x, Space),
+        )
