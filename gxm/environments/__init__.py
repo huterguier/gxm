@@ -11,6 +11,10 @@ try:
 except ImportError:
     PgxEnvironment = None
 try:
+    from gxm.environments.gymnasium_environment import GymnasiumEnvironment
+except ImportError:
+    GymnasiumEnvironment = None
+try:
     from .envpool_environment import EnvpoolEnvironment
 except (ImportError, AttributeError):
     if AttributeError:
@@ -29,4 +33,5 @@ __all__ = [
     "CraftaxEnvironment",
     "EnvpoolEnvironment",
     "JAXAtariEnvironment",
+    "GymnasiumEnvironment",
 ]

@@ -1,0 +1,163 @@
+from dataclasses import dataclass
+from typing import Any
+
+import gymnasium
+import jax
+import jax.numpy as jnp
+import numpy as np
+
+from gxm.core import Environment, EnvironmentState, Timestep
+from gxm.spaces import Box, Discrete, Space, Tree
+
+envs_gymnasium = {}
+
+
+@jax.tree_util.register_dataclass
+@dataclass
+class GymnasiumState:
+    env_id: jax.Array
+
+
+class GymnasiumEnvironment(Environment):
+    id: str
+    return_shape_dtype: Any
+    kwargs: Any
+
+    def __init__(self, id: str, **kwargs):
+        self.id = id
+        env = gymnasium.make_vec(self.id, num_envs=1, **kwargs)
+        obs, _ = env.reset()
+        action = env.action_space.sample()
+        obs, reward, terminated, truncated, _ = env.step(action)
+        env_state = GymnasiumState(env_id=jnp.int32(0))
+        timestep = Timestep(
+            obs=jnp.array(obs),
+            true_obs=jnp.array(obs),
+            reward=jnp.array(reward),
+            terminated=jnp.array(terminated),
+            truncated=jnp.array(truncated),
+            info={},
+        )
+        self.return_shape_dtype = jax.tree.map(
+            lambda x: jax.ShapeDtypeStruct(x.shape[1:], x.dtype), (env_state, timestep)
+        )
+        self.action_space = self.gymnasium_to_gxm_space(env.action_space)
+        self.kwargs = kwargs
+
+    def init(self, key: jax.Array) -> tuple[EnvironmentState, Timestep]:
+        def callback(key):
+            global envs_gymnasium, current_env_id
+            shape = key.shape[:-1]
+            keys_flat = jnp.reshape(key, (-1, key.shape[-1]))
+            num_envs = keys_flat.shape[0]
+            envs = gymnasium.make_vec(self.id, num_envs=num_envs, **self.kwargs)
+            obs, _ = envs.reset()
+            env_id = len(envs_gymnasium)
+            envs_gymnasium[env_id] = envs
+            env_state = (
+                GymnasiumState(env_id=jnp.full(shape, env_id, dtype=jnp.int32)),
+            )
+            timestep = Timestep(
+                obs=jnp.reshape(obs, shape + obs.shape[1:]),
+                true_obs=jnp.reshape(obs, shape + obs.shape[1:]),
+                reward=jnp.zeros(shape, dtype=jnp.float32),
+                terminated=jnp.zeros(shape, dtype=jnp.bool),
+                truncated=jnp.zeros(shape, dtype=jnp.bool),
+                info={},
+            )
+            return env_state, timestep
+
+        env_state, timestep = jax.pure_callback(
+            callback,
+            self.return_shape_dtype,
+            jax.random.key_data(key),
+            vmap_method="broadcast_all",
+        )
+        return env_state, timestep
+
+    def step(
+        self, key: jax.Array, env_state: EnvironmentState, action: jax.Array
+    ) -> tuple[EnvironmentState, Timestep]:
+        del key
+
+        def callback(env_id, action):
+            global envs_gymnasium
+            shape = env_id.shape
+            envs = envs_gymnasium[np.ravel(env_id)[0]]
+            actions = np.reshape(np.asarray(action), (-1,))
+            obs, reward, terminated, truncated, _ = envs.step(actions)
+            env_state = (GymnasiumState(env_id=env_id),)
+            timestep = Timestep(
+                obs=jnp.reshape(obs, shape + obs.shape[1:]),
+                true_obs=jnp.reshape(obs, shape + obs.shape[1:]),
+                reward=jnp.reshape(reward, shape),
+                terminated=jnp.reshape(terminated, shape),
+                truncated=jnp.reshape(truncated, shape),
+                info={},
+            )
+            return env_state, timestep
+
+        env_state, timestep = jax.pure_callback(
+            callback,
+            self.return_shape_dtype,
+            env_state.env_id,
+            action,
+            vmap_method="broadcast_all",
+        )
+
+        return env_state, timestep
+
+    def reset(self, key: jax.Array, env_state: EnvironmentState) -> EnvironmentState:
+        del key
+
+        def callback(env_id):
+            global envs_gymnasium
+            shape = env_id.shape
+            envs = envs_gymnasium[np.ravel(env_id)[0]]
+            obs, _ = envs.reset()
+            env_state = (
+                GymnasiumState(env_id=jnp.full(shape, env_id, dtype=jnp.int32)),
+            )
+            timestep = Timestep(
+                obs=jnp.reshape(obs, shape + obs.shape[1:]),
+                true_obs=jnp.reshape(obs, shape + obs.shape[1:]),
+                reward=jnp.zeros(shape, dtype=jnp.float32),
+                terminated=jnp.zeros(shape, dtype=jnp.bool),
+                truncated=jnp.zeros(shape, dtype=jnp.bool),
+                info={},
+            )
+            return env_state, timestep
+
+        env_state, timestep = jax.pure_callback(
+            callback,
+            self.return_shape_dtype,
+            env_state.env_id,
+            vmap_method="broadcast_all",
+        )
+        return env_state, timestep
+
+    @classmethod
+    def gymnasium_to_gxm_space(cls, gymnasium_space: Any) -> Space:
+        if isinstance(gymnasium_space, gymnasium.spaces.Discrete):
+            return Discrete(int(gymnasium_space.n))
+        elif isinstance(gymnasium_space, gymnasium.spaces.Box):
+            return Box(
+                jnp.asarray(gymnasium_space.low),
+                jnp.asarray(gymnasium_space.high),
+                gymnasium_space.shape,
+            )
+        elif isinstance(gymnasium_space, gymnasium.spaces.MultiDiscrete):
+            return Tree(tuple(Discrete(int(n)) for n in gymnasium_space.nvec))
+        elif isinstance(gymnasium_space, gymnasium.spaces.Dict):
+            return Tree(
+                {
+                    k: cls.gymnasium_to_gxm_space(v)
+                    for k, v in gymnasium_space.spaces.items()
+                }
+            )
+        elif isinstance(gymnasium_space, gymnasium.spaces.Tuple):
+            return Tree(
+                tuple(cls.gymnasium_to_gxm_space(s) for s in gymnasium_space.spaces)
+            )
+        else:
+            raise NotImplementedError(f"Envpool space {gymnasium_space} not supported.")

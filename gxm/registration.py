@@ -1,8 +1,7 @@
-import jax
-
 from gxm.environments import (
     CraftaxEnvironment,
     EnvpoolEnvironment,
+    GymnasiumEnvironment,
     GymnaxEnvironment,
     JAXAtariEnvironment,
     PgxEnvironment,
@@ -34,31 +33,6 @@ def make(id: str, **kwargs):
         "Envpool": EnvpoolEnvironment,
         "Craftax": CraftaxEnvironment,
         "JAXAtari": JAXAtariEnvironment,
+        "Gymnasium": GymnasiumEnvironment,
     }[library]
     return Environment(id, **kwargs)
-
-
-if __name__ == "__main__":
-
-    env = make("Gymnax/CartPole-v1")
-    # env = make("Envpool/Breakout-v5")
-
-    @jax.jit
-    def rollout(key, num_steps=1000):
-
-        def step(env_state, key):
-            key_action, key_step = jax.random.split(key)
-            action = jax.random.randint(key_action, (1,), 0, env.num_actions)[0]
-            env_state, timestep = env.step(key_step, env_state, action)
-            jax.debug.print("{}", timestep.done)
-            return env_state, None
-
-        env_state, _ = env.init(key)
-        keys = jax.random.split(key, num_steps)
-        env_state, _ = jax.lax.scan(step, env_state, keys)
-
-        return env_state
-
-    key = jax.random.PRNGKey(0)
-    num_steps = 100
-    env_state = rollout(key)
