@@ -24,8 +24,8 @@ class TestGymnax(TestEnvironment):
 
     @pytest.fixture(
         params=[
-            # "CartPole-v1",
-            # "ALE/Breakout-v5",
+            "CartPole-v1",
+            "ALE/Breakout-v5",
         ]
     )
     def id(self, request):
@@ -48,6 +48,6 @@ class TestGymnax(TestEnvironment):
                 np.array([action])
             )
             assert jax.numpy.allclose(timestep.obs, obs)
-            # assert jax.numpy.allclose(timestep.reward, reward)
+            assert jax.numpy.allclose(timestep.reward, reward)
             assert timestep.terminated == terminated
             assert timestep.truncated == truncated

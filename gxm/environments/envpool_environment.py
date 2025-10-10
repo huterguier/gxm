@@ -3,7 +3,8 @@ from dataclasses import dataclass
 from typing import Any
 
 import envpool
-import gymnasium
+import gym
+import gym.spaces
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -28,7 +29,7 @@ class EnvpoolEnvironment(Environment):
 
     def __init__(self, id: str, **kwargs):
         self.id = id
-        env = envpool.make(self.id, env_type="gymnasium", num_envs=1, **kwargs)
+        env = envpool.make(self.id, env_type="gym", num_envs=1, **kwargs)
         obs, _ = env.reset()
         obs, reward, terminated, truncated, _ = env.step(np.zeros(1, dtype=int))
         env_state = EnvpoolState(env_id=jnp.int32(0))
@@ -53,7 +54,7 @@ class EnvpoolEnvironment(Environment):
             keys_flat = jnp.reshape(key, (-1, key.shape[-1]))
             num_envs = keys_flat.shape[0]
             envs = envpool.make(
-                self.id, env_type="gymnasium", num_envs=num_envs, **self.kwargs
+                self.id, env_type="gym", num_envs=num_envs, **self.kwargs
             )
             obs, _ = envs.reset()
             env_id = len(envs_envpool)
@@ -134,22 +135,22 @@ class EnvpoolEnvironment(Environment):
 
     @classmethod
     def envpool_to_gxm_space(cls, envpool_space: Any) -> Space:
-        if isinstance(envpool_space, gymnasium.spaces.Discrete):
+        if isinstance(envpool_space, gym.spaces.Discrete):
             return Discrete(int(envpool_space.n))
-        elif isinstance(envpool_space, gymnasium.spaces.Box):
+        elif isinstance(envpool_space, gym.spaces.Box):
             return Box(
                 jnp.asarray(envpool_space.low),
                 jnp.asarray(envpool_space.high),
                 envpool_space.shape,
             )
-        elif isinstance(envpool_space, gymnasium.spaces.Dict):
+        elif isinstance(envpool_space, gym.spaces.Dict):
             return Tree(
                 {
                     k: cls.envpool_to_gxm_space(v)
                     for k, v in envpool_space.spaces.items()
                 }
             )
-        elif isinstance(envpool_space, gymnasium.spaces.Tuple):
+        elif isinstance(envpool_space, gym.spaces.Tuple):
             return Tree(
                 tuple(cls.envpool_to_gxm_space(s) for s in envpool_space.spaces)
             )
