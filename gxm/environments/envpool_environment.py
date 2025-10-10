@@ -1,4 +1,3 @@
-import time
 from dataclasses import dataclass
 from typing import Any
 
@@ -32,7 +31,7 @@ class EnvpoolEnvironment(Environment):
         self.id = id
         env = envpool.make(self.id, env_type="gym", num_envs=1, **kwargs)
         obs = env.reset()
-        obs, reward, done, _ = env.step(np.zeros(1, dtype=int))
+        obs, reward, done, info = env.step(np.zeros(1, dtype=int))
         env_state = EnvpoolState(env_id=jnp.int32(0))
         timestep = Timestep(
             obs=jnp.array(obs),
@@ -40,7 +39,7 @@ class EnvpoolEnvironment(Environment):
             reward=jnp.array(reward),
             terminated=jnp.array(done),
             truncated=jnp.array(done),
-            info={},
+            info=jax.tree.map(jnp.array, info),
         )
         self.return_shape_dtype = jax.tree.map(
             lambda x: jax.ShapeDtypeStruct(x.shape[1:], x.dtype), (env_state, timestep)
@@ -62,13 +61,21 @@ class EnvpoolEnvironment(Environment):
             env_id = len(envs_envpool)
             envs_envpool[env_id] = envs
             env_state = (EnvpoolState(env_id=jnp.full(shape, env_id, dtype=jnp.int32)),)
+            info = jax.tree.map(
+                lambda ds: jnp.zeros((num_envs,) + ds.shape, dtype=ds.dtype),
+                self.return_shape_dtype[1].info,
+            )
+
             timestep = Timestep(
                 obs=jnp.reshape(obs, shape + obs.shape[1:]),
                 true_obs=jnp.reshape(obs, shape + obs.shape[1:]),
                 reward=jnp.zeros(shape, dtype=jnp.float32),
                 terminated=jnp.zeros(shape, dtype=jnp.bool),
                 truncated=jnp.zeros(shape, dtype=jnp.bool),
-                info={},
+                info=jax.tree.map(
+                    lambda ds: jnp.zeros(shape + ds.shape[:1], dtype=ds.dtype),
+                    self.return_shape_dtype[1].info,
+                ),
             )
             return env_state, timestep
 
@@ -88,7 +95,7 @@ class EnvpoolEnvironment(Environment):
             shape = env_id.shape
             envs = envs_envpool[np.ravel(env_id)[0]]
             actions = np.reshape(np.asarray(action), (-1,))
-            obs, reward, done, _ = envs.step(actions)
+            obs, reward, done, info = envs.step(actions)
             env_state = (EnvpoolState(env_id=env_id),)
             timestep = Timestep(
                 obs=jnp.reshape(obs, shape + obs.shape[1:]),
@@ -96,7 +103,7 @@ class EnvpoolEnvironment(Environment):
                 reward=jnp.reshape(reward, shape),
                 terminated=jnp.reshape(done, shape),
                 truncated=jnp.full_like(jnp.reshape(done, shape), False),
-                info={},
+                info=jax.tree.map(lambda i: jnp.reshape(i, shape + i.shape[1:]), info),
             )
             return env_state, timestep
 
@@ -123,7 +130,10 @@ class EnvpoolEnvironment(Environment):
                 reward=jnp.zeros(shape, dtype=jnp.float32),
                 terminated=jnp.zeros(shape, dtype=jnp.bool),
                 truncated=jnp.zeros(shape, dtype=jnp.bool),
-                info={},
+                info=jax.tree.map(
+                    lambda ds: jnp.zeros(shape + ds.shape[:1], dtype=ds.dtype),
+                    self.return_shape_dtype[1].info,
+                ),
             )
             return env_state, timestep
 
