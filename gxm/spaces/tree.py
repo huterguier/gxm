@@ -59,8 +59,11 @@ class Tree(Space):
     @property
     def n(self) -> int:
         return jax.tree.reduce(
-            lambda a, b: a * b,
+            lambda a, b: a * b.n,
             self.spaces,
-            0,
+            1,
             lambda x: isinstance(x, Space),
         )
+
+    def __repr__(self) -> str:
+        return f"Tree({self.spaces})"
