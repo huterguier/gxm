@@ -33,15 +33,15 @@ class GymnasiumEnvironment(Environment):
         timestep = Timestep(
             obs=jnp.array(obs),
             true_obs=jnp.array(obs),
-            reward=jnp.array(reward),
-            terminated=jnp.array(terminated),
-            truncated=jnp.array(truncated),
+            reward=jnp.array(reward, dtype=jnp.float32),
+            terminated=jnp.array(terminated, dtype=jnp.bool),
+            truncated=jnp.array(truncated, dtype=jnp.bool),
             info={},
         )
         self.return_shape_dtype = jax.tree.map(
             lambda x: jax.ShapeDtypeStruct(x.shape[1:], x.dtype), (env_state, timestep)
         )
-        self.action_space = self.gymnasium_to_gxm_space(env.action_space)
+        self.action_space = self.gymnasium_to_gxm_space(env.single_action_space)
         self.kwargs = kwargs
 
     def init(self, key: jax.Array) -> tuple[EnvironmentState, Timestep]:
@@ -51,7 +51,7 @@ class GymnasiumEnvironment(Environment):
             keys_flat = jnp.reshape(key, (-1, key.shape[-1]))
             num_envs = keys_flat.shape[0]
             envs = gymnasium.make_vec(self.id, num_envs=num_envs, **self.kwargs)
-            obs, _ = envs.reset()
+            obs, _ = envs.reset(seed=0)
             env_id = len(envs_gymnasium)
             envs_gymnasium[env_id] = envs
             env_state = (
@@ -90,9 +90,9 @@ class GymnasiumEnvironment(Environment):
             timestep = Timestep(
                 obs=jnp.reshape(obs, shape + obs.shape[1:]),
                 true_obs=jnp.reshape(obs, shape + obs.shape[1:]),
-                reward=jnp.reshape(reward, shape),
-                terminated=jnp.reshape(terminated, shape),
-                truncated=jnp.reshape(truncated, shape),
+                reward=jnp.reshape(reward, shape).astype(jnp.float32),
+                terminated=jnp.reshape(terminated, shape).astype(jnp.bool),
+                truncated=jnp.reshape(truncated, shape).astype(jnp.bool),
                 info={},
             )
             return env_state, timestep
