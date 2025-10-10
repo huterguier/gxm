@@ -1,10 +1,16 @@
 import jax
 import pytest
+from test_space import TestSpace
 
 from gxm.spaces import Box
 
 
-class TestBox:
+class TestBox(TestSpace):
+    @pytest.fixture
+    def space(self, low_high, shape):
+        low, high = low_high
+        return Box(low=low, high=high, shape=shape)
+
     @pytest.fixture(params=[(-1.0, 1.0), (0.0, 10.0), (-5.0, 5.0)])
     def low_high(self, request):
         return request.param
@@ -13,22 +19,14 @@ class TestBox:
     def shape(self, request):
         return request.param
 
-    @pytest.fixture(params=[0, 1, 42])
-    def key(self, request):
-        return jax.random.key(request.param)
-
-    @pytest.fixture
-    def space(self, low_high, shape):
-        low, high = low_high
-        return Box(low=low, high=high, shape=shape)
-
-    def test_init(self, space, low_high, shape):
-        low, high = low_high
+    def test_init(self, space):
         assert isinstance(space, Box)
-        assert space.low.shape == shape
-        assert space.high.shape == shape
-        assert jax.numpy.all(space.low == low)
-        assert jax.numpy.all(space.high == high)
+
+    def test_broadcast(self, shape, low_high):
+        low, high = low_high
+        box = Box(low=low, high=high, shape=shape)
+        assert box.low.shape == shape
+        assert box.high.shape == shape
 
     def test_sample(self, space, key):
         sample = space.sample(key)

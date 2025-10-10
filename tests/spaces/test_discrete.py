@@ -1,17 +1,13 @@
-import jax
 import pytest
+from test_space import TestSpace
 
 from gxm.spaces import Discrete
 
 
-class TestDiscrete:
+class TestDiscrete(TestSpace):
     @pytest.fixture(params=[1, 3, 8])
-    def space(self, request):
+    def space(self, request) -> Discrete:
         return Discrete(request.param)
-
-    @pytest.fixture(params=[0, 1, 42])
-    def key(self, request):
-        return jax.random.key(request.param)
 
     def test_init(self, space):
         assert isinstance(space, Discrete)
@@ -27,10 +23,6 @@ class TestDiscrete:
             assert space.contains(i)
         assert not space.contains(-1)
         assert not space.contains(space.n)
-
-    def test_sample_contains(self, space, key):
-        sample = space.sample(key)
-        assert space.contains(sample)
 
     def test_repr(self, space):
         assert repr(space) == f"Discrete({space.n})"
