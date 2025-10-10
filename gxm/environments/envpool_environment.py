@@ -25,6 +25,7 @@ class EnvpoolEnvironment(Environment):
     id: str
     return_shape_dtype: Any
     action_space: Space
+    observation_space: Space
     kwargs: Any
 
     def __init__(self, id: str, **kwargs):
@@ -45,6 +46,7 @@ class EnvpoolEnvironment(Environment):
             lambda x: jax.ShapeDtypeStruct(x.shape[1:], x.dtype), (env_state, timestep)
         )
         self.action_space = self.envpool_to_gxm_space(env.action_space)
+        self.observation_space = self.envpool_to_gxm_space(env.observation_space)
         self.kwargs = kwargs
 
     def init(self, key: jax.Array) -> tuple[EnvironmentState, Timestep]:
