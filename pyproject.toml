@@ -30,6 +30,7 @@ gymnax = [
 ]
 envpool = [
   "envpool==0.6.6",
+  "gym==0.23.1",
 ]
 pgx = [
   "pgx>=2.6.0",
