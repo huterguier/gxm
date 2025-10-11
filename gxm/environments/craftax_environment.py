@@ -16,11 +16,21 @@ class CraftaxEnvironment(Environment):
     env_params = Any
 
     def __init__(self, id: str, **kwargs):
+        print(id)
         self.env = make_craftax_env_from_name(id, auto_reset=True, **kwargs)
         self.env_params = self.env.default_params
+        self.action_space = self.craftax_to_gxm_space(
+            self.env.action_space(self.env_params)
+        )
+        self.observation_space = self.craftax_to_gxm_space(
+            self.env.observation_space(self.env_params)
+        )
 
     def init(self, key: jax.Array) -> tuple[EnvironmentState, Timestep]:
         obs, craftax_state = self.env.reset(key, self.env_params)
+        obs, state, reward, done, info = self.env.step(
+            key, craftax_state, jnp.array(0), self.env_params
+        )
         env_state = craftax_state
         timestep = Timestep(
             obs=obs,
@@ -28,7 +38,7 @@ class CraftaxEnvironment(Environment):
             reward=jnp.float32(0.0),
             terminated=jnp.bool(False),
             truncated=jnp.bool(False),
-            info={},
+            info=info,
         )
         return env_state, timestep
 
@@ -42,7 +52,7 @@ class CraftaxEnvironment(Environment):
         self, key: jax.Array, env_state: EnvironmentState, action: jax.Array
     ) -> EnvironmentState:
         craftax_state = env_state
-        obs, craftax_state, reward, done, _ = self.env.step(
+        obs, craftax_state, reward, done, info = self.env.step(
             key, craftax_state, action, self.env_params
         )
         env_state = craftax_state
@@ -52,28 +62,28 @@ class CraftaxEnvironment(Environment):
             reward=reward,
             terminated=done,
             truncated=done,
-            info={},
+            info=info,
         )
         return env_state, timestep
 
     @classmethod
-    def gymnax_to_gxm_space(cls, craftax_space) -> Space:
-        """Convert a Gymnax space to a Gxm space."""
-        if isinstance(craftax_space, gymnax.environments.spaces.Discrete):
-            return Discrete(craftax_space.n)
-        if isinstance(craftax_space, gymnax.environments.spaces.Box):
+    def craftax_to_gxm_space(cls, gymnax_space) -> Space:
+        """Convert a Craftax space to a Gxm space."""
+        if isinstance(gymnax_space, gymnax.environments.spaces.Discrete):
+            return Discrete(gymnax_space.n)
+        if isinstance(gymnax_space, gymnax.environments.spaces.Box):
             return Box(
-                low=craftax_space.low,
-                high=craftax_space.high,
-                shape=craftax_space.shape,
+                low=gymnax_space.low,
+                high=gymnax_space.high,
+                shape=gymnax_space.shape,
             )
-        if isinstance(craftax_space, gymnax.environments.spaces.Dict):
+        if isinstance(gymnax_space, gymnax.environments.spaces.Dict):
             return Tree(
-                {k: cls.gymnax_to_gxm_space(v) for k, v in craftax_space.spaces.items()}
+                {k: cls.craftax_to_gxm_space(v) for k, v in gymnax_space.spaces.items()}
             )
-        if isinstance(craftax_space, gymnax.environments.spaces.Tuple):
-            return Tree([cls.gymnax_to_gxm_space(s) for s in craftax_space.spaces])
+        if isinstance(gymnax_space, gymnax.environments.spaces.Tuple):
+            return Tree([cls.craftax_to_gxm_space(s) for s in gymnax_space.spaces])
         else:
             raise NotImplementedError(
-                f"Gymnax space type {type(craftax_space)} not supported."
+                f"Craftax space type {type(gymnax_space)} not supported."
             )
