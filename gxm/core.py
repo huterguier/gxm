@@ -157,6 +157,8 @@ class Environment:
 
     action_space: Space
     """The action space of the environment."""
+    observation_space: Space
+    """The observation space of the environment."""
 
     def init(self, key: jax.Array) -> tuple[EnvironmentState, Timestep]:
         """
