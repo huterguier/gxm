@@ -1,25 +1,43 @@
 # Gxm <small><em>(Gym for JAX)</em></small>
 
-[Gxm](https://github.com/huterguier/gxm) aims to be the [Gym](https://www.gymlibrary.dev/)-equivalent for [JAX](https://github.com/jax-ml/jax)-based RL Environments.
-It normalizes different environment backends behind one tiny, (purely) functional API that is `jit`, `vmap` and `scan` friendly and explicit about randomness.
+[``gxm``](https://github.com/huterguier/gxm) aims to be the [``gym``](https://www.gymlibrary.dev/)-equivalent for [JAX](https://github.com/jax-ml/jax)-based RL Environments.
+It normalizes different environment backends behind one tiny, purely functional API that is `jit`, `vmap` and `scan` friendly and explicit about randomness.
+For a more detailed description please refer to the [documentation](https://gxm.readthedocs.io/en/latest/).
+
+
+## Features
+- 🤝**Unified Functional Interface:** ``gxm`` unifies different environment libraries behind one tiny API. This eases development and experimentation with different environments.
+- 🌐**Broad Environment Support:** ``gxm`` supports a wide range of environments from different libraries. A complete list of supported environments can be found below.
+- 💻**CPU based Enironments:** Run your favorite CPU based environments directly in JAX via callbacks. These wrappers also support `vmap` and behave ([almost](https://gxm.readthedocs.io/en/latest/the_sharp_bits.html#cpu-based-environments)) exactly like the other JAX-native environments!
+- ✅**Handling Truncation:** ``gxm`` handles truncation and termination in a unified way across all environments. Note that handling trunctation in JAX adds a slight memory overhead but can be disabled if not needed.
+
+
+## API
+
+Environments in ``gxm`` can be created in the standardized way by using a `make` function.
+The identifier strings are of the form `<Library>/<Environment-Name>`.
 ```python
 import gxm
-
-env = gxm.make("Envpool/Breakout-v5")
-env_state, timestep = env.init(key)
-env_state, timestep = env.step(key, env_state, action)
-env_state, timestep = gxm.reset(key, env_state)
+env = gxm.make("Gymnasium/LunarLander-v3")
 ```
+The returned environment object exposes the methods `init`, `step` and `reset`.
+Note that there is a clear distinction between `reset` and `init`. 
+`init` is used to create a new environment state from scratch while `reset` is used to reset an existing environment state.
+For fully functional environments there is no difference between the two, but for CPU based environments `reset` will reuse the existing environment instance while `init` will create a new one.
+In addition this conforms to the common JAX pattern of having an `init` function to create an initial state.
 
-## Motivation
-There are many RL environments implemented in JAX, but they all have different APIs and ways of handling randomness.
-This makes it hard to switch between environments or use multiple environments in the same project.
-Gxm aims to solve this problem by providing a unified API for different environment backends.
-In addition, Gxm adds support for CPU-based environments, such as Envpool and Gymnasium, which are not implemented in JAX.
+
+```python
+env_state, timestep = env.init(key)
+for _ in range(1e3):
+    env_state, timestep = env.step(key, env_state, action)
+env_state, timestep = env.reset(key, env_state)
+```
+As a reminder, you should never use `for` loops for environment rollouts in JAX. This is just for demonstration purposes.😉
 
 
-## Environments
-Currently Gxm supports the following Libraries:
+## Supported Environments
+Currently ``gxm`` supports the following Libraries.
 - [Gymnax](https://github.com/RobertTLange/gymnax) (Classic Control, bsuite and MinAtar)
 - [Pgx](https://github.com/sotetsuk/pgx) (Boardgames and MinAtar)
 - [Navix](https://github.com/epignatelli/navix) (Minigrid in JAX)
@@ -27,19 +45,34 @@ Currently Gxm supports the following Libraries:
 - [Craftax](https://github.com/MichaelTMatthews/Craftax) (Crafter in JAX)
 - [Gymnasium](https://github.com/Farama-Foundation/Gymnasium) (Classic Control, Atari, Box2D, MuJoCo, etc.)
 
-The following environments are planned to be supported in the future:
+The following environments are planned to be supported in the future.
 - [Brax](https://github.com/google/brax) (Physics-based Environments in JAX)
 - [DeepMind Control Suite](https://github.com/google-deepmind/dm_control) (Physics-based Environments in Python)
 - [Jumanji](https://github.com/instadeepai/jumanji) (Various RL Environments in JAX)
 
-## Installation
 
-```bash
+## Installation
+``gxm`` can be installed directly from PyPI.
+```
 pip install gxm
 ```
-By default only the `gymnax` backend is installed. To install additional backends use one or more of the following extras.
-```bash
-pip install gxm[envpool,pgx,gymnasium,craftax,mjx,brax]
+By default Gxm comes without any of the underlying environment libraries.
+You can install any combination of them by using optional dependencies or all of the at once using ``all``.
+```
+pip install gxm[gymnax, pgx, navix, envpool, craftax, gymnasium]
+```
+
+## Citation
+If you use ``gxm`` in your research, please cite it as follows.
+Please also cite the underlying environment libraries that you used. Their Githubs are linked above.
+```bibtex
+@software{gxm2025github,
+  author = {Henrik Metternich},
+  title = {{gxm}: Unified Functional Interface for RL Environments in JAX},
+  url = {https://github.com/huterguier/gxm},
+  version = {0.1.1},
+  year = {2025},
+}
 ```
 
 ```{toctree}
