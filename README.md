@@ -28,6 +28,12 @@ The identifier strings are of the form `<Library>/<Environment-Name>`.
 import gxm
 env = gxm.make("Gymnasium/LunarLander-v3")
 ```
+Alternatively you can also be explicit about the environment creation and import the corresponding environment for instantiation.
+In both cases environment parameters will be passed to the underlying environment library.
+```python
+from gxm.environments import GymnasiumEnvironment
+env = GymnasiumEnvironment("LunarLander-v3", gravity=-10.0, wind_power=15.0, turbulence_power=1.5)
+```
 The returned environment object exposes the methods `init`, `step` and `reset`.
 Note that there is a clear distinction between `reset` and `init`. 
 `init` is used to create a new environment state from scratch while `reset` is used to reset an existing environment state.
