@@ -42,6 +42,9 @@ class GymnasiumEnvironment(Environment):
             lambda x: jax.ShapeDtypeStruct(x.shape[1:], x.dtype), (env_state, timestep)
         )
         self.action_space = self.gymnasium_to_gxm_space(env.single_action_space)
+        self.observation_space = self.gymnasium_to_gxm_space(
+            env.single_observation_space
+        )
         self.kwargs = kwargs
 
     def init(self, key: jax.Array) -> tuple[EnvironmentState, Timestep]:
