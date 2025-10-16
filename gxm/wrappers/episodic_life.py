@@ -1,4 +1,5 @@
 from jax import Array
+from jax import numpy as jnp
 
 from gxm.core import Environment, EnvironmentState, Timestep
 from gxm.wrappers.wrapper import Wrapper
@@ -39,5 +40,7 @@ class EpisodicLife(Wrapper):
         prev_lives = env_state[1]
         env_state, timestep = self.env.step(key, env_state[0], action)
         lives = timestep.info["lives"]
-        timestep.terminated = timestep.terminated or (lives < prev_lives and lives > 0)
+        timestep.terminated = jnp.logical_or(
+            timestep.terminated, (lives < prev_lives and lives > 0)
+        )
         return (env_state, lives), timestep
