@@ -40,7 +40,5 @@ class EpisodicLife(Wrapper):
         prev_lives = env_state[1]
         env_state, timestep = self.env.step(key, env_state[0], action)
         lives = timestep.info["lives"]
-        timestep.terminated = jnp.logical_or(
-            timestep.terminated, (lives < prev_lives and lives > 0)
-        )
+        timestep.terminated = jnp.logical_or(timestep.terminated, lives < prev_lives)
         return (env_state, lives), timestep
