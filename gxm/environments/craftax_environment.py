@@ -12,12 +12,19 @@ from gxm.spaces import Box, Discrete, Space, Tree
 class CraftaxEnvironment(Environment):
     """Base class for Craftax environments."""
 
+    craftax_id: str
+    """ The Craftax environment ID. """
     env: Any
+    """ The Craftax environment. """
     env_params = Any
+    """ The parameters for the Craftax environment. """
 
     def __init__(self, id: str, **kwargs):
-        print(id)
-        self.env = make_craftax_env_from_name(id, auto_reset=True, **kwargs)
+        self.id = id
+        self.craftax_id = id.split("/", 1)[1]
+        self.env = make_craftax_env_from_name(
+            self.craftax_id, auto_reset=True, **kwargs
+        )
         self.env_params = self.env.default_params
         self.action_space = self.craftax_to_gxm_space(
             self.env.action_space(self.env_params)

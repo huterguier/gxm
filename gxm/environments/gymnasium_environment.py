@@ -19,13 +19,18 @@ class GymnasiumState:
 
 
 class GymnasiumEnvironment(Environment):
-    id: str
+
+    gymnasium_id: str
+    """ The Gymnasium environment ID. """
     return_shape_dtype: Any
+    """ The shape and dtype of the returned EnvironmentState and Timestep. """
     kwargs: Any
+    """ The kwargs used to create the Gymnasium environment. """
 
     def __init__(self, id: str, **kwargs):
         self.id = id
-        env = gymnasium.make_vec(self.id, num_envs=1, **kwargs)
+        self.gymnasium_id = id.split("/", 1)[1]
+        env = gymnasium.make_vec(self.gymnasium_id, num_envs=1, **kwargs)
         obs, _ = env.reset()
         action = env.action_space.sample()
         obs, reward, terminated, truncated, info = env.step(action)
@@ -53,7 +58,9 @@ class GymnasiumEnvironment(Environment):
             shape = key.shape[:-1]
             keys_flat = jnp.reshape(key, (-1, key.shape[-1]))
             num_envs = keys_flat.shape[0]
-            envs = gymnasium.make_vec(self.id, num_envs=num_envs, **self.kwargs)
+            envs = gymnasium.make_vec(
+                self.gymnasium_id, num_envs=num_envs, **self.kwargs
+            )
             obs, info = envs.reset(seed=0)
             env_id = len(envs_gymnasium)
             envs_gymnasium[env_id] = envs
@@ -141,6 +148,7 @@ class GymnasiumEnvironment(Environment):
 
     @classmethod
     def gymnasium_to_gxm_space(cls, gymnasium_space: Any) -> Space:
+        """Convert a Gymnasium space to a Gxm space."""
         if isinstance(gymnasium_space, gymnasium.spaces.Discrete):
             return Discrete(int(gymnasium_space.n))
         elif isinstance(gymnasium_space, gymnasium.spaces.Box):

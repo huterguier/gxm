@@ -1,3 +1,5 @@
+from typing import cast
+
 import jax
 import pgx
 from pgx.experimental import auto_reset
@@ -9,10 +11,15 @@ from gxm.spaces import Discrete
 class PgxEnvironment(Environment):
     """Base class for Pgx environments."""
 
+    pgx_id: str
+    """The Pgx environment ID."""
     env: pgx.Env
+    """The Pgx environment instance."""
 
-    def __init__(self, env_id: pgx.EnvId, **kwargs):
-        self.env = pgx.make(env_id, **kwargs)
+    def __init__(self, id: str, **kwargs):
+        self.id = id
+        self.pgx_id = id.split("/", 1)[1]
+        self.env = pgx.make(cast(pgx.EnvId, self.pgx_id), **kwargs)
         self.action_space = Discrete(self.env.num_actions)
 
     def init(self, key: jax.Array) -> tuple[EnvironmentState, Timestep]:

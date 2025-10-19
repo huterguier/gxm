@@ -12,11 +12,17 @@ from gxm.spaces import Box, Discrete, Space, Tree
 class GymnaxEnvironment(Environment):
     """Base class for Gymnax environments."""
 
+    gymnax_id: str
+    """ The Gymnax environment ID. """
     env: gymnax.environments.environment.Environment
+    """ The Gymnax environment. """
     env_params: Any
+    """ The parameters for the Gymnax environment. """
 
     def __init__(self, id: str, **kwargs):
-        self.env, self.env_params = gymnax.make(id, **kwargs)
+        self.id = id
+        self.gymnax_id = id.split("/", 1)[1]
+        self.env, self.env_params = gymnax.make(self.gymnax_id, **kwargs)
         self.action_space = self.gymnax_to_gxm_space(
             self.env.action_space(self.env_params)
         )

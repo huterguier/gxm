@@ -26,7 +26,7 @@ def make(id: str, **kwargs):
         >>> env = make("Pgx/MountainCarContinuous-v0")
         >>> env = make("Envpool/Pong-v5")
     """
-    library, id = id.split("/", 1)
+    library = id.split("/", 1)[0]
     Environment = {
         "Gymnax": GymnaxEnvironment,
         "Pgx": PgxEnvironment,

@@ -21,15 +21,18 @@ class EnvpoolState:
 
 
 class EnvpoolEnvironment(Environment):
-    id: str
+
+    envpool_id: str
+    """ The Envpool environment ID. """
     return_shape_dtype: Any
-    action_space: Space
-    observation_space: Space
+    """ The shape and dtype of the returned EnvironmentState and Timestep. """
     kwargs: Any
+    """ The kwargs used to create the Envpool environment. """
 
     def __init__(self, id: str, **kwargs):
         self.id = id
-        env = envpool.make(self.id, env_type="gym", num_envs=1, **kwargs)
+        self.envpool_id = id.split("/", 1)[1]
+        env = envpool.make(self.envpool_id, env_type="gym", num_envs=1, **kwargs)
         obs = env.reset()
         obs, reward, done, info = env.step(np.zeros(1, dtype=int))
         env_state = EnvpoolState(env_id=jnp.int32(0))
@@ -55,7 +58,7 @@ class EnvpoolEnvironment(Environment):
             keys_flat = jnp.reshape(key, (-1, key.shape[-1]))
             num_envs = keys_flat.shape[0]
             envs = envpool.make(
-                self.id, env_type="gym", num_envs=num_envs, **self.kwargs
+                self.envpool_id, env_type="gym", num_envs=num_envs, **self.kwargs
             )
             obs = envs.reset()
             env_id = len(envs_envpool)

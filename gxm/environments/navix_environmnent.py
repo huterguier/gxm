@@ -9,8 +9,10 @@ class NavixEnvironment(Environment):
     """Base class for Gymnax environments."""
 
     env: navix.Environment
+    """The Navix environment instance."""
 
     def __init__(self, id: str, **kwargs):
+        self.id = "Navix/" + id
         self.env, self.env_params = navix.make(id, **kwargs)
 
     def init(self, key: jax.Array) -> tuple[EnvironmentState, Timestep]:
