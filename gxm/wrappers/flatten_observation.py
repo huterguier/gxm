@@ -14,7 +14,8 @@ class FlattenObservation(Wrapper):
     def __init__(self, env: Environment):
         self.env = env
 
-    def flatten(self, obs: Any) -> Array:
+    @classmethod
+    def flatten(cls, obs: Any) -> Array:
         obs_leaves = jax.tree.leaves(obs)
         obs_flat = jnp.concatenate([jnp.ravel(leaf) for leaf in obs_leaves])
         return obs_flat

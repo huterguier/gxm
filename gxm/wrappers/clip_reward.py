@@ -36,7 +36,7 @@ class ClipReward(Wrapper):
     ) -> tuple[EnvironmentState, Timestep]:
         env_state, timestep = self.env.reset(key, env_state)
         timestep.reward = self.clip(timestep.reward)
-        return env_state, env_state.timestep
+        return env_state, timestep
 
     def step(
         self,

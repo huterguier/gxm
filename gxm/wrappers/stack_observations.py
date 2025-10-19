@@ -1,3 +1,6 @@
+from typing import Any, Sequence
+
+import jax
 import jax.numpy as jnp
 from jax import Array
 
@@ -18,27 +21,32 @@ class StackObservations(Wrapper):
 
     def init(self, key: Array) -> tuple[EnvironmentState, Timestep]:
         env_state, timestep = self.env.init(key)
+
+        def stack(obss):
+            return jax.tree.map(lambda *os: jnp.stack(os, axis=0), *obss)
+
         if self.padding == "reset":
-            timestep.obs = jnp.stack(self.num_stack * [timestep.obs], axis=0)
-            timestep.true_obs = jnp.stack(self.num_stack * [timestep.true_obs], axis=0)
+            timestep.obs = stack([self.num_stack * [timestep.obs]])
+            timestep.true_obs = stack([self.num_stack * [timestep.true_obs]])
         else:
             raise ValueError(f"Unknown padding method: {self.padding}")
-        env_state = (env_state, (timestep.obs, timestep.true_obs))
 
-        return env_state, timestep
+        return (env_state, (timestep.obs, timestep.true_obs)), timestep
 
     def reset(
         self, key: Array, env_state: EnvironmentState
     ) -> tuple[EnvironmentState, Timestep]:
         env_state, timestep = self.env.reset(key, env_state)
+
+        def stack(obss):
+            return jax.tree.map(lambda *os: jnp.stack(os, axis=0), *obss)
+
         if self.padding == "reset":
-            env_state.obs = jnp.stack(self.num_stack * [env_state.obs], axis=0)
-            env_state.true_obs = jnp.stack(
-                self.num_stack * [env_state.true_obs], axis=0
-            )
+            timestep.obs = stack([self.num_stack * [timestep.obs]])
+            timestep.true_obs = stack([self.num_stack * [timestep.true_obs]])
         else:
             raise ValueError(f"Unknown padding method: {self.padding}")
-        return env_state, timestep
+        return (env_state, (timestep.obs, timestep.true_obs)), timestep
 
     def step(
         self,
@@ -46,12 +54,18 @@ class StackObservations(Wrapper):
         env_state: EnvironmentState,
         action: Array,
     ) -> tuple[EnvironmentState, Timestep]:
+        env_state, (obss, true_obss) = env_state
         env_state, timestep = self.env.step(key, env_state, action)
-        timestep.obs = jnp.concatenate(
-            [timestep.obs[1:], jnp.expand_dims(timestep.obs[0], axis=0)], axis=0
-        )
-        timestep.true_obs = jnp.concatenate(
-            [timestep.true_obs[1:], jnp.expand_dims(timestep.true_obs[0], axis=0)],
-            axis=0,
-        )
-        return env_state, timestep
+        obss = jax.tree.map(lambda os: os[1:], obss)
+        true_obss = jax.tree.map(lambda tos: tos[1:], true_obss)
+
+        def concatenate(obss: Sequence[Any]) -> Any:
+            return jax.tree.map(lambda *os: jnp.concatenate(os, axis=0), *obss)
+
+        def expand_dims(obs: Any) -> Any:
+            return jax.tree.map(lambda o: jnp.expand_dims(o, axis=0), obs)
+
+        timestep.obs = concatenate([obss, expand_dims(timestep.obs)])
+        timestep.true_obs = concatenate([true_obss, expand_dims(timestep.true_obs)])
+
+        return (env_state, (timestep.obs, timestep.true_obs)), timestep

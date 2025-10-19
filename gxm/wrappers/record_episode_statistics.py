@@ -1,27 +1,34 @@
+import dataclasses
 from dataclasses import dataclass
 
 import jax
 import jax.numpy as jnp
 
 from gxm.core import Environment, EnvironmentState, Timestep
+from gxm.typing import Array
 from gxm.wrappers.wrapper import Wrapper
 
 
 @jax.tree_util.register_dataclass
 @dataclass
 class EpisodeStatistics:
-    current_return: jax.Array
-    episodic_return: jax.Array
-    discounted_episodic_return: jax.Array
-    length: jax.Array
-    current_discounted_return: jax.Array
-    current_length: jax.Array
+    current_return: Array
+    episodic_return: Array
+    current_length: Array
+    episode_length: Array
+    current_discounted_return: Array
+    episodic_discounted_return: Array
 
 
 class RecordEpisodeStatistics(Wrapper):
     """
-    A wrapper that records episode statistics such as episodic return, discounted episodic return, and length.
-    :math:`J(\\tau) = \\sum_{t=0}^{T} r_t` and discounted return :math:`G(\\tau) = \\sum_{t=0}^{T} \\gamma^t r_t`
+    A wrapper that records the episode length :math:`T` , episodic return
+    :math:`J(\\tau) = \\sum_{t=0}^{T} r_t` , and discounted episodic return
+    :math:`G(\\tau) = \\sum_{t=0}^{T} \\gamma^t r_t` at the end of each episode.
+    The statistics can be accessed from the ``info`` field of the ``Timestep`` returned
+    by the environment. It will contain the stats of the most recent finished episode.
+    By default , the discount factor :math:`\\gamma` is set to 1.0, meaning that the
+    episodic return and discounted episodic return are the same.
     """
 
     gamma: float
@@ -36,18 +43,18 @@ class RecordEpisodeStatistics(Wrapper):
             current_return=jnp.float32(0.0),
             episodic_return=jnp.float32(0.0),
             current_discounted_return=jnp.float32(0.0),
-            discounted_episodic_return=jnp.float32(0.0),
-            length=jnp.int32(0.0),
+            episodic_discounted_return=jnp.float32(0.0),
+            episode_length=jnp.int32(0.0),
             current_length=jnp.int32(0.0),
         )
         env_state = (env_state, episode_stats)
         timestep.info |= {
-            "current_return": episode_stats.current_return,
-            "current_discounted_return": episode_stats.current_discounted_return,
             "current_length": episode_stats.current_length,
+            "episode_length": episode_stats.episode_length,
+            "current_return": episode_stats.current_return,
             "episodic_return": episode_stats.episodic_return,
-            "discounted_episodic_return": episode_stats.discounted_episodic_return,
-            "length": episode_stats.length,
+            "current_discounted_return": episode_stats.current_discounted_return,
+            "episodic_discounted_return": episode_stats.episodic_discounted_return,
         }
         return env_state, timestep
 
@@ -55,32 +62,24 @@ class RecordEpisodeStatistics(Wrapper):
         self, key: jax.Array, env_state: EnvironmentState
     ) -> tuple[EnvironmentState, Timestep]:
         (env_state, episode_stats) = env_state
-        env_state = self.env.reset(key, env_state)
+        env_state, timestep = self.env.reset(key, env_state)
         episode_stats = EpisodeStatistics(
             current_return=jnp.float32(0.0),
             current_length=jnp.int32(0.0),
             episodic_return=jnp.float32(0.0),
-            discounted_episodic_return=jnp.float32(0.0),
-            length=jnp.int32(0.0),
+            episodic_discounted_return=jnp.float32(0.0),
+            episode_length=jnp.int32(0.0),
             current_discounted_return=jnp.float32(0.0),
         )
         env_state = (env_state, episode_stats)
-        timestep = Timestep(
-            obs=env_state.obs,
-            true_obs=env_state.obs,
-            reward=env_state.reward,
-            terminated=env_state.terminated,
-            truncated=env_state.truncated,
-            info=env_state.info
-            | {
-                "current_return": episode_stats.current_return,
-                "current_discounted_return": episode_stats.current_discounted_return,
-                "current_length": episode_stats.current_length,
-                "episodic_return": episode_stats.episodic_return,
-                "discounted_episodic_return": episode_stats.discounted_episodic_return,
-                "length": episode_stats.length,
-            },
-        )
+        timestep.info |= {
+            "current_length": episode_stats.current_length,
+            "episode_length": episode_stats.episode_length,
+            "current_return": episode_stats.current_return,
+            "episodic_return": episode_stats.episodic_return,
+            "current_discounted_return": episode_stats.current_discounted_return,
+            "episodic_discounted_return": episode_stats.episodic_discounted_return,
+        }
         return env_state, timestep
 
     def step(
@@ -105,32 +104,34 @@ class RecordEpisodeStatistics(Wrapper):
         episodic_return = (
             1 - done
         ) * episode_stats.episodic_return + done * current_return
-        discounted_episodic_return = (
-            (1 - done) * episode_stats.discounted_episodic_return
+        episodic_discounted_return = (
+            (1 - done) * episode_stats.episodic_discounted_return
             + done * current_discounted_return
         )
-        length = (1 - done) * episode_stats.length + done * current_length
+        episode_length = (
+            1 - done
+        ) * episode_stats.episode_length + done * current_length
 
         current_return = (1 - done) * current_return
         current_discounted_return = (1 - done) * current_discounted_return
         current_length = (1 - done) * current_length
 
         episode_stats = EpisodeStatistics(
-            current_return=current_return,
-            current_discounted_return=current_discounted_return,
             current_length=current_length,
+            episode_length=episode_length,
+            current_return=current_return,
             episodic_return=episodic_return,
-            discounted_episodic_return=discounted_episodic_return,
-            length=length,
+            current_discounted_return=current_discounted_return,
+            episodic_discounted_return=episodic_discounted_return,
         )
         env_state = (env_state, episode_stats)
         timestep.info |= {
-            "current_return": episode_stats.current_return,
-            "current_discounted_return": episode_stats.current_discounted_return,
             "current_length": episode_stats.current_length,
+            "episode_length": episode_stats.episode_length,
+            "current_return": episode_stats.current_return,
             "episodic_return": episode_stats.episodic_return,
-            "discounted_episodic_return": episode_stats.discounted_episodic_return,
-            "length": episode_stats.length,
+            "current_discounted_return": episode_stats.current_discounted_return,
+            "episodic_discounted_return": episode_stats.episodic_discounted_return,
         }
 
         return env_state, timestep
