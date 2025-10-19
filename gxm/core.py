@@ -155,7 +155,7 @@ class Environment:
     ``init``, ``step``, ``reset``, and ``num_actions`` methods.
     """
 
-    id: str = "BaseEnvironment"
+    id: str
     """The unique identifier of the environment."""
     action_space: Space
     """The action space of the environment."""
