@@ -207,7 +207,7 @@ class Environment:
         del key, env_state
         raise NotImplementedError("This method should be implemented by subclasses.")
 
-    def contains(self, wrapper_type: type["Environment"]) -> bool:
+    def has_wrapper(self, wrapper_type: type["Environment"]) -> bool:
         """
         Check if the environment or any of its wrappers is of a specific type.
 
