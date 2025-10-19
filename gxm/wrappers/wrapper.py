@@ -8,6 +8,11 @@ class Wrapper(Environment):
 
     env: Environment
 
+    def contains(self, wrapper_type: type[Environment]) -> bool:
+        if isinstance(self, wrapper_type):
+            return True
+        return self.env.contains(wrapper_type)
+
     def __getattr__(self, name: str) -> Any:
         if name in self.__dict__:
             return self.__dict__[name]
