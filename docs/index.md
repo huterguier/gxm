@@ -33,8 +33,18 @@ for _ in range(1e3):
     env_state, timestep = env.step(key, env_state, action)
 env_state, timestep = env.reset(key, env_state)
 ```
-As a reminder, you should never use `for` loops for environment rollouts in JAX. This is just for demonstration purposes.😉
-
+As a reminder, you should never use for loops for environment rollouts in JAX. This is just for demonstration purposes.
+A single `timestep` has the following signature in `gxm`. Here `true_obs` stores the observation that would have been observed if there was no truncation.
+Hence `obs` and `true_obs` only differ whenever `truncated` is true.
+```python
+class Timestep:
+    reward: jax.Array
+    terminated: jax.Array
+    truncated: jax.Array
+    obs: jax.Array
+    true_obs: jax.Array
+    info: dict[str, Any]
+```
 
 ## Supported Environments
 Currently ``gxm`` supports the following Libraries.

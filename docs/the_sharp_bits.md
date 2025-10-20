@@ -21,18 +21,18 @@ next_env_state = env.step(env_state, key, 0)
 ```
 
 Usually this is not an issue, as environments are typically used in a sequential manner.
-However specialized algorithms, such as MCTS, are not compatible with these environments.
+However specialized algorithms, such as [MCTS](https://en.wikipedia.org/wiki/Monte_Carlo_tree_search), are not compatible with these environments.
 
 ## ``init`` vs ``reset``
 Typically, RL environments have a `reset` function that resets the environment to an initial state.
 In ``gxm``, there is a clear distinction between `init` and `reset`. 
-- `init`: This function initializes the environment and returns the initial state. It is called once at the beginning of an episode.
+- `init`: This function initializes the environment and returns the initial state.
 - `reset`: This function resets the environment to a new initial state after an episode ends. It can be called multiple times during the lifecycle of an environment.
 
-This distinvtion is motivated by two reasons:
+This distinction is motivated by two key aspects:
 1. **Consistency**: Most JAX libraries use the ``init`` function to initialize states. 
    By using `init` for the initial state, we maintain consistency with other JAX libraries.
-2. **Compatibility**: CPU-based environments like `envpool` and gymnasium maintain a state.
+2. **Compatibility**: CPU-based environments like `envpool` and gymnasium maintain a reference to the environment instance on the host.
    Calling ``reset`` without this state would lead to an instantiation of a new environment, which is not the intended behavior.
 
 ## Using ``envpool``
@@ -42,4 +42,35 @@ In order to use ``envpool``, you need to replace the entire content of ``envpool
 ```python
 def make_xla(obj):
     pass
+```
+
+## Termination and Truncation
+Handling termination and truncation correctly is essential for the correctness of many reinforcement learning algorithms.
+Yet most JAX-based environment libraries do not account for this at all.
+Handling truncation is not problematic when handling resets manually, but becomes tricky when using auto-resets, as the true observation is lost when the environment is reset.
+While on CPU-based environments the true observation can be returned conditionally, in JAX this is not possible as the returned structure must be known at compile time.
+This means that the only way to handle truncation correctly is to always return the true observation, even if there was no truncation at that step.
+
+In the example below, the `IgnoreTruncation` wrapper will treat truncation as termination, setting the `terminated` flag to `True` when truncation occurs. In addition it will set `true_obs` to `None` for all timesteps to save memory.
+
+```python
+import gxm
+from gxm.wrappers import IgnoreTruncation, Rollout
+env = IgnoreTruncation(gxm.make("Envpool/Breakout-v5"))
+```
+
+## Composite Spaces
+In most environment libraries, different classes are used to represent composite spaces such as dictionaries, tuples, and other structured combinations. 
+`gxm` unifies composite spaces by relying on PyTrees, eliminating the need for separate classes. 
+This allows for arbitrary compositions, such as tuples of dictionaries of tuples, and simplifies extension to new types of spaces, as long as they follow the pytree structure.
+```python
+from gxm.spaces import Discrete, Tree
+space = Tree({
+    "position": Discrete(5),
+    "velocity": Discrete(3),
+    "info": {
+        "goal": Discrete(2),
+        "obstacles": (Discrete(4), Discrete(4))
+    }
+})
 ```
