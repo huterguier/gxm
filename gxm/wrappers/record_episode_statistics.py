@@ -59,6 +59,25 @@ class RecordEpisodeStatistics(Wrapper[RecordEpisodeStatisticsState]):
         self.gamma = gamma
         self.n_episodes = n_episodes
 
+    @staticmethod
+    def get_averaged_stats(episode_stats: EpisodeStatistics) -> dict[str, jax.Array]:
+        valid_episodes = jnp.maximum(jnp.sum(episode_stats.mask), 1.0)
+        episode_length = (
+            jnp.sum(episode_stats.episode_length * episode_stats.mask) / valid_episodes
+        )
+        episodic_return = (
+            jnp.sum(episode_stats.episodic_return * episode_stats.mask) / valid_episodes
+        )
+        episodic_discounted_return = (
+            jnp.sum(episode_stats.episodic_discounted_return * episode_stats.mask)
+            / valid_episodes
+        )
+        return {
+            "episode_length": episode_length,
+            "episodic_return": episodic_return,
+            "episodic_discounted_return": episodic_discounted_return,
+        }
+
     def init(self, key: jax.Array) -> tuple[RecordEpisodeStatisticsState, Timestep]:
         env_state, timestep = self.env.init(key)
         current_stats = CurrentStatistics(
@@ -79,12 +98,10 @@ class RecordEpisodeStatistics(Wrapper[RecordEpisodeStatisticsState]):
         )
         timestep.info |= {
             "current_length": current_stats.current_length,
-            "episode_length": episode_stats.episode_length,
             "current_return": current_stats.current_return,
-            "episodic_return": episode_stats.episodic_return,
             "current_discounted_return": current_stats.current_discounted_return,
-            "episodic_discounted_return": episode_stats.episodic_discounted_return,
         }
+        timestep.info |= self.get_averaged_stats(episode_stats)
         return record_episode_stats_state, timestep
 
     def reset(
@@ -111,10 +128,8 @@ class RecordEpisodeStatistics(Wrapper[RecordEpisodeStatisticsState]):
             "current_length": current_stats.current_length,
             "episode_length": episode_stats.episode_length,
             "current_return": current_stats.current_return,
-            "episodic_return": episode_stats.episodic_return,
-            "current_discounted_return": current_stats.current_discounted_return,
-            "episodic_discounted_return": episode_stats.episodic_discounted_return,
         }
+        timestep.info |= self.get_averaged_stats(episode_stats)
         return record_episode_stats_state, timestep
 
     def step(
@@ -184,11 +199,9 @@ class RecordEpisodeStatistics(Wrapper[RecordEpisodeStatisticsState]):
         )
         timestep.info |= {
             "current_length": current_stats.current_length,
-            "episode_length": episode_stats.episode_length,
             "current_return": current_stats.current_return,
-            "episodic_return": episode_stats.episodic_return,
             "current_discounted_return": current_stats.current_discounted_return,
-            "episodic_discounted_return": episode_stats.episodic_discounted_return,
         }
+        timestep.info |= self.get_averaged_stats(episode_stats)
 
         return wrapper_state, timestep

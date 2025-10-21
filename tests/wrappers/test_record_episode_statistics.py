@@ -8,4 +8,4 @@ class TestRecordEpisodeStatistics(TestWrapper):
 
     @pytest.fixture
     def wrapper(self, env) -> Wrapper:
-        return RecordEpisodeStatistics(env)
+        return RecordEpisodeStatistics(env, gamma=0.99, n_episodes=5)
