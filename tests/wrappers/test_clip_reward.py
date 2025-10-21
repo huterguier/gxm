@@ -4,7 +4,7 @@ from test_wrapper import TestWrapper
 from gxm.wrappers import ClipReward, Wrapper
 
 
-class TestClipReward(TestWrapper):
+class TestDiscretize(TestWrapper):
 
     @pytest.fixture
     def wrapper(self, env) -> Wrapper:

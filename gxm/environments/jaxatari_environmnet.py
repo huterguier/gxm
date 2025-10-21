@@ -1,19 +1,29 @@
+from dataclasses import dataclass
 from typing import Any
 
 import jax
 import jax.numpy as jnp
 import jaxatari
 import jaxatari.core
-import jaxatari.environment
 import jaxatari.spaces
 import jaxatari.wrappers
 from jaxatari.wrappers import AtariWrapper, PixelObsWrapper
 
 from gxm.core import Environment, EnvironmentState, Timestep
 from gxm.spaces import Box, Discrete, Space, Tree
+from gxm.typing import Array, Key
 
 
-class JAXAtariEnvironment(Environment):
+@jax.tree_util.register_dataclass
+@dataclass
+class JAXAtariEnvironmentState(EnvironmentState):
+    """State for JAXAtari environments."""
+
+    jaxatari_state: Any
+    """State for JAXAtari environments."""
+
+
+class JAXAtariEnvironment(Environment[JAXAtariEnvironmentState]):
     """Base class for JAXAtari environments."""
 
     env: jaxatari.wrappers.JaxatariWrapper
@@ -25,11 +35,11 @@ class JAXAtariEnvironment(Environment):
         self.env = PixelObsWrapper(env)
         self.action_space = self.jaxatari_to_gxm_space(self.env.action_space())
 
-    def init(self, key: jax.Array) -> tuple[EnvironmentState, Timestep]:
+    def init(self, key: Key) -> tuple[JAXAtariEnvironmentState, Timestep]:
         obs, jaxatari_state = self.env.reset(key)
         obs = self.to_grayscale(obs)
         obs = self.resize(obs)
-        env_state = jaxatari_state
+        env_state = JAXAtariEnvironmentState(jaxatari_state=jaxatari_state)
         timestep = Timestep(
             obs=obs,
             true_obs=obs,
@@ -41,19 +51,20 @@ class JAXAtariEnvironment(Environment):
         return env_state, timestep
 
     def reset(
-        self, key: jax.Array, env_state: EnvironmentState
-    ) -> tuple[EnvironmentState, Timestep]:
+        self, key: Key, env_state: JAXAtariEnvironmentState
+    ) -> tuple[JAXAtariEnvironmentState, Timestep]:
         del env_state
         return self.init(key)
 
     def step(
-        self, key: jax.Array, env_state: EnvironmentState, action: jax.Array
-    ) -> tuple[EnvironmentState, Timestep]:
-        gymnax_state = env_state
-        obs, gymnax_state, reward, done, _ = self.env.step(gymnax_state, action)
+        self, key: Key, env_state: JAXAtariEnvironmentState, action: Array
+    ) -> tuple[JAXAtariEnvironmentState, Timestep]:
+        del key
+        jaxatari_state = env_state.jaxatari_state
+        obs, jaxatari_state, reward, done, _ = self.env.step(jaxatari_state, action)
         obs = self.to_grayscale(obs)
         obs = self.resize(obs)
-        env_state = gymnax_state
+        env_state = JAXAtariEnvironmentState(jaxatari_state=jaxatari_state)
         timestep = Timestep(
             obs=obs,
             true_obs=obs,
@@ -65,12 +76,12 @@ class JAXAtariEnvironment(Environment):
         return env_state, timestep
 
     @classmethod
-    def to_grayscale(cls, obs: jax.Array) -> jax.Array:
+    def to_grayscale(cls, obs: Array) -> Array:
         """Convert an RGB observation to grayscale."""
         return jnp.dot(obs[..., :3], jnp.array([0.2989, 0.5870, 0.1140]))
 
     @classmethod
-    def resize(cls, obs: jax.Array) -> jax.Array:
+    def resize(cls, obs: Array) -> Array:
         """Resize an observation to 84x84."""
         return jax.image.resize(obs, (obs.shape[0], 84, 84), method="bilinear")
 

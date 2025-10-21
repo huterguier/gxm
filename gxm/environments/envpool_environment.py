@@ -10,17 +10,21 @@ import numpy as np
 
 from gxm.core import Environment, EnvironmentState, Timestep
 from gxm.spaces import Box, Discrete, Space, Tree
+from gxm.typing import Array, Key
 
 envs_envpool = {}
 
 
 @jax.tree_util.register_dataclass
 @dataclass
-class EnvpoolState:
-    env_id: jax.Array
+class EnvpoolEnvironmentState(EnvironmentState):
+    """The state of an Envpool environment."""
+
+    env_id: Array
+    """ The ID referencing the Envpool environment instance. """
 
 
-class EnvpoolEnvironment(Environment):
+class EnvpoolEnvironment(Environment[EnvpoolEnvironmentState]):
 
     envpool_id: str
     """ The Envpool environment ID. """
@@ -35,7 +39,7 @@ class EnvpoolEnvironment(Environment):
         env = envpool.make(self.envpool_id, env_type="gym", num_envs=1, **kwargs)
         obs = env.reset()
         obs, reward, done, info = env.step(np.zeros(1, dtype=int))
-        env_state = EnvpoolState(env_id=jnp.int32(0))
+        env_state = EnvpoolEnvironmentState(env_id=jnp.int32(0))
         timestep = Timestep(
             obs=jnp.array(obs),
             true_obs=jnp.array(obs),
@@ -51,7 +55,7 @@ class EnvpoolEnvironment(Environment):
         self.observation_space = self.envpool_to_gxm_space(env.observation_space)
         self.kwargs = kwargs
 
-    def init(self, key: jax.Array) -> tuple[EnvironmentState, Timestep]:
+    def init(self, key: Key) -> tuple[EnvpoolEnvironmentState, Timestep]:
         def callback(key):
             global envs_envpool, current_env_id
             shape = key.shape[:-1]
@@ -63,10 +67,8 @@ class EnvpoolEnvironment(Environment):
             obs = envs.reset()
             env_id = len(envs_envpool)
             envs_envpool[env_id] = envs
-            env_state = (EnvpoolState(env_id=jnp.full(shape, env_id, dtype=jnp.int32)),)
-            info = jax.tree.map(
-                lambda ds: jnp.zeros((num_envs,) + ds.shape, dtype=ds.dtype),
-                self.return_shape_dtype[1].info,
+            env_state = EnvpoolEnvironmentState(
+                env_id=jnp.full(shape, env_id, dtype=jnp.int32)
             )
 
             timestep = Timestep(
@@ -91,15 +93,17 @@ class EnvpoolEnvironment(Environment):
         return env_state, timestep
 
     def step(
-        self, key: jax.Array, env_state: EnvironmentState, action: jax.Array
-    ) -> tuple[EnvironmentState, Timestep]:
+        self, key: Key, env_state: EnvpoolEnvironmentState, action: Array
+    ) -> tuple[EnvpoolEnvironmentState, Timestep]:
+        del key
+
         def callback(env_id, action):
             global envs_envpool
             shape = env_id.shape
             envs = envs_envpool[np.ravel(env_id)[0]]
             actions = np.reshape(np.asarray(action), (-1,))
             obs, reward, done, info = envs.step(actions)
-            env_state = (EnvpoolState(env_id=env_id),)
+            env_state = EnvpoolEnvironmentState(env_id=env_id)
             timestep = Timestep(
                 obs=jnp.reshape(obs, shape + obs.shape[1:]),
                 true_obs=jnp.reshape(obs, shape + obs.shape[1:]),
@@ -120,13 +124,19 @@ class EnvpoolEnvironment(Environment):
 
         return env_state, timestep
 
-    def reset(self, key: jax.Array, env_state: EnvironmentState) -> EnvironmentState:
+    def reset(
+        self, key: Key, env_state: EnvpoolEnvironmentState
+    ) -> tuple[EnvpoolEnvironmentState, Timestep]:
+        del key
+
         def callback(env_id):
             global envs_envpool
             shape = env_id.shape
             envs = envs_envpool[np.ravel(env_id)[0]]
             obs = envs.reset()
-            env_state = (EnvpoolState(env_id=jnp.full(shape, env_id, dtype=jnp.int32)),)
+            env_state = EnvpoolEnvironmentState(
+                env_id=jnp.full(shape, env_id, dtype=jnp.int32)
+            )
             timestep = Timestep(
                 obs=jnp.reshape(obs, shape + obs.shape[1:]),
                 true_obs=jnp.reshape(obs, shape + obs.shape[1:]),

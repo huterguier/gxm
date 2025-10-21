@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import cast
 
 import jax
@@ -6,9 +7,19 @@ from pgx.experimental import auto_reset
 
 from gxm.core import Environment, EnvironmentState, Timestep
 from gxm.spaces import Discrete
+from gxm.typing import Array, Key
 
 
-class PgxEnvironment(Environment):
+@jax.tree_util.register_dataclass
+@dataclass
+class PgxEnvironmentState(EnvironmentState):
+    """State for Pgx environments."""
+
+    pgx_state: pgx.State
+    """The Pgx state."""
+
+
+class PgxEnvironment(Environment[PgxEnvironmentState]):
     """Base class for Pgx environments."""
 
     pgx_id: str
@@ -22,9 +33,9 @@ class PgxEnvironment(Environment):
         self.env = pgx.make(cast(pgx.EnvId, self.pgx_id), **kwargs)
         self.action_space = Discrete(self.env.num_actions)
 
-    def init(self, key: jax.Array) -> tuple[EnvironmentState, Timestep]:
+    def init(self, key: Key) -> tuple[PgxEnvironmentState, Timestep]:
         pgx_state = self.env.init(key)
-        env_state = pgx_state
+        env_state = PgxEnvironmentState(pgx_state=pgx_state)
         timestep = Timestep(
             obs=pgx_state.observation,
             true_obs=pgx_state.observation,
@@ -36,18 +47,18 @@ class PgxEnvironment(Environment):
         return env_state, timestep
 
     def reset(
-        self, key: jax.Array, env_state: EnvironmentState
-    ) -> tuple[EnvironmentState, Timestep]:
+        self, key: Key, env_state: PgxEnvironmentState
+    ) -> tuple[PgxEnvironmentState, Timestep]:
         del env_state
         return self.init(key)
 
     def step(
-        self, key: jax.Array, env_state: EnvironmentState, action: jax.Array
-    ) -> tuple[EnvironmentState, Timestep]:
+        self, key: Key, env_state: PgxEnvironmentState, action: Array
+    ) -> tuple[PgxEnvironmentState, Timestep]:
         pgx_state = auto_reset(self.env.step, self.env.init)(
-            env_state.state, action, key
+            env_state.pgx_state, action, key
         )
-        env_state = pgx_state
+        env_state = PgxEnvironmentState(pgx_state=pgx_state)
         timestep = Timestep(
             obs=pgx_state.observation,
             true_obs=pgx_state.observation,

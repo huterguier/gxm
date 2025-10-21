@@ -1,5 +1,6 @@
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Generic, TypeVar
 
 import jax
 import jax.numpy as jnp
@@ -145,10 +146,19 @@ class Trajectory:
         return self.reward.shape[0]
 
 
-EnvironmentState = Any
+class EnvironmentState:
+    """
+    A placeholder class for environment state.
+    This can be replaced with a more specific implementation as needed.
+    """
+
+    pass
 
 
-class Environment:
+TEnvironmentState = TypeVar("TEnvironmentState", bound=EnvironmentState)
+
+
+class Environment(Generic[TEnvironmentState], ABC):
     """
     Base class for environments in ``gxm``.
     Environments should inherit from this class and implement the
@@ -162,7 +172,8 @@ class Environment:
     observation_space: Space
     """The observation space of the environment."""
 
-    def init(self, key: jax.Array) -> tuple[EnvironmentState, Timestep]:
+    @abstractmethod
+    def init(self, key: jax.Array) -> tuple[TEnvironmentState, Timestep]:
         """
         Initialize the environment and return the initial state.
 
@@ -172,15 +183,28 @@ class Environment:
             A tuple containing the initial environment state and the initial timestep.
         """
 
-        del key
-        raise NotImplementedError("This method should be implemented by subclasses.")
+    @abstractmethod
+    def reset(
+        self, key: jax.Array, env_state: TEnvironmentState
+    ) -> tuple[TEnvironmentState, Timestep]:
+        """
+        Reset the environment to its initial state.
 
+        Args:
+            key: A JAX random key for any stochasticity in the environment.
+            env_state: The current state of the environment.
+        Returns:
+            A tuple containing the reset environment state and the initial timestep.
+        """
+        pass
+
+    @abstractmethod
     def step(
         self,
         key: jax.Array,
-        env_state: EnvironmentState,
+        env_state: TEnvironmentState,
         action: jax.Array,
-    ) -> tuple[EnvironmentState, Timestep]:
+    ) -> tuple[TEnvironmentState, Timestep]:
         """
         Perform a step in the environment given an action.
 
@@ -191,23 +215,7 @@ class Environment:
         Returns:
             A tuple containing the new environment state and the resulting timestep.
         """
-        del key, env_state, action
-        raise NotImplementedError("This method should be implemented by subclasses.")
-
-    def reset(
-        self, key: jax.Array, env_state: EnvironmentState
-    ) -> tuple[EnvironmentState, Timestep]:
-        """
-        Reset the environment to its initial state.
-
-        Args:
-            key: A JAX random key for any stochasticity in the environment.
-            env_state: The current state of the environment.
-        Returns:
-            A tuple containing the reset environment state and the initial timestep.
-        """
-        del key, env_state
-        raise NotImplementedError("This method should be implemented by subclasses.")
+        pass
 
     def has_wrapper(self, wrapper_type: type["Environment"]) -> bool:
         """
@@ -219,3 +227,18 @@ class Environment:
             True if the environment or any of its wrappers is of the specified type, False otherwise.
         """
         return isinstance(self, wrapper_type)
+
+    def get_wrapper(self, wrapper_type: type["Environment"]) -> "Environment":
+        """
+        Retrieve the first wrapper of a specific type from the environment.
+
+        Args:
+            wrapper_type: The type of the wrapper to retrieve.
+        Returns:
+            The first wrapper of the specified type.
+        Raises:
+            ValueError: If no wrapper of the specified type is found.
+        """
+        if isinstance(self, wrapper_type):
+            return self
+        raise ValueError(f"No wrapper of type {wrapper_type} found in the environment.")
