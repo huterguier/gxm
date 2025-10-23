@@ -4,7 +4,7 @@ import jax
 import jax.numpy as jnp
 
 from gxm.core import Environment, EnvironmentState, Timestep
-from gxm.typing import Array
+from gxm.typing import Array, Key, PyTree
 from gxm.wrappers.wrapper import Wrapper, WrapperState
 
 
@@ -78,7 +78,7 @@ class RecordEpisodeStatistics(Wrapper[RecordEpisodeStatisticsState]):
             "episodic_discounted_return": episodic_discounted_return,
         }
 
-    def init(self, key: jax.Array) -> tuple[RecordEpisodeStatisticsState, Timestep]:
+    def init(self, key: Key) -> tuple[RecordEpisodeStatisticsState, Timestep]:
         env_state, timestep = self.env.init(key)
         current_stats = CurrentStatistics(
             current_return=jnp.float32(0.0),
@@ -105,7 +105,7 @@ class RecordEpisodeStatistics(Wrapper[RecordEpisodeStatisticsState]):
         return record_episode_stats_state, timestep
 
     def reset(
-        self, key: jax.Array, env_state: RecordEpisodeStatisticsState
+        self, key: Key, env_state: RecordEpisodeStatisticsState
     ) -> tuple[RecordEpisodeStatisticsState, Timestep]:
         env_state, timestep = self.env.reset(key, env_state.env_state)
         current_stats = CurrentStatistics(
@@ -134,9 +134,9 @@ class RecordEpisodeStatistics(Wrapper[RecordEpisodeStatisticsState]):
 
     def step(
         self,
-        key: jax.Array,
+        key: Key,
         env_state: RecordEpisodeStatisticsState,
-        action: jax.Array,
+        action: PyTree,
     ) -> tuple[RecordEpisodeStatisticsState, Timestep]:
         wrapper_state = env_state
         current_stats = wrapper_state.current_stats

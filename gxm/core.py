@@ -4,9 +4,9 @@ from typing import Any, Generic, TypeVar
 
 import jax
 import jax.numpy as jnp
-from jax import Array
 
 from gxm.spaces import Space
+from gxm.typing import Array, Key, PyTree
 
 
 @jax.tree_util.register_dataclass
@@ -26,11 +26,11 @@ class Timestep:
     """Whether the episode has terminated at this timestep."""
     truncated: Array
     """Whether the episode has been truncated at this timestep."""
-    obs: Array
+    obs: PyTree
     """The observation :math:`S_{i+1}` at this timestep :math:`i`."""
-    true_obs: Array
+    true_obs: PyTree
     """The true observation :math:`\hat{S}_{i+1}` at this timestep. This may differ from ``obs`` in environments that allow truncation, if and only if truncation is True. """
-    info: dict[str, Any]
+    info: dict[str, PyTree]
     """Additional information about the timestep."""
 
     @property
@@ -40,7 +40,7 @@ class Timestep:
 
     def transition(
         self,
-        prev_obs: Any,
+        prev_obs: PyTree,
         action: Array,
         prev_info: dict[str, Any] = {},
     ) -> "Transition":
@@ -66,7 +66,7 @@ class Timestep:
         )
 
     def trajectory(
-        self, first_obs: Any, action: Array, first_info: dict[str, Any] = {}
+        self, first_obs: PyTree, action: Array, first_info: dict[str, PyTree] = {}
     ) -> "Trajectory":
         r"""
         Convert a sequence of timesteps :math:`(R_0, S_1, ..., S_n)` with
@@ -98,14 +98,14 @@ class Timestep:
 class Transition:
     """Class representing a single transition :math:`(S_i, A_i, R_i, S_{i+1})` in an environment."""
 
-    prev_obs: Array
-    prev_info: dict[str, Any]
-    action: Array
+    prev_obs: PyTree
+    prev_info: dict[str, PyTree]
+    action: PyTree
     reward: Array
     terminated: Array
     truncated: Array
-    obs: Array
-    info: dict[str, Any]
+    obs: PyTree
+    info: dict[str, PyTree]
 
     @property
     def done(self) -> Array:
@@ -118,11 +118,11 @@ class Transition:
 class Trajectory:
     """Class representing a trajectory :math:`(S_0, A_0, R_0, S_1, ..., S_n)` in an environment."""
 
-    obs: Array
+    obs: PyTree
     """The observations :math:`(S_0, S_1, ..., S_n)` in the trajectory."""
-    true_obs: Array
+    true_obs: PyTree
     """The true observations :math:`(\hat{S}_0, \hat{S}_1, ..., \hat{S}_n)` in the trajectory. These may differ from ``obs`` in environments that allow truncation."""
-    action: Array
+    action: PyTree
     """The actions :math:`(A_0, A_1, ..., A_{n-1})` taken in the trajectory."""
     reward: Array
     """The rewards :math:`(R_0, R_1, ..., R_{n-1})` received in the trajectory."""
@@ -130,7 +130,7 @@ class Trajectory:
     """Whether the episode terminated at each timestep in the trajectory."""
     truncated: Array
     """Whether the episode was truncated at each timestep in the trajectory."""
-    info: dict[str, Any]
+    info: dict[str, PyTree]
     """Additional information about the trajectory."""
 
     @property
@@ -173,7 +173,7 @@ class Environment(Generic[TEnvironmentState], ABC):
     """The observation space of the environment."""
 
     @abstractmethod
-    def init(self, key: jax.Array) -> tuple[TEnvironmentState, Timestep]:
+    def init(self, key: Key) -> tuple[TEnvironmentState, Timestep]:
         """
         Initialize the environment and return the initial state.
 
@@ -185,7 +185,7 @@ class Environment(Generic[TEnvironmentState], ABC):
 
     @abstractmethod
     def reset(
-        self, key: jax.Array, env_state: TEnvironmentState
+        self, key: Key, env_state: TEnvironmentState
     ) -> tuple[TEnvironmentState, Timestep]:
         """
         Reset the environment to its initial state.
@@ -201,9 +201,9 @@ class Environment(Generic[TEnvironmentState], ABC):
     @abstractmethod
     def step(
         self,
-        key: jax.Array,
+        key: Key,
         env_state: TEnvironmentState,
-        action: jax.Array,
+        action: PyTree,
     ) -> tuple[TEnvironmentState, Timestep]:
         """
         Perform a step in the environment given an action.

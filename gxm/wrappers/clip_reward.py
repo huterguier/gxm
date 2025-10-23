@@ -1,7 +1,7 @@
 import jax.numpy as jnp
-from jax import Array
 
 from gxm.core import Environment, EnvironmentState, Timestep
+from gxm.typing import Array, Key, PyTree
 from gxm.wrappers.wrapper import Wrapper
 
 
@@ -26,13 +26,13 @@ class ClipReward(Wrapper):
     def clip(self, reward: Array) -> Array:
         return jnp.clip(reward, self.min, self.max)
 
-    def init(self, key: Array) -> tuple[EnvironmentState, Timestep]:
+    def init(self, key: Key) -> tuple[EnvironmentState, Timestep]:
         env_state, timestep = self.env.init(key)
         timestep.reward = self.clip(timestep.reward)
         return env_state, timestep
 
     def reset(
-        self, key: Array, env_state: EnvironmentState
+        self, key: Key, env_state: EnvironmentState
     ) -> tuple[EnvironmentState, Timestep]:
         env_state, timestep = self.env.reset(key, env_state)
         timestep.reward = self.clip(timestep.reward)
@@ -40,9 +40,9 @@ class ClipReward(Wrapper):
 
     def step(
         self,
-        key: Array,
+        key: Key,
         env_state: EnvironmentState,
-        action: Array,
+        action: PyTree,
     ) -> tuple[EnvironmentState, Timestep]:
         env_state, timestep = self.env.step(key, env_state, action)
         return env_state, timestep

@@ -28,13 +28,17 @@ dev = [
 gymnax = [
   "gymnax",
 ]
+gymnasium = [
+  "gymnasium>=1.0.0",
+  "ale-py",
+]
 envpool = [
   "envpool==0.6.6",
   "gym==0.23.1",
   "numpy<2",
 ]
 pgx = [
-  "pgx>=2.6.0",
+  "pgx",
 ]
 craftax = [
   "craftax",
@@ -43,14 +47,7 @@ navix = [
   "navix",
 ]
 all = [
-  "gymnax",
-  "envpool",
-  "pgx>=2.6.0",
-  "craftax",
-  "navix",
-  "jaxatari@git+https://github.com/huterguier/JAXAtari",
-  "black",
-  "isort",
+  "gxm[gymnax,gymnasium,envpool,pgx,craftax,navix]",
 ]
 
 [project.urls]

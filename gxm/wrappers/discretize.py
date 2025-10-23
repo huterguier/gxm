@@ -1,6 +1,7 @@
-from jax import Array
+import jax
 
 from gxm.core import Environment, EnvironmentState, Timestep
+from gxm.typing import Key, PyTree
 from gxm.wrappers.wrapper import Wrapper
 
 
@@ -23,9 +24,9 @@ class Discretize(Wrapper):
     """
 
     env: Environment
-    actions: Array
+    actions: PyTree
 
-    def __init__(self, env: Environment, actions: Array):
+    def __init__(self, env: Environment, actions: PyTree):
         """
         Args:
             env: The environment to wrap.
@@ -34,19 +35,19 @@ class Discretize(Wrapper):
         self.env = env
         self.actions = actions
 
-    def init(self, key: Array) -> tuple[EnvironmentState, Timestep]:
+    def init(self, key: Key) -> tuple[EnvironmentState, Timestep]:
         return self.env.init(key)
 
     def reset(
-        self, key: Array, env_state: EnvironmentState
+        self, key: Key, env_state: EnvironmentState
     ) -> tuple[EnvironmentState, Timestep]:
         return self.env.reset(key, env_state)
 
     def step(
         self,
-        key: Array,
+        key: Key,
         env_state: EnvironmentState,
-        action: Array,
+        action: PyTree,
     ) -> tuple[EnvironmentState, Timestep]:
-        action = self.actions[action]
+        action = jax.tree.map(lambda x: x[action], self.actions)
         return self.env.step(key, env_state, action)

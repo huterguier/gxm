@@ -55,3 +55,15 @@ class TestWrapper:
         wrapper_states, timesteps = jax.vmap(wrapper.step)(
             keys, wrapper_states, actions
         )
+
+    def test_scan_step(self, wrapper: Wrapper):
+        key = jax.random.key(0)
+        wrapper_state, _ = wrapper.init(key)
+
+        def step_fn(carry, _):
+            wrapper_state = carry
+            action = wrapper.action_space.sample(key)
+            wrapper_state, timestep = wrapper.step(key, wrapper_state, action)
+            return wrapper_state, timestep
+
+        jax.lax.scan(step_fn, wrapper_state, length=10)

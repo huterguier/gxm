@@ -1,11 +1,20 @@
-from jax import Array
+from dataclasses import dataclass
+
+import jax
 from jax import numpy as jnp
 
-from gxm.core import Environment, EnvironmentState, Timestep
-from gxm.wrappers.wrapper import Wrapper
+from gxm.core import Environment, Timestep
+from gxm.typing import Array, Key, PyTree
+from gxm.wrappers.wrapper import Wrapper, WrapperState
 
 
-class EpisodicLife(Wrapper):
+@jax.tree_util.register_dataclass
+@dataclass
+class EpisodicLifeState(WrapperState):
+    lives: Array
+
+
+class EpisodicLife(Wrapper[EpisodicLifeState]):
     """
     A wrapper that makes losing a life in an environment (like Atari games) count as the end of an episode.
     It assumes that the environment's timestep info dictionary contains a "lives" key indicating the number of lives remaining.
@@ -20,25 +29,29 @@ class EpisodicLife(Wrapper):
         """
         self.env = env
 
-    def init(self, key: Array) -> tuple[EnvironmentState, Timestep]:
+    def init(self, key: Key) -> tuple[EpisodicLifeState, Timestep]:
         env_state, timestep = self.env.init(key)
-        return (env_state, timestep.info["lives"]), timestep
+        lives = timestep.info["lives"]
+        episodic_life_state = EpisodicLifeState(env_state=env_state, lives=lives)
+        return episodic_life_state, timestep
 
     def reset(
-        self, key: Array, env_state: EnvironmentState
-    ) -> tuple[EnvironmentState, Timestep]:
-        env_state, timestep = self.env.reset(key, env_state[0])
+        self, key: Key, env_state: EpisodicLifeState
+    ) -> tuple[EpisodicLifeState, Timestep]:
+        env_state, timestep = self.env.reset(key, env_state.env_state)
         lives = timestep.info["lives"]
-        return (env_state, lives), env_state.timestep
+        episodic_life_state = EpisodicLifeState(env_state=env_state, lives=lives)
+        return episodic_life_state, timestep
 
     def step(
         self,
-        key: Array,
-        env_state: EnvironmentState,
-        action: Array,
-    ) -> tuple[EnvironmentState, Timestep]:
-        prev_lives = env_state[1]
-        env_state, timestep = self.env.step(key, env_state[0], action)
+        key: Key,
+        env_state: EpisodicLifeState,
+        action: PyTree,
+    ) -> tuple[EpisodicLifeState, Timestep]:
+        prev_lives = env_state.lives
+        env_state, timestep = self.env.step(key, env_state.env_state, action)
         lives = timestep.info["lives"]
+        episodic_life_state = EpisodicLifeState(env_state=env_state, lives=lives)
         timestep.terminated = jnp.logical_or(timestep.terminated, lives < prev_lives)
-        return (env_state, lives), timestep
+        return episodic_life_state, timestep
