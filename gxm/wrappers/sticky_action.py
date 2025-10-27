@@ -1,18 +1,17 @@
 from dataclasses import dataclass
-from typing import Any
 
 import jax
 import jax.numpy as jnp
-from jax import Array
 
-from gxm.core import Environment, EnvironmentState, Timestep
+from gxm.core import Environment, Timestep
+from gxm.typing import Key, PyTree
 from gxm.wrappers.wrapper import Wrapper, WrapperState
 
 
 @jax.tree_util.register_dataclass
 @dataclass
 class StickyActionState(WrapperState):
-    prev_action: Array
+    prev_action: PyTree
 
 
 class StickyAction(Wrapper):
@@ -22,7 +21,7 @@ class StickyAction(Wrapper):
         self.env = env
         self.stickiness = stickiness
 
-    def init(self, key: Array) -> tuple[StickyActionState, Timestep]:
+    def init(self, key: Key) -> tuple[StickyActionState, Timestep]:
         env_state, timestep = self.env.init(key)
         sticky_action_state = StickyActionState(
             env_state=env_state,
@@ -31,7 +30,7 @@ class StickyAction(Wrapper):
         return sticky_action_state, timestep
 
     def reset(
-        self, key: Array, env_state: StickyActionState
+        self, key: Key, env_state: StickyActionState
     ) -> tuple[StickyActionState, Timestep]:
         env_state, timestep = self.env.reset(key, env_state)
         sticky_action_state = StickyActionState(
@@ -42,9 +41,9 @@ class StickyAction(Wrapper):
 
     def step(
         self,
-        key: Array,
+        key: Key,
         env_state: StickyActionState,
-        action: Array,
+        action: PyTree,
     ) -> tuple[StickyActionState, Timestep]:
         sticky_action = jnp.where(
             jax.random.uniform(key) < self.stickiness,
