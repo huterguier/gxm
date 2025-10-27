@@ -3,7 +3,7 @@ from dataclasses import dataclass
 import jax
 import jax.numpy as jnp
 
-from gxm.core import Environment, EnvironmentState, Timestep
+from gxm.core import Environment, Timestep
 from gxm.typing import Array, Key, PyTree
 from gxm.wrappers.wrapper import Wrapper, WrapperState
 
@@ -28,7 +28,6 @@ class CurrentStatistics:
 @jax.tree_util.register_dataclass
 @dataclass
 class RecordEpisodeStatisticsState(WrapperState):
-    env_state: EnvironmentState
     current_stats: CurrentStatistics
     episode_stats: EpisodeStatistics
 
