@@ -242,3 +242,13 @@ class Environment(Generic[TEnvironmentState], ABC):
         if isinstance(self, wrapper_type):
             return self
         raise ValueError(f"No wrapper of type {wrapper_type} found in the environment.")
+
+    @property
+    def unwrapped(self) -> "Environment":
+        """
+        Retrieve the base environment by unwrapping all wrappers.
+
+        Returns:
+            The base environment without any wrappers.
+        """
+        return self

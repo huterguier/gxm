@@ -35,6 +35,10 @@ class Wrapper(Generic[TWrapperState], Environment[TWrapperState]):
             return self
         return self.env.get_wrapper(wrapper_type)
 
+    @property
+    def unwrapped(self) -> Environment:
+        return self.env.unwrapped
+
     def __getattr__(self, name: str) -> Any:
         if hasattr(self.env, name):
             return getattr(self.env, name)
