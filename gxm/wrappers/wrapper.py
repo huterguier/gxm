@@ -24,6 +24,13 @@ class Wrapper(Generic[TWrapperState], Environment[TWrapperState]):
     """Base class for environment wrappers in gxm."""
 
     env: Environment
+    unwrap: bool = True
+
+    def __init__(self, env: Environment, unwrap: bool = True):
+        self.env = env
+        if isinstance(env, Wrapper) and not unwrap:
+            assert not env.unwrap
+        self.unwrap = unwrap
 
     def has_wrapper(self, wrapper_type: type[Environment]) -> bool:
         if isinstance(self, wrapper_type):
@@ -37,7 +44,9 @@ class Wrapper(Generic[TWrapperState], Environment[TWrapperState]):
 
     @property
     def unwrapped(self) -> Environment:
-        return self.env.unwrapped
+        if self.unwrap:
+            return self.env.unwrapped
+        return self
 
     def __getattr__(self, name: str) -> Any:
         if hasattr(self.env, name):
