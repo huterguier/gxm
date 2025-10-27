@@ -26,13 +26,14 @@ class Discretize(Wrapper):
     env: Environment
     actions: PyTree
 
-    def __init__(self, env: Environment, actions: PyTree):
+    def __init__(self, env: Environment, actions: PyTree, unwrap: bool = True):
         """
         Args:
             env: The environment to wrap.
             actions: The discrete set of actions to map to.
+            unwrap: Whether to unwrap the environment or treat it as part of the base environment.
         """
-        self.env = env
+        super().__init__(env, unwrap=unwrap)
         self.actions = actions
 
     def init(self, key: Key) -> tuple[EnvironmentState, Timestep]:

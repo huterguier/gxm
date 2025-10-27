@@ -12,14 +12,16 @@ class ClipReward(Wrapper):
 
     env: Environment
 
-    def __init__(self, env: Environment, min: float = -1.0, max: float = 1.0):
+    def __init__(
+        self, env: Environment, unwrap: bool = True, min: float = -1.0, max: float = 1.0
+    ):
         """
         Args:
             env: The environment to wrap.
             min: Minimum reward value.
             max: Maximum reward value.
         """
-        self.env = env
+        super().__init__(env, unwrap=unwrap)
         self.min = min
         self.max = max
 

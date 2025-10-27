@@ -18,8 +18,7 @@ class StickyAction(Wrapper):
     """A wrapper that makes actions sticky with a given probability."""
 
     def __init__(self, env: Environment, unwrap: bool = True, stickiness: float = 0.25):
-        super().__init__(env, unwrap)
-        self.env = env
+        super().__init__(env, unwrap=unwrap)
         self.stickiness = stickiness
 
     def init(self, key: Key) -> tuple[StickyActionState, Timestep]:

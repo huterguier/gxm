@@ -9,8 +9,8 @@ from gxm.wrappers.wrapper import Wrapper, WrapperState
 class FlattenObservation(Wrapper):
     """Wrapper that adds a rollout method to the environment."""
 
-    def __init__(self, env: Environment):
-        self.env = env
+    def __init__(self, env: Environment, unwrap: bool = True):
+        super().__init__(env, unwrap=unwrap)
 
     @classmethod
     def flatten(cls, obs: PyTree) -> Array:

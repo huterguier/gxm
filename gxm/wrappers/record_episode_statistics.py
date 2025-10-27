@@ -53,8 +53,14 @@ class RecordEpisodeStatistics(Wrapper[RecordEpisodeStatisticsState]):
     n_episodes: int
     """The number of past episodes to record statistics for."""
 
-    def __init__(self, env: Environment, gamma: float = 1.0, n_episodes: int = 1):
-        self.env = env
+    def __init__(
+        self,
+        env: Environment,
+        unwrap: bool = True,
+        gamma: float = 1.0,
+        n_episodes: int = 1,
+    ):
+        super().__init__(env, unwrap=unwrap)
         self.gamma = gamma
         self.n_episodes = n_episodes
 
