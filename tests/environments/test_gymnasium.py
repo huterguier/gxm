@@ -10,7 +10,7 @@ import gxm
 ale = ALEInterface()
 
 
-class TestGymnax(TestEnvironment):
+class TestGymnasium(TestEnvironment):
     @pytest.fixture(
         params=[
             "CartPole-v1",
