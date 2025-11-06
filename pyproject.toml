@@ -24,31 +24,16 @@ classifiers = [
 dev = [
   "black",
   "isort",
+  "pytest",
+  "pytest-cov",
 ]
-gymnax = [
-  "gymnax",
-]
-gymnasium = [
-  "gymnasium>=1.0.0",
-  "ale-py",
-]
-envpool = [
-  "envpool==0.6.6",
-  "gym==0.23.1",
-  "numpy<2",
-]
-pgx = [
-  "pgx",
-]
-craftax = [
-  "craftax",
-]
-navix = [
-  "navix",
-]
-all = [
-  "gxm[gymnax,gymnasium,envpool,pgx,craftax,navix]",
-]
+gymnax = ["gymnax"]
+gymnasium = ["gymnasium>=1.0.0", "ale-py"]
+envpool = ["envpool==0.6.6", "gym==0.23.1", "numpy<2"]
+pgx = ["pgx"]
+craftax = ["craftax"]
+navix = ["navix"]
+jaxatari = ["jaxatari@git+https://github.com/k4ntz/JAXAtari", "pygame"]
 
 [project.urls]
 Homepage = "https://github.com/huterguier/gxm"
@@ -56,3 +41,12 @@ Homepage = "https://github.com/huterguier/gxm"
 [tool.setuptools.packages.find]
 include = ["gxm", "gxm.*"]
 exclude = ["images"]
+
+
+[tool.uv]
+conflicts = [
+    [
+      { extra = "envpool" },
+      { extra = "jaxatari" },
+    ],
+]

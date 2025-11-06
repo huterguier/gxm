@@ -26,11 +26,18 @@ class JAXAtariEnvironmentState(EnvironmentState):
 class JAXAtariEnvironment(Environment[JAXAtariEnvironmentState]):
     """Base class for JAXAtari environments."""
 
+    jaxatari_id: str
+    """The JAXAtari environment id."""
     env: jaxatari.wrappers.JaxatariWrapper
+    """The JAXAtari environment."""
     env_params: Any
+    """The JAXAtari environment parameters."""
 
     def __init__(self, id: str, **kwargs):
-        env = jaxatari.core.make(id, **kwargs)
+
+        self.id = id
+        self.jaxatari_id = id.split("/", 1)[1]
+        env = jaxatari.core.make(self.jaxatari_id, **kwargs)
         env = AtariWrapper(env)
         self.env = PixelObsWrapper(env)
         self.action_space = self.jaxatari_to_gxm_space(self.env.action_space())
