@@ -17,7 +17,7 @@ class WrapperState(EnvironmentState):
         return getattr(self.env, name)
 
 
-TWrapperState = TypeVar("TWrapperState", bound=EnvironmentState)
+TWrapperState = TypeVar("TWrapperState", bound=WrapperState)
 
 
 class Wrapper(Generic[TWrapperState], Environment[TWrapperState]):
