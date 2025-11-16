@@ -11,11 +11,6 @@ from gxm.core import Environment, EnvironmentState
 class WrapperState(EnvironmentState):
     env_state: EnvironmentState
 
-    def __getattr__(self, name: str) -> Any:
-        if hasattr(self.env, name):
-            return getattr(self.env, name)
-        return getattr(self.env, name)
-
 
 TWrapperState = TypeVar("TWrapperState", bound=WrapperState)
 
