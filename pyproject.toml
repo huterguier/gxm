@@ -22,6 +22,7 @@ classifiers = [
 
 [project.optional-dependencies]
 dev = [
+  "gxm[gymnax,gymnasium]",
   "black",
   "isort",
   "pytest",
