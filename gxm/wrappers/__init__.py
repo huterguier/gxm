@@ -3,6 +3,7 @@
 from gxm.wrappers.clip_reward import ClipReward
 from gxm.wrappers.discretize import Discretize
 from gxm.wrappers.episodic_life import EpisodicLife
+from gxm.wrappers.evaluate import Evaluate
 from gxm.wrappers.flatten_observation import FlattenObservation
 from gxm.wrappers.ignore_truncation import IgnoreTruncation
 from gxm.wrappers.record_episode_statistics import RecordEpisodeStatistics
@@ -15,6 +16,7 @@ __all__ = [
     "ClipReward",
     "Discretize",
     "EpisodicLife",
+    "Evaluate",
     "FlattenObservation",
     "IgnoreTruncation",
     "RecordEpisodeStatistics",
