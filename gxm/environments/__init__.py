@@ -16,11 +16,7 @@ except ImportError:
     GymnasiumEnvironment = None
 try:
     from .envpool_environment import EnvpoolEnvironment
-except (ImportError, AttributeError):
-    if AttributeError:
-        print(
-            "Envpool is not compatible with JAX>=0.5.0 by default. Check the installation guide."
-        )
+except:
     EnvpoolEnvironment = None
 try:
     from gxm.environments.jaxatari_environmnet import JAXAtariEnvironment
