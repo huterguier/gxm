@@ -47,11 +47,14 @@ class EpisodeCounter(Wrapper):
         env_state: EpisodeCounterState,
         action: PyTree,
     ) -> tuple[EpisodeCounterState, Timestep]:
+        episode_counter_state = env_state
         env_state, timestep = self.env.step(key, env_state.env_state, action)
         episode_counter_state = EpisodeCounterState(
             env_state=env_state,
             n_episodes=jnp.where(
-                timestep.done, env_state.n_episodes + 1, env_state.n_episodes
+                timestep.done,
+                episode_counter_state.n_episodes + 1,
+                episode_counter_state.n_episodes,
             ),
         )
         timestep.info["n_episodes"] = episode_counter_state.n_episodes

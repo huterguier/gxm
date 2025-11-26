@@ -47,10 +47,11 @@ class StepCounter(Wrapper):
         env_state: StepCounterState,
         action: PyTree,
     ) -> tuple[StepCounterState, Timestep]:
+        step_counter_state = env_state
         env_state, timestep = self.env.step(key, env_state.env_state, action)
         step_counter_state = StepCounterState(
             env_state=env_state,
-            n_steps=env_state.n_steps + 1,
+            n_steps=step_counter_state.n_steps + 1,
         )
         timestep.info["n_steps"] = step_counter_state.n_steps
         return step_counter_state, timestep
