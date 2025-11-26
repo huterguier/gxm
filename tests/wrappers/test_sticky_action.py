@@ -4,7 +4,7 @@ from test_wrapper import TestWrapper
 from gxm.wrappers import StickyAction, Wrapper
 
 
-class TestDiscretize(TestWrapper):
+class TestStickyAction(TestWrapper):
 
     @pytest.fixture
     def wrapper(self, env) -> Wrapper:
