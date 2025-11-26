@@ -31,6 +31,7 @@ class ClipReward(Wrapper):
     def init(self, key: Key) -> tuple[EnvironmentState, Timestep]:
         env_state, timestep = self.env.init(key)
         timestep.reward = self.clip(timestep.reward)
+        timestep.info["true_reward"] = timestep.reward
         return env_state, timestep
 
     def reset(
@@ -38,6 +39,7 @@ class ClipReward(Wrapper):
     ) -> tuple[EnvironmentState, Timestep]:
         env_state, timestep = self.env.reset(key, env_state)
         timestep.reward = self.clip(timestep.reward)
+        timestep.info["true_reward"] = timestep.reward
         return env_state, timestep
 
     def step(
@@ -47,4 +49,6 @@ class ClipReward(Wrapper):
         action: PyTree,
     ) -> tuple[EnvironmentState, Timestep]:
         env_state, timestep = self.env.step(key, env_state, action)
+        timestep.reward = self.clip(timestep.reward)
+        timestep.info["true_reward"] = timestep.reward
         return env_state, timestep
