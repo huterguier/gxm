@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Sequence
+from typing import Sequence
 
 import jax
 import jax.numpy as jnp
@@ -26,9 +26,9 @@ class StackObservations(Wrapper[StackObservationsState]):
     num_stack: int
     padding: str
 
-    def __init__(self, env: Environment, num_stack: int, padding: str = "reset"):
+    def __init__(self, env: Environment, n_stack: int, padding: str = "reset"):
         self.env = env
-        self.num_stack = num_stack
+        self.num_stack = n_stack
         self.padding = padding
 
     def init(self, key: Key) -> tuple[StackObservationsState, Timestep]:
@@ -38,8 +38,8 @@ class StackObservations(Wrapper[StackObservationsState]):
         env_state, timestep = self.env.init(key)
 
         if self.padding == "reset":
-            obss = stack([self.num_stack * [timestep.obs]])
-            true_obss = stack([self.num_stack * [timestep.true_obs]])
+            obss = stack(self.num_stack * [timestep.obs])
+            true_obss = stack(self.num_stack * [timestep.true_obs])
             timestep.obs = obss
             timestep.true_obs = true_obss
         else:
@@ -60,8 +60,8 @@ class StackObservations(Wrapper[StackObservationsState]):
         env_state, timestep = self.env.reset(key, env_state.env_state)
 
         if self.padding == "reset":
-            obss = stack([self.num_stack * [timestep.obs]])
-            true_obss = stack([self.num_stack * [timestep.true_obs]])
+            obss = stack(self.num_stack * [timestep.obs])
+            true_obss = stack(self.num_stack * [timestep.true_obs])
             timestep.obs = obss
             timestep.true_obs = true_obss
         else:
