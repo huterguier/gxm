@@ -7,7 +7,7 @@ name = "gxm"
 version = "0.1.1"
 description = "Reinforcement Learning Environemts in JAX."
 readme = "README.md"
-requires-python = "==3.10.18"
+requires-python = ">=3.10"
 license = "Apache-2.0"
 authors = [
   { name = "huterguier", email = "huterguier@gmail.com" }
@@ -27,6 +27,7 @@ dev = [
   "isort",
   "pytest",
   "pytest-cov",
+  "tqdx",
 ]
 gymnax = ["gymnax"]
 gymnasium = ["gymnasium>=1.0.0", "ale-py"]
@@ -34,7 +35,6 @@ envpool = ["envpool==0.6.6", "gym==0.23.1", "numpy<2"]
 pgx = ["pgx"]
 craftax = ["craftax"]
 navix = ["navix"]
-jaxatari = ["jaxatari@git+https://github.com/k4ntz/JAXAtari", "pygame"]
 
 [project.urls]
 Homepage = "https://github.com/huterguier/gxm"
