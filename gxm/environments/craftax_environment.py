@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Any
 
 import gymnax.environments.spaces
@@ -7,9 +8,19 @@ from craftax.craftax_env import make_craftax_env_from_name
 
 from gxm.core import Environment, EnvironmentState, Timestep
 from gxm.spaces import Box, Discrete, Space, Tree
+from gxm.typing import Action, Key
 
 
-class CraftaxEnvironment(Environment):
+@jax.tree_util.register_dataclass
+@dataclass
+class CraftaxEnvironmentState(EnvironmentState):
+    """State for Craftax environments."""
+
+    craftax_state: Any
+    """ The Craftax environment state. """
+
+
+class CraftaxEnvironment(Environment[CraftaxEnvironmentState]):
     """Base class for Craftax environments."""
 
     craftax_id: str
@@ -33,36 +44,36 @@ class CraftaxEnvironment(Environment):
             self.env.observation_space(self.env_params)
         )
 
-    def init(self, key: jax.Array) -> tuple[EnvironmentState, Timestep]:
+    def init(self, key: Key) -> tuple[CraftaxEnvironmentState, Timestep]:
         obs, craftax_state = self.env.reset(key, self.env_params)
-        obs, state, reward, done, info = self.env.step(
+        obs, _, _, _, info = self.env.step(
             key, craftax_state, jnp.array(0), self.env_params
         )
-        env_state = craftax_state
+        env_state = CraftaxEnvironmentState(craftax_state=craftax_state)
         timestep = Timestep(
             obs=obs,
             true_obs=obs,
             reward=jnp.float32(0.0),
-            terminated=jnp.bool(False),
+            terminated=jnp.bool(True),
             truncated=jnp.bool(False),
             info=info,
         )
         return env_state, timestep
 
     def reset(
-        self, key: jax.Array, env_state: EnvironmentState
-    ) -> tuple[EnvironmentState, Timestep]:
+        self, key: Key, env_state: CraftaxEnvironmentState
+    ) -> tuple[CraftaxEnvironmentState, Timestep]:
         del env_state
         return self.init(key)
 
     def step(
-        self, key: jax.Array, env_state: EnvironmentState, action: jax.Array
-    ) -> EnvironmentState:
-        craftax_state = env_state
+        self, key: Key, env_state: CraftaxEnvironmentState, action: Action
+    ) -> tuple[CraftaxEnvironmentState, Timestep]:
+        craftax_state = env_state.craftax_state
         obs, craftax_state, reward, done, info = self.env.step(
             key, craftax_state, action, self.env_params
         )
-        env_state = craftax_state
+        env_state = CraftaxEnvironmentState(craftax_state=craftax_state)
         timestep = Timestep(
             obs=obs,
             true_obs=obs,

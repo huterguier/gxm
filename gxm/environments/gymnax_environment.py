@@ -1,7 +1,9 @@
+from dataclasses import dataclass
 from typing import Any
 
 import gymnax
 import gymnax.environments.spaces
+import jax
 import jax.numpy as jnp
 
 from gxm.core import Environment, EnvironmentState, Timestep
@@ -9,6 +11,8 @@ from gxm.spaces import Box, Discrete, Space, Tree
 from gxm.typing import Array, Key
 
 
+@jax.tree_util.register_dataclass
+@dataclass
 class GymnaxEnvironmentState(EnvironmentState):
     """State for Gymnax environments."""
 
@@ -36,12 +40,12 @@ class GymnaxEnvironment(Environment):
 
     def init(self, key: Key) -> tuple[GymnaxEnvironmentState, Timestep]:
         obs, gxm_state = self.env.reset(key, self.env_params)
-        env_state = gxm_state
+        env_state = GymnaxEnvironmentState(gymnax_state=gxm_state)
         timestep = Timestep(
             obs=obs,
             true_obs=obs,
             reward=jnp.float32(0.0),
-            terminated=jnp.bool(False),
+            terminated=jnp.bool(True),
             truncated=jnp.bool(False),
             info={},
         )
@@ -56,17 +60,17 @@ class GymnaxEnvironment(Environment):
     def step(
         self, key: Key, env_state: GymnaxEnvironmentState, action: Array
     ) -> tuple[GymnaxEnvironmentState, Timestep]:
-        gymnax_state = env_state
+        gymnax_state = env_state.gymnax_state
         obs, gymnax_state, reward, done, _ = self.env.step(
             key, gymnax_state, action, self.env_params
         )
-        env_state = gymnax_state
+        env_state = GymnaxEnvironmentState(gymnax_state=gymnax_state)
         timestep = Timestep(
             obs=obs,
             true_obs=obs,
             reward=reward,
             terminated=done,
-            truncated=done,
+            truncated=jnp.bool(False),
             info={},
         )
         return env_state, timestep
