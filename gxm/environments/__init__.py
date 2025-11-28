@@ -22,6 +22,10 @@ try:
     from gxm.environments.jaxatari_environmnet import JAXAtariEnvironment
 except ImportError:
     JAXAtariEnvironment = None
+try:
+    from gxm.environments.xminigrid_environment import XMiniGridEnvironment
+except ImportError:
+    XMiniGridEnvironment = None
 
 __all__ = [
     "GymnaxEnvironment",
@@ -30,4 +34,5 @@ __all__ = [
     "EnvpoolEnvironment",
     "JAXAtariEnvironment",
     "GymnasiumEnvironment",
+    "XMiniGridEnvironment",
 ]

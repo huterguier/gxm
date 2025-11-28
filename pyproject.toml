@@ -35,6 +35,7 @@ envpool = ["envpool==0.6.6", "gym==0.23.1", "numpy<2"]
 pgx = ["pgx"]
 craftax = ["craftax"]
 navix = ["navix"]
+xminigrid = ["xminigrid"]
 
 [project.urls]
 Homepage = "https://github.com/huterguier/gxm"

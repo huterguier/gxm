@@ -5,6 +5,7 @@ from gxm.environments import (
     GymnaxEnvironment,
     JAXAtariEnvironment,
     PgxEnvironment,
+    XMiniGridEnvironment,
 )
 
 
@@ -32,6 +33,7 @@ def make(id: str, **kwargs):
         "Pgx": PgxEnvironment,
         "Envpool": EnvpoolEnvironment,
         "Craftax": CraftaxEnvironment,
+        "XMiniGrid": XMiniGridEnvironment,
         "JAXAtari": JAXAtariEnvironment,
         "Gymnasium": GymnasiumEnvironment,
     }[library]
