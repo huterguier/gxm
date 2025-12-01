@@ -37,6 +37,9 @@ class GymnaxEnvironment(Environment):
         self.action_space = self.gymnax_to_gxm_space(
             self.env.action_space(self.env_params)
         )
+        self.observation_space = self.gymnax_to_gxm_space(
+            self.env.observation_space(self.env_params)
+        )
 
     def init(self, key: Key) -> tuple[GymnaxEnvironmentState, Timestep]:
         obs, gxm_state = self.env.reset(key, self.env_params)
