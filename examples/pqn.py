@@ -1,9 +1,6 @@
 from dataclasses import dataclass
 from typing import Any
 
-import ale_py
-import flax
-import flax.core
 import flax.linen as nn
 import jax
 import jax.numpy as jnp
@@ -18,21 +15,23 @@ from gxm.wrappers import ClipReward, EpisodicLife, RecordEpisodeStatistics
 @jax.tree_util.register_dataclass
 @dataclass
 class PQNState:
-    params: flax.core.FrozenDict
-    opt_state: optax.OptState
-    env_state: gxm.EnvironmentState
-    timestep: gxm.Timestep
-    info: dict[str, Any]
+    key: Array
+    params: Any
+    opt_state: Any
+    env_state: Any
+    timestep: Any
+    info: Any
 
 
 class PQN:
+
     def __init__(self, args, env, network, optimizer):
         self.args = args
         self.env = env
         self.network = network
         self.optimizer = optimizer
-        self.args["n_epochs"] = int(
-            self.args["n_steps"] // (self.args["n_envs"] * self.args["n_steps_rollout"])
+        self.args["n_loops"] = int(
+            self.args["n_steps"] // (self.args["n_steps_rollout"] * self.args["n_envs"])
         )
 
     def init(self, key):
@@ -44,53 +43,53 @@ class PQN:
         )
         opt_state = self.optimizer.init(params)
         info = {"step": 0, "episode": 0, "update": 0}
+
         return PQNState(
+            key=key,
+            info=info,
             params=params,
             opt_state=opt_state,
             env_state=env_state,
             timestep=timestep,
-            info=info,
         )
 
-    def rollout(self, key, alg_state):
+    def rollout(self, key, alg_state, n_steps):
 
-        def policy(key, alg_state, obs):
+        def pi_epsilon(key, alg_state, obs):
             key_e, key_action = jax.random.split(key)
             epsilon = optax.linear_schedule(
                 self.args["e_start"],
                 self.args["e_end"],
                 self.args["e_fraction"] * self.args["n_steps"],
             )(alg_state.info["step"])
-            action_random: Array = self.env.action_space.sample(key_action)
+            action_random = self.env.action_space.sample(key_action)
             q = self.network.apply(alg_state.params, obs)
             action_greedy = jnp.argmax(q, axis=-1)
             action = jnp.where(
-                jax.random.uniform(key_e) < epsilon,
-                action_random,
-                action_greedy,
+                jax.random.uniform(key_e) < epsilon, action_random, action_greedy
             )
             return action, q
 
         def step(alg_state, key):
             obs = alg_state.timestep.obs
             keys_pi, keys_step = jax.random.split(key, (2, self.args["n_envs"]))
-            action, q = jax.vmap(policy, (0, None, 0))(keys_pi, alg_state, obs)
+            action, q = jax.vmap(pi_epsilon, (0, None, 0))(keys_pi, alg_state, obs)
             env_state, timestep = jax.vmap(self.env.step)(
                 keys_step, alg_state.env_state, action
             )
-            transition = timestep.transition(obs, action)
-            transition.info["q"] = q
+            transition = timestep.transition(prev_obs=obs, action=action)
             alg_state.env_state = env_state
             alg_state.timestep = timestep
             alg_state.info["step"] += self.args["n_envs"]
-            return alg_state, transition
 
-        keys = jax.random.split(key, self.args["n_steps_rollout"])
-        alg_state, batch = jax.lax.scan(step, alg_state, keys)
-        return alg_state, batch
+            return alg_state, (transition, q)
 
-    def minibatches(self, key, alg_state, transitions):
-        def lambda_returns(transitions, last_q):
+        keys = jax.random.split(key, n_steps)
+        alg_state, (transitions, qs) = jax.lax.scan(step, alg_state, keys)
+        return alg_state, transitions, qs
+
+    def minibatches(self, key, alg_state, transitions, qs, n_minibatches):
+        def lambda_returns(timesteps, qs, last_q):
             def lambda_step(carry, x):
                 g_next, q_next = carry
                 reward, qs, done = x
@@ -102,14 +101,14 @@ class PQN:
                 return (g, q), g + delta
 
             g_t = (
-                transitions.reward[-1]
-                + self.args["gamma"] * (1 - transitions.done[-1]) * last_q
+                timesteps.reward[-1]
+                + self.args["gamma"] * (1 - timesteps.done[-1]) * last_q
             )
-            q_t = jnp.max(transitions.info["q"][-1], axis=-1)
+            q_t = jnp.max(qs[-1], axis=-1)
             _, returns = jax.lax.scan(
                 lambda_step,
                 (g_t, q_t),
-                (transitions.reward, transitions.info["q"], transitions.done),
+                (timesteps.reward, qs, timesteps.done),
                 reverse=True,
             )
             return returns
@@ -117,27 +116,25 @@ class PQN:
         last_q = jax.vmap(self.network.apply, (None, 0))(
             alg_state.params, transitions.obs[-1]
         )
-        targets = lambda_returns(transitions, jnp.max(last_q, axis=-1))
+        targets = lambda_returns(transitions, qs, jnp.max(last_q, axis=-1))
         batches = (transitions, targets)
         batch = jax.tree.map(lambda x: x.reshape(-1, *x.shape[2:]), batches)
         batch = jax.tree.map(lambda x: jax.random.permutation(key, x), batch)
         minibatches = jax.tree.map(
-            lambda x: x.reshape(self.args["n_minibatches"], -1, *x.shape[1:]),
+            lambda x: x.reshape(n_minibatches, -1, *x.shape[1:]),
             batch,
         )
         return minibatches
 
-    def update(self, key, alg_state, minibatches):
-        del key
+    def update(self, alg_state, minibatches, n_update_epochs):
+
+        def q_pred(params, sample):
+            qs_pred = self.network.apply(params, sample.prev_obs)
+            q_pred = qs_pred[sample.action]
+            return q_pred
 
         def loss(params, minibatch):
             batch, targets = minibatch
-
-            def q_pred(params, sample):
-                qs_pred = self.network.apply(params, sample.obs)
-                q_pred = qs_pred[sample.action]
-                return q_pred
-
             qs_pred = jax.vmap(q_pred, (None, 0))(params, batch)
             loss = jnp.mean((qs_pred - targets) ** 2)
             return loss
@@ -156,26 +153,45 @@ class PQN:
             return state_minibatches, None
 
         (alg_state, _), _ = jax.lax.scan(
-            update_epoch, (alg_state, minibatches), length=self.args["n_update_epochs"]
+            update_epoch, (alg_state, minibatches), length=n_update_epochs
         )
 
         return alg_state
 
-    def train(self, key):
-        def epoch(alg_state, key):
-            key_rollout, key_minibatch, key_update = jax.random.split(key, 3)
-            alg_state, transitions = self.rollout(key_rollout, alg_state)
-            minibatches = self.minibatches(key_minibatch, alg_state, transitions)
-            alg_state = self.update(key_update, alg_state, minibatches)
-            return alg_state, _
-
-        key_init, key_epoch = jax.random.split(key)
-        alg_state = self.init(key_init)
-        alg_state, _ = tqdx.scan(
-            epoch,
-            alg_state,
-            jax.random.split(key_epoch, self.args["n_epochs"]),
+    def loop(self, key, alg_state):
+        alg_state, samples, qs = self.rollout(
+            key, alg_state, self.args["n_steps_rollout"]
         )
+        minibatches = self.minibatches(
+            key, alg_state, samples, qs, self.args["n_minibatches"]
+        )
+        alg_state = self.update(alg_state, minibatches, self.args["n_update_epochs"])
+        # jax.debug.print(
+        #     "Step: {s}, Update: {u}, Return: {r}",
+        #     s=alg_state.info["step"],
+        #     u=alg_state.info["update"],
+        #     r=alg_state.timestep.info["episodic_return"].mean(),
+        # )
+        return alg_state
+
+    def train(self, key, init_alg_state=None):
+
+        def loop(alg_state, key):
+            alg_state = self.loop(key, alg_state)
+            return alg_state, None
+
+        key_init, key_eval, key_epoch = key, *jax.random.split(key)
+        if init_alg_state is None:
+            alg_state = self.init(key_init)
+        else:
+            alg_state = init_alg_state
+
+        alg_state, _ = tqdx.scan(
+            loop,
+            alg_state,
+            jax.random.split(key_epoch, self.args["n_loops"]),
+        )
+
         return alg_state
 
 
@@ -184,6 +200,7 @@ class Network(nn.Module):
 
     @nn.compact
     def __call__(self, x):
+        x = jnp.transpose(x, (1, 2, 0))
         x = x / 255.0
         x = nn.Conv(32, kernel_size=(8, 8), strides=(4, 4))(x)
         x = nn.LayerNorm()(x)
@@ -194,12 +211,12 @@ class Network(nn.Module):
         x = nn.Conv(64, kernel_size=(3, 3), strides=(1, 1))(x)
         x = nn.LayerNorm()(x)
         x = nn.relu(x)
-        x = x.reshape((x.shape[0], -1))
+        x = x.reshape(-1)
         x = nn.Dense(512)(x)
         x = nn.LayerNorm()(x)
         x = nn.relu(x)
         x = nn.Dense(self.action_dim)(x)
-        return x
+        return x.squeeze()
 
 
 if __name__ == "__main__":
@@ -207,7 +224,6 @@ if __name__ == "__main__":
         "n_steps": 5e7,
         "n_envs": 128,
         "n_steps_rollout": 32,
-        "n_steps_loop": 5,
         "n_minibatches": 32,
         "n_update_epochs": 2,
         "gamma": 0.99,
@@ -215,9 +231,11 @@ if __name__ == "__main__":
         "lr": 2.5e-4,
         "max_grad_norm": 10.0,
         "e_start": 1.0,
-        "e_end": 0.001,
+        "e_end": 0.0005,
         "e_fraction": 0.1,
     }
+    import ale_py
+
     env = gxm.make("Gymnasium/ALE/Breakout-v5", reward_clipping=False)
     env = RecordEpisodeStatistics(env)
     env = EpisodicLife(env)
@@ -228,4 +246,4 @@ if __name__ == "__main__":
     )
 
     alg = PQN(args, env, network, optimizer)
-    agent_state = alg.train(jax.random.key(0))
+    agent_state = jax.jit(alg.train)(jax.random.key(0))
