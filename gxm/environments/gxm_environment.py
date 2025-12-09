@@ -45,13 +45,18 @@ class GxmEnvironment(Generic[TGxmEnvironmentState], Environment[TGxmEnvironmentS
             env_state_step,
             env_state_reset,
         )
+        obs = jax.tree.map(
+            lambda x_step, x_reset: jnp.where(timestep_step.done, x_reset, x_step),
+            timestep_step.obs,
+            timestep_reset.obs,
+        )
         true_obs = jax.tree.map(
             lambda x_step, x_reset: jnp.where(timestep_step.truncated, x_reset, x_step),
             timestep_step.obs,
             timestep_reset.obs,
         )
         timestep = Timestep(
-            obs=timestep_step.obs,
+            obs=obs,
             true_obs=true_obs,
             reward=timestep_step.reward,
             terminated=timestep_step.terminated,
