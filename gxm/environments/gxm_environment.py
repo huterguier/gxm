@@ -1,4 +1,5 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
+from typing import Generic, TypeVar
 
 import jax
 import jax.numpy as jnp
@@ -11,29 +12,32 @@ class GxmEnvironmentState(EnvironmentState):
     pass
 
 
-class GxmEnvironment(Environment[GxmEnvironmentState], ABC):
+TGxmEnvironmentState = TypeVar("TGxmEnvironmentState", bound=GxmEnvironmentState)
+
+
+class GxmEnvironment(Generic[TGxmEnvironmentState], Environment[TGxmEnvironmentState]):
     """Base class for Gxm environments."""
 
     gxm_id: str
     """ The Gxm environment ID. """
 
-    def init(self, key: Key) -> tuple[GxmEnvironmentState, Timestep]:
+    def init(self, key: Key) -> tuple[TGxmEnvironmentState, Timestep]:
         env_state, timestep = self._reset(key)
         return env_state, timestep
 
     def reset(
-        self, key: Key, env_state: GxmEnvironmentState
-    ) -> tuple[GxmEnvironmentState, Timestep]:
+        self, key: Key, env_state: TGxmEnvironmentState
+    ) -> tuple[TGxmEnvironmentState, Timestep]:
         env_state, timestep = self._reset(key)
         return env_state, timestep
 
     @abstractmethod
-    def _reset(self, key: Key) -> tuple[GxmEnvironmentState, Timestep]:
+    def _reset(self, key: Key) -> tuple[TGxmEnvironmentState, Timestep]:
         pass
 
     def step(
-        self, key: Key, env_state: GxmEnvironmentState, action: Action
-    ) -> tuple[GxmEnvironmentState, Timestep]:
+        self, key: Key, env_state: TGxmEnvironmentState, action: Action
+    ) -> tuple[TGxmEnvironmentState, Timestep]:
         env_state_step, timestep_step = self._step(key, env_state, action)
         env_state_reset, timestep_reset = self._reset(key)
         env_state = jax.tree.map(
@@ -58,6 +62,6 @@ class GxmEnvironment(Environment[GxmEnvironmentState], ABC):
 
     @abstractmethod
     def _step(
-        self, key: Key, env_state: GxmEnvironmentState, action: Action
-    ) -> tuple[GxmEnvironmentState, Timestep]:
+        self, key: Key, env_state: TGxmEnvironmentState, action: Action
+    ) -> tuple[TGxmEnvironmentState, Timestep]:
         pass
