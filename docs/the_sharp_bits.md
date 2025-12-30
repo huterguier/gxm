@@ -74,3 +74,8 @@ space = Tree({
     }
 })
 ```
+
+## Vmapping over `init`
+
+- can be dangerous because keys determine the number of environments created
+- if youre not careful and you dont vmap over keys correctly you might end up with fewer or more environments than you expect

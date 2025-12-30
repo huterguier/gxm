@@ -166,12 +166,12 @@ class PQN:
             key, alg_state, samples, qs, self.args["n_minibatches"]
         )
         alg_state = self.update(alg_state, minibatches, self.args["n_update_epochs"])
-        # jax.debug.print(
-        #     "Step: {s}, Update: {u}, Return: {r}",
-        #     s=alg_state.info["step"],
-        #     u=alg_state.info["update"],
-        #     r=alg_state.timestep.info["episodic_return"].mean(),
-        # )
+        jax.debug.print(
+            "Step: {s}, Update: {u}, Return: {r}",
+            s=alg_state.info["step"],
+            u=alg_state.info["update"],
+            r=alg_state.timestep.info["episodic_return"].mean(),
+        )
         return alg_state
 
     def train(self, key, init_alg_state=None):
@@ -222,11 +222,11 @@ class Network(nn.Module):
 if __name__ == "__main__":
     args = {
         "n_steps": 5e7,
-        "n_envs": 128,
-        "n_steps_rollout": 32,
+        "n_envs": 16,
+        "n_steps_rollout": 256,
         "n_minibatches": 32,
         "n_update_epochs": 2,
-        "gamma": 0.99,
+        "gamma": 0.995,
         "lambda": 0.65,
         "lr": 2.5e-4,
         "max_grad_norm": 10.0,

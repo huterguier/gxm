@@ -16,7 +16,6 @@ class TestGymnasium(TestEnvironment):
             "CartPole-v1",
             "MountainCar-v0",
             "Acrobot-v1",
-            # "MountainCarContinuous-v0",
         ]
     )
     def env(self, request):
@@ -30,6 +29,23 @@ class TestGymnasium(TestEnvironment):
     )
     def id(self, request):
         return request.param
+
+    def test_vmap(self, env):
+        key = jax.random.key(0)
+        keyss = jax.random.split(key, (10, 10))
+
+        def rollout(key):
+            env_state, _ = env.init(key)
+
+            def step(env_state, key):
+                action = env.action_space.sample(key)
+                return env.step(key, env_state, action)
+
+            keys = jax.random.split(key, 100)
+            env_state, timesteps = jax.lax.scan(step, env_state, keys)
+            return timesteps
+
+        _ = jax.vmap(jax.vmap(rollout))(keyss)
 
     def test_equality(self, id):
         env_gxm = gxm.make("Gymnasium/" + id)
