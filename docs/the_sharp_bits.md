@@ -75,7 +75,35 @@ space = Tree({
 })
 ```
 
-## Vmapping over `init`
+## Vmapping over functions that contain `init`
 
-- can be dangerous because keys determine the number of environments created
-- if youre not careful and you dont vmap over keys correctly you might end up with fewer or more environments than you expect
+Let's say you have written a small rollout function that takes in a single key and an action and returns the environment state after 10 steps with that action.
+
+```python
+env = gxm.make("Gymnasium/LunarLander-v3")
+def rollout(key, action):
+    def step(env_state, _):
+        env_state, _ = env.step(key, env_state, action)
+        return env_state, None
+
+    env_state, _ = env.init(key)
+    env_state, _ = jax.lax.scan(step, env_state, None, length=10)
+    return env_state
+```
+
+You can vmap over the `rollout` function to perform multiple rollouts in parallel.
+Assuming that you don't care much about randomness you might be tempted to do something like this.
+
+```python
+key = jax.random.key(0)
+actions = env.action_space.sample(key, (5))
+batched_rollout = jax.vmap(rollout, (None, 0))(key, actions)
+```
+
+For all JAX-native environments this will work as expected since JAX can infer that the shape of the environment. However for all CPU-based environments this will fail as the `init` function looks at the key to determine the number of environments to create.
+To fix this you need to make sure that you're vmapping over the keys as well.
+
+```python
+keys = jax.random.split(key, 5)
+batched_rollout = jax.vmap(rollout)(keys, actions)
+```
