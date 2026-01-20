@@ -2,11 +2,12 @@ from dataclasses import dataclass
 from typing import cast
 
 import jax
+import jax.numpy as jnp
 import pgx
 from pgx.experimental import auto_reset
 
 from gxm.core import Environment, EnvironmentState, Timestep
-from gxm.spaces import Discrete
+from gxm.spaces import Box, Discrete
 from gxm.typing import Array, Key
 
 
@@ -32,6 +33,7 @@ class PgxEnvironment(Environment[PgxEnvironmentState]):
         self.pgx_id = id.split("/", 1)[1]
         self.env = pgx.make(cast(pgx.EnvId, self.pgx_id), **kwargs)
         self.action_space = Discrete(self.env.num_actions)
+        self.observation_space = Box(-jnp.inf, jnp.inf, self.env.observation_shape)
 
     def init(self, key: Key) -> tuple[PgxEnvironmentState, Timestep]:
         pgx_state = self.env.init(key)
