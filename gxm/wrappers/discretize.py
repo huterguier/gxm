@@ -1,6 +1,7 @@
 import jax
 
 from gxm.core import Environment, EnvironmentState, Timestep
+from gxm.spaces import Discrete
 from gxm.typing import Key, PyTree
 from gxm.wrappers.wrapper import Wrapper
 
@@ -35,6 +36,7 @@ class Discretize(Wrapper):
         """
         super().__init__(env, unwrap=unwrap)
         self.actions = actions
+        self.action_space = Discrete(len(actions))
 
     def init(self, key: Key) -> tuple[EnvironmentState, Timestep]:
         return self.env.init(key)
