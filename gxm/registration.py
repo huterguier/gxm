@@ -1,4 +1,5 @@
 from gxm.environments import (
+    BraxEnvironment,
     CraftaxEnvironment,
     EnvpoolEnvironment,
     GymnasiumEnvironment,
@@ -38,5 +39,6 @@ def make(id: str, **kwargs):
         "JAXAtari": JAXAtariEnvironment,
         "Gymnasium": GymnasiumEnvironment,
         "Navix": NavixEnvironment,
+        "Brax": BraxEnvironment,
     }[library]
     return Environment(id, **kwargs)

@@ -30,6 +30,10 @@ try:
     from gxm.environments.navix_environmnent import NavixEnvironment
 except ImportError:
     NavixEnvironment = None
+try:
+    from gxm.environments.brax_environment import BraxEnvironment
+except ImportError:
+    BraxEnvironment = None
 
 __all__ = [
     "GymnaxEnvironment",
@@ -40,4 +44,5 @@ __all__ = [
     "GymnasiumEnvironment",
     "XMiniGridEnvironment",
     "NavixEnvironment",
+    "BraxEnvironment",
 ]
