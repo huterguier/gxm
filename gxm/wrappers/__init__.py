@@ -12,6 +12,7 @@ from gxm.wrappers.rollout import Rollout
 from gxm.wrappers.stack_observations import StackObservations
 from gxm.wrappers.step_counter import StepCounter
 from gxm.wrappers.sticky_action import StickyAction
+from gxm.wrappers.time_limit import TimeLimit
 from gxm.wrappers.wrapper import Wrapper
 
 __all__ = [
@@ -27,5 +28,6 @@ __all__ = [
     "StackObservations",
     "StepCounter",
     "StickyAction",
+    "TimeLimit",
     "Wrapper",
 ]
