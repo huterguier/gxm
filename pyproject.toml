@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gxm"
-version = "0.1.1"
+version = "0.1.2"
 description = "Reinforcement Learning Environemts in JAX."
 readme = "README.md"
 requires-python = ">=3.10"
