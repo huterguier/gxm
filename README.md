@@ -95,7 +95,7 @@ Please also cite the underlying environment libraries that you used. Their Githu
   author = {Henrik Metternich},
   title = {{gxm}: Unified Functional Interface for RL Environments in JAX},
   url = {https://github.com/huterguier/gxm},
-  version = {0.1.1},
+  version = {0.1.3},
   year = {2025},
 }
 ```
