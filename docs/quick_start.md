@@ -18,12 +18,12 @@ env = gxm.make("Envpool/Breakout-v5")
 ```
 Below are some example environment IDs for different backends.
 
-| Library Backend | Example ID                       |
-|-----------------|----------------------------------|
-| Gymnax          | Gymnax/CartPole-v1               |
-| Envpool         | Envpool/Breakout-v5              |
-| Pgx             | Pgx/MountainCarContinuous-v0     |
-| Craftax         | Craftax/Craftax-Classic-v1       |
+| Library Backend | Example ID                             |
+|-----------------|----------------------------------------|
+| Gymnax          | Gymnax/CartPole-v1                     |
+| Envpool         | Envpool/Breakout-v5                    |
+| Gymnasium       | Gymnasium/MountainCarContinuous-v0     |
+| Craftax         | Craftax/Craftax-Classic-v1             |
 
 ## 3. Spaces
 
