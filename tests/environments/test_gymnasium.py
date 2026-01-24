@@ -16,6 +16,7 @@ class TestGymnasium(TestEnvironment):
             "CartPole-v1",
             "MountainCar-v0",
             "Acrobot-v1",
+            "MountainCarContinuous-v0",
         ]
     )
     def env(self, request):
