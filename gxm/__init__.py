@@ -1,5 +1,5 @@
 from gxm.core import Environment, EnvironmentState, Timestep, Trajectory, Transition
-from gxm.registration import make
+from gxm.registration import make, register
 
 __all__ = [
     "Environment",
@@ -8,4 +8,5 @@ __all__ = [
     "Transition",
     "Trajectory",
     "make",
+    "register",
 ]
