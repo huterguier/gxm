@@ -34,6 +34,10 @@ try:
     from gxm.environments.brax_environment import BraxEnvironment
 except ImportError:
     BraxEnvironment = None
+try:
+    from gxm.environments.mettagrid_environment import MettagridEnvironment
+except ImportError:
+    MettagridEnvironment = None
 
 __all__ = [
     "GymnaxEnvironment",
@@ -45,4 +49,5 @@ __all__ = [
     "XMiniGridEnvironment",
     "NavixEnvironment",
     "BraxEnvironment",
+    "MettagridEnvironment",
 ]

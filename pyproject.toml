@@ -37,6 +37,7 @@ pgx = ["pgx"]
 craftax = ["craftax"]
 navix = ["navix"]
 xminigrid = ["xminigrid"]
+mettagrid = ["mettagrid", "pufferlib>=0.6.0"]
 
 [project.urls]
 Homepage = "https://github.com/huterguier/gxm"

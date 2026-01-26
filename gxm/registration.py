@@ -5,6 +5,7 @@ from gxm.environments import (
     GymnasiumEnvironment,
     GymnaxEnvironment,
     JAXAtariEnvironment,
+    MettagridEnvironment,
     NavixEnvironment,
     PgxEnvironment,
     XMiniGridEnvironment,
@@ -40,5 +41,6 @@ def make(id: str, **kwargs):
         "Gymnasium": GymnasiumEnvironment,
         "Navix": NavixEnvironment,
         "Brax": BraxEnvironment,
+        "Mettagrid": MettagridEnvironment,
     }[library]
     return Environment(id, **kwargs)
