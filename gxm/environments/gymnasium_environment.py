@@ -32,9 +32,13 @@ class GymnasiumEnvironment(Environment[GymnasiumState]):
         self.id = id
         self.gymnasium_id = id.split("/", 1)[1]
         env = gymnasium.make_vec(self.gymnasium_id, num_envs=1, **kwargs)
-        obs, _ = env.reset()
+        obs, info_reset = env.reset()
         action = env.action_space.sample()
-        obs, reward, terminated, truncated, info = env.step(action)
+        obs, reward, terminated, truncated, info_step = env.step(action)
+        if jax.tree.structure(info_reset) != jax.tree.structure(info_step):
+            info = info_step
+        else:
+            info = info_reset
         env_state = GymnasiumState(env_id=jnp.int32(0))
         timestep = Timestep(
             obs=jnp.array(obs),
@@ -63,6 +67,13 @@ class GymnasiumEnvironment(Environment[GymnasiumState]):
                 self.gymnasium_id, num_envs=num_envs, **self.kwargs
             )
             obs, info = envs.reset(seed=0)
+            if jax.tree.structure(info) != jax.tree.structure(
+                self.return_shape_dtype[1].info
+            ):
+                info = jax.tree.map(
+                    lambda x: jnp.zeros((num_envs,) + x.shape[1:], x.dtype),
+                    self.return_shape_dtype[1].info,
+                )
             env_id = len(envs_gymnasium)
             envs_gymnasium[env_id] = envs
             env_state = GymnasiumState(env_id=jnp.full(shape, env_id, dtype=jnp.int32))
@@ -93,7 +104,15 @@ class GymnasiumEnvironment(Environment[GymnasiumState]):
             global envs_gymnasium
             shape = env_id.shape
             envs = envs_gymnasium[np.ravel(env_id)[0]]
+            num_envs = env_id.size
             obs, info = envs.reset()
+            if jax.tree.structure(info) != jax.tree.structure(
+                self.return_shape_dtype[1].info
+            ):
+                info = jax.tree.map(
+                    lambda x: jnp.zeros((num_envs,) + x.shape[1:], x.dtype),
+                    self.return_shape_dtype[1].info,
+                )
             env_state = GymnasiumState(env_id=jnp.full(shape, env_id, dtype=jnp.int32))
             timestep = Timestep(
                 obs=jnp.reshape(obs, shape + obs.shape[1:]),
@@ -122,7 +141,9 @@ class GymnasiumEnvironment(Environment[GymnasiumState]):
             global envs_gymnasium
             shape = env_id.shape
             envs = envs_gymnasium[np.ravel(env_id)[0]]
-            actions = np.reshape(np.asarray(action), (-1,))
+            actions = jax.tree.map(
+                lambda a: np.asarray(a).reshape(-1, *action.shape[len(shape) :]), action
+            )
             obs, reward, terminated, truncated, info = envs.step(actions)
             env_state = GymnasiumState(env_id=env_id)
             timestep = Timestep(

@@ -10,6 +10,29 @@ from gxm.environments import (
     XMiniGridEnvironment,
 )
 
+_registry = {
+    "Gymnax": GymnaxEnvironment,
+    "Pgx": PgxEnvironment,
+    "Envpool": EnvpoolEnvironment,
+    "Craftax": CraftaxEnvironment,
+    "XMiniGrid": XMiniGridEnvironment,
+    "JAXAtari": JAXAtariEnvironment,
+    "Gymnasium": GymnasiumEnvironment,
+    "Navix": NavixEnvironment,
+    "Brax": BraxEnvironment,
+}
+
+
+def register(library: str, environment_class):
+    """
+    Register a new environment library.
+
+    Args:
+        library (str): The name of the library to register.
+        environment_class: The environment class to associate with the library.
+    """
+    _registry[library] = environment_class
+
 
 def make(id: str, **kwargs):
     """
@@ -30,15 +53,8 @@ def make(id: str, **kwargs):
         >>> env = make("Envpool/Pong-v5")
     """
     library = id.split("/", 1)[0]
-    Environment = {
-        "Gymnax": GymnaxEnvironment,
-        "Pgx": PgxEnvironment,
-        "Envpool": EnvpoolEnvironment,
-        "Craftax": CraftaxEnvironment,
-        "XMiniGrid": XMiniGridEnvironment,
-        "JAXAtari": JAXAtariEnvironment,
-        "Gymnasium": GymnasiumEnvironment,
-        "Navix": NavixEnvironment,
-        "Brax": BraxEnvironment,
-    }[library]
+    if library not in _registry:
+        raise ValueError(f"Unknown environment library: {library}")
+    Environment = _registry[library]
     return Environment(id, **kwargs)
+
