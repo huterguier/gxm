@@ -164,3 +164,4 @@ cython_debug/
 
 runs/
 wandb/
+uv.lock
