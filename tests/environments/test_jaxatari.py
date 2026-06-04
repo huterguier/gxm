@@ -1,4 +1,5 @@
 import pytest
+pytest.importorskip("jaxatari")
 from test_environment import TestEnvironment
 
 import gxm

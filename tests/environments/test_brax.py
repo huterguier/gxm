@@ -1,6 +1,7 @@
+import pytest
+pytest.importorskip("brax")
 import brax.envs
 import jax
-import pytest
 from test_environment import TestEnvironment
 
 import gxm
