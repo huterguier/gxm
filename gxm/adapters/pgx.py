@@ -32,8 +32,8 @@ class PgxAdapter(Environment[PgxState]):
         pgx_state = self.env.init(key)
         env_state = PgxState(pgx_state=pgx_state)
         timestep = Timestep(
-            obs=pgx_state.observation,
-            true_obs=pgx_state.observation,
+            next_obs=pgx_state.observation,
+            true_next_obs=pgx_state.observation,
             reward=pgx_state.rewards[pgx_state.current_player],
             terminated=pgx_state.terminated,
             truncated=pgx_state.truncated,
@@ -49,8 +49,8 @@ class PgxAdapter(Environment[PgxState]):
         pgx_state = auto_reset(self.env.step, self.env.init)(env_state.pgx_state, action, key)
         env_state = PgxState(pgx_state=pgx_state)
         timestep = Timestep(
-            obs=pgx_state.observation,
-            true_obs=pgx_state.observation,
+            next_obs=pgx_state.observation,
+            true_next_obs=pgx_state.observation,
             reward=pgx_state.rewards[pgx_state.current_player],
             terminated=pgx_state.terminated,
             truncated=pgx_state.truncated,

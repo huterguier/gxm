@@ -58,8 +58,8 @@ class GymnaxAdapter(Environment[GymnaxState]):
         obs, gymnax_state = self.env.reset(key, self.env_params)
         env_state = GymnaxState(gymnax_state=gymnax_state)
         timestep = Timestep(
-            obs=obs,
-            true_obs=obs,
+            next_obs=obs,
+            true_next_obs=obs,
             reward=jnp.float32(0.0),
             terminated=jnp.bool(True),
             truncated=jnp.bool(False),
@@ -76,8 +76,8 @@ class GymnaxAdapter(Environment[GymnaxState]):
         obs, gymnax_state, reward, done, _ = self.env.step(key, gymnax_state, action, self.env_params)
         env_state = GymnaxState(gymnax_state=gymnax_state)
         timestep = Timestep(
-            obs=obs,
-            true_obs=obs,
+            next_obs=obs,
+            true_next_obs=obs,
             reward=reward,
             terminated=done,
             truncated=jnp.bool(False),
@@ -106,8 +106,8 @@ class _GymnaxToGxm(Environment[_WrappedGymnaxState]):
             key, state, self._env.action_space(self._params).sample(key), self._params
         )
         timestep = Timestep(
-            obs=obs,
-            true_obs=obs,
+            next_obs=obs,
+            true_next_obs=obs,
             reward=jnp.float32(0.0),
             terminated=jnp.bool(True),
             truncated=jnp.bool(False),
@@ -124,8 +124,8 @@ class _GymnaxToGxm(Environment[_WrappedGymnaxState]):
             key, env_state.gymnax_state, action, self._params
         )
         timestep = Timestep(
-            obs=obs,
-            true_obs=obs,
+            next_obs=obs,
+            true_next_obs=obs,
             reward=reward,
             terminated=done,
             truncated=jnp.bool(False),
@@ -145,12 +145,12 @@ class _GxmToGymnax:
     def step(self, key: Key, state: Any, action: Any, params: Optional[Any] = None):
         del params
         next_state, timestep = self._env.step(key, state, action)
-        return timestep.obs, next_state, timestep.reward, timestep.done, timestep.info
+        return timestep.next_obs, next_state, timestep.reward, timestep.done, timestep.info
 
     def reset(self, key: Key, params: Optional[Any] = None):
         del params
         state, timestep = self._env.init(key)
-        return timestep.obs, state
+        return timestep.next_obs, state
 
     def action_space(self, params: Optional[Any] = None):
         del params

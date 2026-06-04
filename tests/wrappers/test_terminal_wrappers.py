@@ -12,11 +12,11 @@ class TestTerminalWrappers:
 
         key = jax.random.PRNGKey(0)
         state, timestep = gxm_env.init(key)
-        assert timestep.obs.shape == (4,)
+        assert timestep.next_obs.shape == (4,)
 
         action = gxm_env.action_space.sample(key)
         next_state, next_timestep = gxm_env.step(key, state, action)
-        assert next_timestep.obs.shape == (4,)
+        assert next_timestep.next_obs.shape == (4,)
 
     def test_gxm_to_gymnax(self):
         gxm_env = gxm.make("Gymnax/CartPole-v1")

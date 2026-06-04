@@ -66,8 +66,8 @@ class TimeLimit(Wrapper):
             time=jnp.array(0, dtype=jnp.int32),
         )
         reset_timestep = Timestep(
-            obs=reset_timestep.obs,
-            true_obs=timestep.obs,
+            next_obs=reset_timestep.next_obs,
+            true_next_obs=timestep.next_obs,
             reward=timestep.reward,
             terminated=jnp.array(False, dtype=jnp.bool),
             truncated=jnp.array(True, dtype=jnp.bool),

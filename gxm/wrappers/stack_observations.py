@@ -38,10 +38,10 @@ class StackObservations(Wrapper[StackObservationsState]):
         env_state, timestep = self.env.init(key)
 
         if self.padding == "reset":
-            obss = stack(self.num_stack * [timestep.obs])
-            true_obss = stack(self.num_stack * [timestep.true_obs])
-            timestep.obs = obss
-            timestep.true_obs = true_obss
+            obss = stack(self.num_stack * [timestep.next_obs])
+            true_obss = stack(self.num_stack * [timestep.true_next_obs])
+            timestep.next_obs = obss
+            timestep.true_next_obs = true_obss
         else:
             raise ValueError(f"Unknown padding method: {self.padding}")
 
@@ -60,10 +60,10 @@ class StackObservations(Wrapper[StackObservationsState]):
         env_state, timestep = self.env.reset(key, env_state.env_state)
 
         if self.padding == "reset":
-            obss = stack(self.num_stack * [timestep.obs])
-            true_obss = stack(self.num_stack * [timestep.true_obs])
-            timestep.obs = obss
-            timestep.true_obs = true_obss
+            obss = stack(self.num_stack * [timestep.next_obs])
+            true_obss = stack(self.num_stack * [timestep.true_next_obs])
+            timestep.next_obs = obss
+            timestep.true_next_obs = true_obss
         else:
             raise ValueError(f"Unknown padding method: {self.padding}")
 
@@ -90,12 +90,12 @@ class StackObservations(Wrapper[StackObservationsState]):
         env_state, timestep = self.env.step(key, env_state.env_state, action)
 
         obss = jax.tree.map(lambda os: os[1:], obss)
-        obss = concatenate([obss, expand_dims(timestep.obs)])
+        obss = concatenate([obss, expand_dims(timestep.next_obs)])
         true_obss = jax.tree.map(lambda tos: tos[1:], true_obss)
-        true_obss = concatenate([true_obss, expand_dims(timestep.true_obs)])
+        true_obss = concatenate([true_obss, expand_dims(timestep.true_next_obs)])
 
-        timestep.obs = obss
-        timestep.true_obs = true_obss
+        timestep.next_obs = obss
+        timestep.true_next_obs = true_obss
 
         stack_observations_state = StackObservationsState(
             env_state=env_state,

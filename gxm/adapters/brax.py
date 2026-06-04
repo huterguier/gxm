@@ -42,8 +42,8 @@ class BraxAdapter(Environment[BraxState]):
         brax_state = self.env.reset(key)
         env_state = BraxState(brax_state=brax_state)
         timestep = Timestep(
-            obs=brax_state.obs,
-            true_obs=brax_state.obs,
+            next_obs=brax_state.obs,
+            true_next_obs=brax_state.obs,
             reward=jnp.float32(0.0),
             terminated=jnp.bool(True),
             truncated=jnp.bool(False),
@@ -60,8 +60,8 @@ class BraxAdapter(Environment[BraxState]):
         brax_state = self.env.step(env_state.brax_state, action)
         env_state = BraxState(brax_state=brax_state)
         timestep = Timestep(
-            obs=brax_state.obs,
-            true_obs=brax_state.obs,
+            next_obs=brax_state.obs,
+            true_next_obs=brax_state.obs,
             reward=brax_state.reward,
             terminated=brax_state.done > 0.5,
             truncated=jnp.bool(False),

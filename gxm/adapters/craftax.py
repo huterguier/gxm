@@ -35,8 +35,8 @@ class CraftaxAdapter(Environment[CraftaxState]):
         obs, _, _, _, info = self.env.step(key, craftax_state, jnp.array(0), self.env_params)
         env_state = CraftaxState(craftax_state=craftax_state)
         timestep = Timestep(
-            obs=obs,
-            true_obs=obs,
+            next_obs=obs,
+            true_next_obs=obs,
             reward=jnp.float32(0.0),
             terminated=jnp.bool(True),
             truncated=jnp.bool(False),
@@ -55,8 +55,8 @@ class CraftaxAdapter(Environment[CraftaxState]):
         )
         env_state = CraftaxState(craftax_state=craftax_state)
         timestep = Timestep(
-            obs=obs,
-            true_obs=obs,
+            next_obs=obs,
+            true_next_obs=obs,
             reward=reward,
             terminated=done,
             truncated=done,

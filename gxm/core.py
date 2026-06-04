@@ -16,7 +16,7 @@ class Timestep:
     Class representing a single timestep :math:`(R_i, S_{i+1})` in an environment.
     Where :math:`R_i` is the reward received after taking an action at timestep
     :math:`i` and :math:`S_{i+1}` is the observation at the next timestep.
-    In case of truncation, ``true_obs`` represents the observation :math:`\hat{S}_{i+1}` that would have been
+    In case of truncation, ``true_next_obs`` represents the observation :math:`\hat{S}_{i+1}` that would have been
     observed if the episode had not been truncated.
     """
 
@@ -26,10 +26,10 @@ class Timestep:
     """Whether the episode has terminated at this timestep."""
     truncated: Array
     """Whether the episode has been truncated at this timestep."""
-    obs: PyTree
+    next_obs: PyTree
     """The observation :math:`S_{i+1}` at this timestep :math:`i`."""
-    true_obs: PyTree
-    """The true observation :math:`\hat{S}_{i+1}` at this timestep. This may differ from ``obs`` in environments that allow truncation, if and only if truncation is True. """
+    true_next_obs: PyTree
+    """The true observation :math:`\hat{S}_{i+1}` at this timestep. This may differ from ``next_obs`` in environments that allow truncation, if and only if truncation is True. """
     info: dict[str, PyTree]
     """Additional information about the timestep."""
 
@@ -61,7 +61,7 @@ class Timestep:
             reward=self.reward,
             terminated=self.terminated,
             truncated=self.truncated,
-            obs=self.obs,
+            next_obs=self.next_obs,
             info=self.info,
         )
 
@@ -80,11 +80,11 @@ class Timestep:
             A Trajectory object containing the sequence of timesteps.
         """
         assert (
-            self.obs.shape[0] == action.shape[0]
+            self.next_obs.shape[0] == action.shape[0]
         ), "The number of observations must match the number of actions."
         return Trajectory(
-            obs=jnp.concatenate([first_obs[None], self.obs], axis=0),
-            true_obs=jnp.concatenate([first_obs[None], self.true_obs], axis=0),
+            obs=jnp.concatenate([first_obs[None], self.next_obs], axis=0),
+            true_obs=jnp.concatenate([first_obs[None], self.true_next_obs], axis=0),
             reward=self.reward,
             terminated=self.terminated,
             truncated=self.truncated,
@@ -104,7 +104,7 @@ class Transition:
     reward: Array
     terminated: Array
     truncated: Array
-    obs: PyTree
+    next_obs: PyTree
     info: dict[str, PyTree]
 
     @property
@@ -285,17 +285,17 @@ class AutoResetEnvironment(Generic[TEnvironmentState], Environment[TEnvironmentS
         )
         obs = jax.tree.map(
             lambda x_step, x_reset: jnp.where(timestep_step.done, x_reset, x_step),
-            timestep_step.obs,
-            timestep_reset.obs,
+            timestep_step.next_obs,
+            timestep_reset.next_obs,
         )
         true_obs = jax.tree.map(
             lambda x_step, x_reset: jnp.where(timestep_step.truncated, x_reset, x_step),
-            timestep_step.obs,
-            timestep_reset.obs,
+            timestep_step.next_obs,
+            timestep_reset.next_obs,
         )
         return env_state, Timestep(
-            obs=obs,
-            true_obs=true_obs,
+            next_obs=obs,
+            true_next_obs=true_obs,
             reward=timestep_step.reward,
             terminated=timestep_step.terminated,
             truncated=timestep_step.truncated,
