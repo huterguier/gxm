@@ -7,6 +7,11 @@ from gxm.wrappers import Wrapper
 
 
 class TestWrapper:
+    __test__ = False
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        cls.__test__ = True
 
     @pytest.fixture(
         params=[

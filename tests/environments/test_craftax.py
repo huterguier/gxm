@@ -1,5 +1,6 @@
-import jax
 import pytest
+pytest.importorskip("craftax.craftax_env")
+import jax
 from craftax.craftax_env import make_craftax_env_from_name
 from test_environment import TestEnvironment
 

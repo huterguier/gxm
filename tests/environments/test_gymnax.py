@@ -1,6 +1,7 @@
+import pytest
+pytest.importorskip("gymnax")
 import gymnax
 import jax
-import pytest
 from test_environment import TestEnvironment
 
 import gxm

@@ -1,7 +1,9 @@
+import pytest
+pytest.importorskip("gymnasium")
+pytest.importorskip("ale_py")
 import gymnasium
 import jax
 import numpy as np
-import pytest
 from ale_py import ALEInterface
 from test_environment import TestEnvironment
 

@@ -1,4 +1,5 @@
 import pytest
+pytest.importorskip("xminigrid")
 from test_environment import TestEnvironment
 
 import gxm

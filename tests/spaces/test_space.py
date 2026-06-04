@@ -6,6 +6,12 @@ from gxm.spaces import Space
 
 
 class TestSpace:
+    __test__ = False
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        cls.__test__ = True
+
     @pytest.fixture(params=[])
     def space(request) -> Space:
         raise NotImplementedError("Add environments to the fixture parameters.")

@@ -1,4 +1,5 @@
 import pytest
+pytest.importorskip("navix")
 from test_environment import TestEnvironment
 
 import gxm
