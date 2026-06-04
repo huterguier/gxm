@@ -30,8 +30,8 @@ class NavixAdapter(Environment[NavixState]):
         navix_state = self.env.reset(key)
         env_state = NavixState(navix_state=navix_state)
         timestep = Timestep(
-            obs=navix_state.observation,
-            true_obs=navix_state.observation,
+            next_obs=navix_state.observation,
+            true_next_obs=navix_state.observation,
             reward=jnp.float32(0.0),
             terminated=jnp.bool(True),
             truncated=jnp.bool(False),
@@ -48,8 +48,8 @@ class NavixAdapter(Environment[NavixState]):
         navix_state = self.env.step(env_state.navix_state, action)
         env_state = NavixState(navix_state=navix_state)
         timestep = Timestep(
-            obs=navix_state.observation,
-            true_obs=navix_state.observation,
+            next_obs=navix_state.observation,
+            true_next_obs=navix_state.observation,
             reward=navix_state.reward,
             terminated=navix_state.is_done(),
             truncated=jnp.bool(False),

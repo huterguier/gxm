@@ -38,8 +38,8 @@ class JAXAtariAdapter(Environment[JAXAtariState]):
         obs = _resize(obs)
         env_state = JAXAtariState(jaxatari_state=jaxatari_state)
         timestep = Timestep(
-            obs=obs,
-            true_obs=obs,
+            next_obs=obs,
+            true_next_obs=obs,
             reward=jnp.float32(0.0),
             terminated=jnp.bool(False),
             truncated=jnp.bool(False),
@@ -58,8 +58,8 @@ class JAXAtariAdapter(Environment[JAXAtariState]):
         obs = _resize(obs)
         env_state = JAXAtariState(jaxatari_state=jaxatari_state)
         timestep = Timestep(
-            obs=obs,
-            true_obs=obs,
+            next_obs=obs,
+            true_next_obs=obs,
             reward=jnp.float32(reward),
             terminated=jnp.bool(done),
             truncated=jnp.bool(done),

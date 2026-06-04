@@ -34,7 +34,7 @@ class TestBrax(TestEnvironment):
         env_state, timestep = env_gxm.init(key)
         state_brax = env_brax.reset(key)
 
-        assert jax.numpy.allclose(timestep.obs, state_brax.obs)
+        assert jax.numpy.allclose(timestep.next_obs, state_brax.obs)
 
         for _ in range(10):
             key, subkey = jax.random.split(key)
@@ -43,6 +43,6 @@ class TestBrax(TestEnvironment):
             env_state, timestep = env_gxm.step(subkey, env_state, action)
             state_brax = env_brax.step(state_brax, action)
             
-            assert jax.numpy.allclose(timestep.obs, state_brax.obs)
+            assert jax.numpy.allclose(timestep.next_obs, state_brax.obs)
             assert jax.numpy.allclose(timestep.reward, state_brax.reward)
             assert timestep.terminated == (state_brax.done > 0.5)

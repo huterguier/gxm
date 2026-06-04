@@ -34,8 +34,8 @@ class XMiniGridAdapter(Environment[XMiniGridState]):
         xminigrid_state = self.env.reset(self.env_params, key)
         env_state = XMiniGridState(xminigrid_state=xminigrid_state)
         timestep = Timestep(
-            obs=xminigrid_state.observation,
-            true_obs=xminigrid_state.observation,
+            next_obs=xminigrid_state.observation,
+            true_next_obs=xminigrid_state.observation,
             reward=jnp.float32(0.0),
             terminated=jnp.bool(False),
             truncated=jnp.bool(False),
@@ -52,8 +52,8 @@ class XMiniGridAdapter(Environment[XMiniGridState]):
         xminigrid_state = self.env.step(self.env_params, env_state.xminigrid_state, action)
         env_state = XMiniGridState(xminigrid_state=xminigrid_state)
         timestep = Timestep(
-            obs=xminigrid_state.observation,
-            true_obs=xminigrid_state.observation,
+            next_obs=xminigrid_state.observation,
+            true_next_obs=xminigrid_state.observation,
             reward=xminigrid_state.reward,
             terminated=xminigrid_state.last(),
             truncated=jnp.bool(False),

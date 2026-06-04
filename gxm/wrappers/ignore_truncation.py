@@ -28,7 +28,7 @@ class IgnoreTruncation(Wrapper):
     def init(self, key: Array) -> tuple[EnvironmentState, Timestep]:
         env_state, timestep = self.env.init(key)
         timestep.truncated = None  # type: ignore
-        timestep.true_obs = None  # type: ignore
+        timestep.true_next_obs = None  # type: ignore
 
         return env_state, timestep
 
@@ -37,7 +37,7 @@ class IgnoreTruncation(Wrapper):
     ) -> tuple[EnvironmentState, Timestep]:
         env_state, timestep = self.env.reset(key, env_state)
         timestep.truncated = None  # type: ignore
-        timestep.true_obs = None  # type: ignore
+        timestep.true_next_obs = None  # type: ignore
         return env_state, timestep
 
     def step(
@@ -50,5 +50,5 @@ class IgnoreTruncation(Wrapper):
         env_state, timestep = self.env.step(key, env_state, action)
         timestep.terminated = jnp.logical_or(timestep.terminated, timestep.truncated)
         timestep.truncated = None  # type: ignore
-        timestep.true_obs = None  # type: ignore
+        timestep.true_next_obs = None  # type: ignore
         return env_state, timestep

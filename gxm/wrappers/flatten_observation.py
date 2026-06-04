@@ -20,12 +20,12 @@ class FlattenObservation(Wrapper):
 
     def init(self, key: Key) -> tuple[WrapperState, Timestep]:
         env_state, timestep = self.env.init(key)
-        timestep.obs = self.flatten(timestep.obs)
+        timestep.next_obs = self.flatten(timestep.next_obs)
         return env_state, timestep
 
     def reset(self, key: Key, env_state: WrapperState) -> tuple[WrapperState, Timestep]:
         env_state, timestep = self.env.reset(key, env_state)
-        timestep.obs = self.flatten(timestep.obs)
+        timestep.next_obs = self.flatten(timestep.next_obs)
         return env_state, timestep
 
     def step(
@@ -35,5 +35,5 @@ class FlattenObservation(Wrapper):
         action: PyTree,
     ) -> tuple[WrapperState, Timestep]:
         env_state, timestep = self.env.step(key, env_state, action)
-        timestep.obs = self.flatten(timestep.obs)
+        timestep.next_obs = self.flatten(timestep.next_obs)
         return env_state, timestep

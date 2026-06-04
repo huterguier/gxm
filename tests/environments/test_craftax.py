@@ -41,6 +41,6 @@ class TestCraftax(TestEnvironment):
             obs, state, reward, done, info = env_craftax.step(
                 key, state, action, env_params_craftax
             )
-            assert jax.numpy.allclose(timestep.obs, obs)
+            assert jax.numpy.allclose(timestep.next_obs, obs)
             assert jax.numpy.allclose(timestep.reward, reward)
             assert timestep.done == done

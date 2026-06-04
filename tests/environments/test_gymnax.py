@@ -48,6 +48,6 @@ class TestGymnax(TestEnvironment):
             obs, state, reward, done, info = env_gymnax.step(
                 key, state, action, env_params_gymnax
             )
-            assert jax.numpy.allclose(timestep.obs, obs)
+            assert jax.numpy.allclose(timestep.next_obs, obs)
             assert jax.numpy.allclose(timestep.reward, reward)
             assert timestep.done == done

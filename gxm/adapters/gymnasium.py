@@ -37,8 +37,8 @@ class GymnasiumAdapter(Environment[GymnasiumState]):
             info = info_reset
         env_state = GymnasiumState(env_id=jnp.int32(0))
         timestep = Timestep(
-            obs=jnp.array(obs),
-            true_obs=jnp.array(obs),
+            next_obs=jnp.array(obs),
+            true_next_obs=jnp.array(obs),
             reward=jnp.array(reward, dtype=jnp.float32),
             terminated=jnp.array(terminated, dtype=jnp.bool),
             truncated=jnp.array(truncated, dtype=jnp.bool),
@@ -68,8 +68,8 @@ class GymnasiumAdapter(Environment[GymnasiumState]):
             _envs_gymnasium[env_id] = envs
             env_state = GymnasiumState(env_id=jnp.full(shape, env_id, dtype=jnp.int32))
             timestep = Timestep(
-                obs=jnp.reshape(obs, shape + obs.shape[1:]),
-                true_obs=jnp.reshape(obs, shape + obs.shape[1:]),
+                next_obs=jnp.reshape(obs, shape + obs.shape[1:]),
+                true_next_obs=jnp.reshape(obs, shape + obs.shape[1:]),
                 reward=jnp.zeros(shape, dtype=jnp.float32),
                 terminated=jnp.zeros(shape, dtype=jnp.bool),
                 truncated=jnp.zeros(shape, dtype=jnp.bool),
@@ -101,8 +101,8 @@ class GymnasiumAdapter(Environment[GymnasiumState]):
                 )
             env_state = GymnasiumState(env_id=jnp.full(shape, env_id, dtype=jnp.int32))
             timestep = Timestep(
-                obs=jnp.reshape(obs, shape + obs.shape[1:]),
-                true_obs=jnp.reshape(obs, shape + obs.shape[1:]),
+                next_obs=jnp.reshape(obs, shape + obs.shape[1:]),
+                true_next_obs=jnp.reshape(obs, shape + obs.shape[1:]),
                 reward=jnp.zeros(shape, dtype=jnp.float32),
                 terminated=jnp.zeros(shape, dtype=jnp.bool),
                 truncated=jnp.zeros(shape, dtype=jnp.bool),
@@ -131,8 +131,8 @@ class GymnasiumAdapter(Environment[GymnasiumState]):
             obs, reward, terminated, truncated, info = envs.step(actions)
             env_state = GymnasiumState(env_id=env_id)
             timestep = Timestep(
-                obs=jnp.reshape(obs, shape + obs.shape[1:]),
-                true_obs=jnp.reshape(obs, shape + obs.shape[1:]),
+                next_obs=jnp.reshape(obs, shape + obs.shape[1:]),
+                true_next_obs=jnp.reshape(obs, shape + obs.shape[1:]),
                 reward=jnp.reshape(reward, shape).astype(jnp.float32),
                 terminated=jnp.reshape(terminated, shape).astype(jnp.bool),
                 truncated=jnp.reshape(truncated, shape).astype(jnp.bool),

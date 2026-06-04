@@ -58,7 +58,7 @@ class TestGymnasium(TestEnvironment):
         env_state, timestep = env_gxm.init(key)
 
         obs, _ = env_gymnasium.reset(seed=0)
-        assert jax.numpy.allclose(timestep.obs, obs[0])
+        assert jax.numpy.allclose(timestep.next_obs, obs[0])
 
         for _ in range(100):
             action = env_gxm.action_space.sample(key)
@@ -66,7 +66,7 @@ class TestGymnasium(TestEnvironment):
             obs, reward, terminated, truncated, _ = env_gymnasium.step(
                 np.array([action])
             )
-            assert jax.numpy.allclose(timestep.obs, obs)
+            assert jax.numpy.allclose(timestep.next_obs, obs)
             assert jax.numpy.allclose(timestep.reward, reward)
             assert timestep.terminated == terminated
             assert timestep.truncated == truncated

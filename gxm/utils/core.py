@@ -36,7 +36,7 @@ def rollout(
     env_state, timestep = env.init(key)
     carry = (key, env_state, pi_state, timestep)
     carry, (timesteps, actions) = jax.lax.scan(step, carry, None, length=n_steps)
-    traj = timesteps.trajectory(timestep.obs, actions)
+    traj = timesteps.trajectory(timestep.next_obs, actions)
     return traj
 
 

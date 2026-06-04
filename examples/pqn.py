@@ -39,7 +39,7 @@ class PQN:
         keys_init = jax.random.split(key_init, self.args["n_envs"])
         env_state, timestep = jax.vmap(self.env.init)(keys_init)
         params = self.network.init(
-            key_network, jax.tree.map(lambda x: x[0], timestep.obs)
+            key_network, jax.tree.map(lambda x: x[0], timestep.next_obs)
         )
         opt_state = self.optimizer.init(params)
         info = {"step": 0, "episode": 0, "update": 0}
@@ -71,7 +71,7 @@ class PQN:
             return action, q
 
         def step(alg_state, key):
-            obs = alg_state.timestep.obs
+            obs = alg_state.timestep.next_obs
             keys_pi, keys_step = jax.random.split(key, (2, self.args["n_envs"]))
             action, q = jax.vmap(pi_epsilon, (0, None, 0))(keys_pi, alg_state, obs)
             env_state, timestep = jax.vmap(self.env.step)(
@@ -114,7 +114,7 @@ class PQN:
             return returns
 
         last_q = jax.vmap(self.network.apply, (None, 0))(
-            alg_state.params, transitions.obs[-1]
+            alg_state.params, transitions.next_obs[-1]
         )
         targets = lambda_returns(transitions, qs, jnp.max(last_q, axis=-1))
         batches = (transitions, targets)
