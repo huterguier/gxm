@@ -1,60 +1,54 @@
-from gxm.environments import (
-    BraxEnvironment,
-    CraftaxEnvironment,
-    EnvpoolEnvironment,
-    GymnasiumEnvironment,
-    GymnaxEnvironment,
-    JAXAtariEnvironment,
-    NavixEnvironment,
-    PgxEnvironment,
-    XMiniGridEnvironment,
-)
+import importlib
 
-_registry = {
-    "Gymnax": GymnaxEnvironment,
-    "Pgx": PgxEnvironment,
-    "Envpool": EnvpoolEnvironment,
-    "Craftax": CraftaxEnvironment,
-    "XMiniGrid": XMiniGridEnvironment,
-    "JAXAtari": JAXAtariEnvironment,
-    "Gymnasium": GymnasiumEnvironment,
-    "Navix": NavixEnvironment,
-    "Brax": BraxEnvironment,
+_builtin = {
+    "Gymnax": "gxm.adapters.gymnax",
+    "Brax": "gxm.adapters.brax",
+    "Pgx": "gxm.adapters.pgx",
+    "Gymnasium": "gxm.adapters.gymnasium",
+    "Craftax": "gxm.adapters.craftax",
+"JAXAtari": "gxm.adapters.jaxatari",
+    "Navix": "gxm.adapters.navix",
+    "XMiniGrid": "gxm.adapters.xminigrid",
 }
 
+_registry: dict[str, callable] = {}
 
-def register(library: str, environment_class):
+
+def register(library: str, make_fn):
     """
-    Register a new environment library.
+    Register a make function for a new environment library.
 
     Args:
-        library (str): The name of the library to register.
-        environment_class: The environment class to associate with the library.
+        library: The library prefix used in environment IDs (e.g. ``"MyLib"``).
+        make_fn: A callable ``(id, **kwargs) -> Environment`` that creates an environment
+                 given its library-specific ID (without the prefix).
     """
-    _registry[library] = environment_class
+    _registry[library] = make_fn
 
 
 def make(id: str, **kwargs):
     """
-    Create an environment given its id.
-    The id should be in the format "Library/EnvironmentName", e.g. "Gymnax/CartPole-v1".
+    Create an environment given its ID.
+
+    The ID must be in the format ``"Library/EnvironmentName"``,
+    e.g. ``"Gymnax/CartPole-v1"`` or ``"Brax/ant"``.
 
     Args:
-        id (str): The id of the environment to create.
-        **kwargs: Additional keyword arguments to pass to the environment constructor.
+        id: The fully qualified environment ID.
+        **kwargs: Additional keyword arguments forwarded to the adapter.
     Returns:
         An instance of the requested environment.
     Raises:
-        ValueError: If the library is not recognized.
-
-    Examples:
-        >>> env = make("Gymnax/CartPole-v1")
-        >>> env = make("Pgx/MountainCarContinuous-v0")
-        >>> env = make("Envpool/Pong-v5")
+        ValueError: If the library prefix is not recognised.
     """
-    library = id.split("/", 1)[0]
-    if library not in _registry:
-        raise ValueError(f"Unknown environment library: {library}")
-    Environment = _registry[library]
-    return Environment(id, **kwargs)
-
+    library, name = id.split("/", 1)
+    if library in _registry:
+        return _registry[library](name, **kwargs)
+    if library in _builtin:
+        module = importlib.import_module(_builtin[library])
+        _registry[library] = module.make
+        return module.make(name, **kwargs)
+    raise ValueError(
+        f"Unknown environment library: '{library}'. "
+        f"Available built-in libraries: {list(_builtin.keys())}."
+    )

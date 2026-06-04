@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Any
 
 import brax
 import brax.envs
@@ -14,26 +13,18 @@ from gxm.typing import Array, Key
 
 @jax.tree_util.register_dataclass
 @dataclass
-class BraxEnvironmentState(EnvironmentState):
-    """State for Brax environments."""
-
+class BraxState(EnvironmentState):
     brax_state: brax.envs.State
-    """ The Brax environment state. """
 
 
-class BraxEnvironment(Environment):
-    """Base class for Brax environments."""
-
+class BraxAdapter(Environment[BraxState]):
     brax_id: str
-    """ The Brax environment ID. """
     env: brax.envs.Env
-    """ The Brax environment. """
 
     def __init__(self, id: str, **kwargs):
-
-        self.id = id
-        self.brax_id = id.split("/", 1)[1]
-        self.env = brax.envs.create(self.brax_id, **kwargs)
+        self.brax_id = id
+        self.id = f"Brax/{id}"
+        self.env = brax.envs.create(id, **kwargs)
         self.env = EpisodeWrapper(self.env, episode_length=1000, action_repeat=1)
         self.env = AutoResetWrapper(self.env)
         self.action_space = Box(
@@ -47,9 +38,9 @@ class BraxEnvironment(Environment):
             shape=(self.env.observation_size,),
         )
 
-    def init(self, key: Key) -> tuple[BraxEnvironmentState, Timestep]:
+    def init(self, key: Key) -> tuple[BraxState, Timestep]:
         brax_state = self.env.reset(key)
-        env_state = BraxEnvironmentState(brax_state=brax_state)
+        env_state = BraxState(brax_state=brax_state)
         timestep = Timestep(
             obs=brax_state.obs,
             true_obs=brax_state.obs,
@@ -60,18 +51,14 @@ class BraxEnvironment(Environment):
         )
         return env_state, timestep
 
-    def reset(
-        self, key: Key, env_state: BraxEnvironmentState
-    ) -> tuple[BraxEnvironmentState, Timestep]:
+    def reset(self, key: Key, env_state: BraxState) -> tuple[BraxState, Timestep]:
         del env_state
         return self.init(key)
 
-    def step(
-        self, key: Key, env_state: BraxEnvironmentState, action: Array
-    ) -> tuple[BraxEnvironmentState, Timestep]:
+    def step(self, key: Key, env_state: BraxState, action: Array) -> tuple[BraxState, Timestep]:
         del key
         brax_state = self.env.step(env_state.brax_state, action)
-        env_state = BraxEnvironmentState(brax_state=brax_state)
+        env_state = BraxState(brax_state=brax_state)
         timestep = Timestep(
             obs=brax_state.obs,
             true_obs=brax_state.obs,
@@ -81,3 +68,7 @@ class BraxEnvironment(Environment):
             info={},
         )
         return env_state, timestep
+
+
+def make(id: str, **kwargs) -> Environment:
+    return BraxAdapter(id, **kwargs)
