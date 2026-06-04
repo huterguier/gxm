@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Generic, TypeVar
+from typing import Generic, TypeVar
 
 import jax
 import jax.numpy as jnp
@@ -40,23 +40,20 @@ class Timestep:
 
     def transition(
         self,
-        prev_obs: PyTree,
+        obs: PyTree,
         action: Array,
-        prev_info: dict[str, Any] = {},
     ) -> "Transition":
         """Convert the current timestep :math:`(R_t, S_{t+1})` into a transition
         :math:`(S_t, A_t, R_t, S_{t+1})` given the previous observation :math:`S_t`
         and the action :math:`A_t`.
         Args:
-            prev_obs: The observation at the previous timestep.
+            obs: The observation at the previous timestep.
             action: The action taken at the current timestep.
-            prev_info: The info at the previous timestep.
         Returns:
             A Transition object containing the current and next timesteps.
         """
         return Transition(
-            prev_obs=prev_obs,
-            prev_info=prev_info,
+            obs=obs,
             action=action,
             reward=self.reward,
             terminated=self.terminated,
@@ -98,8 +95,7 @@ class Timestep:
 class Transition:
     """Class representing a single transition :math:`(S_i, A_i, R_i, S_{i+1})` in an environment."""
 
-    prev_obs: PyTree
-    prev_info: dict[str, PyTree]
+    obs: PyTree
     action: PyTree
     reward: Array
     terminated: Array
@@ -266,16 +262,22 @@ class AutoResetEnvironment(Generic[TEnvironmentState], Environment[TEnvironmentS
         pass
 
     @abstractmethod
-    def _step(self, key: Key, env_state: TEnvironmentState, action: PyTree) -> tuple[TEnvironmentState, Timestep]:
+    def _step(
+        self, key: Key, env_state: TEnvironmentState, action: PyTree
+    ) -> tuple[TEnvironmentState, Timestep]:
         pass
 
     def init(self, key: Key) -> tuple[TEnvironmentState, Timestep]:
         return self._reset(key)
 
-    def reset(self, key: Key, env_state: TEnvironmentState) -> tuple[TEnvironmentState, Timestep]:
+    def reset(
+        self, key: Key, env_state: TEnvironmentState
+    ) -> tuple[TEnvironmentState, Timestep]:
         return self._reset(key)
 
-    def step(self, key: Key, env_state: TEnvironmentState, action: PyTree) -> tuple[TEnvironmentState, Timestep]:
+    def step(
+        self, key: Key, env_state: TEnvironmentState, action: PyTree
+    ) -> tuple[TEnvironmentState, Timestep]:
         env_state_step, timestep_step = self._step(key, env_state, action)
         env_state_reset, timestep_reset = self._reset(key)
         env_state = jax.tree.map(
