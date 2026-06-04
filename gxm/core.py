@@ -252,3 +252,52 @@ class Environment(Generic[TEnvironmentState], ABC):
             The base environment without any wrappers.
         """
         return self
+
+
+class AutoResetEnvironment(Generic[TEnvironmentState], Environment[TEnvironmentState]):
+    """
+    Base class for native gxm environments.
+    Subclasses implement ``_reset`` and ``_step``; auto-reset on episode end is
+    handled automatically in ``step``.
+    """
+
+    @abstractmethod
+    def _reset(self, key: Key) -> tuple[TEnvironmentState, Timestep]:
+        pass
+
+    @abstractmethod
+    def _step(self, key: Key, env_state: TEnvironmentState, action: PyTree) -> tuple[TEnvironmentState, Timestep]:
+        pass
+
+    def init(self, key: Key) -> tuple[TEnvironmentState, Timestep]:
+        return self._reset(key)
+
+    def reset(self, key: Key, env_state: TEnvironmentState) -> tuple[TEnvironmentState, Timestep]:
+        return self._reset(key)
+
+    def step(self, key: Key, env_state: TEnvironmentState, action: PyTree) -> tuple[TEnvironmentState, Timestep]:
+        env_state_step, timestep_step = self._step(key, env_state, action)
+        env_state_reset, timestep_reset = self._reset(key)
+        env_state = jax.tree.map(
+            lambda x_step, x_reset: jnp.where(timestep_step.done, x_reset, x_step),
+            env_state_step,
+            env_state_reset,
+        )
+        obs = jax.tree.map(
+            lambda x_step, x_reset: jnp.where(timestep_step.done, x_reset, x_step),
+            timestep_step.obs,
+            timestep_reset.obs,
+        )
+        true_obs = jax.tree.map(
+            lambda x_step, x_reset: jnp.where(timestep_step.truncated, x_reset, x_step),
+            timestep_step.obs,
+            timestep_reset.obs,
+        )
+        return env_state, Timestep(
+            obs=obs,
+            true_obs=true_obs,
+            reward=timestep_step.reward,
+            terminated=timestep_step.terminated,
+            truncated=timestep_step.truncated,
+            info=timestep_step.info,
+        )
