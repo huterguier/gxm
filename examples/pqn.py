@@ -77,7 +77,7 @@ class PQN:
             env_state, timestep = jax.vmap(self.env.step)(
                 keys_step, alg_state.env_state, action
             )
-            transition = timestep.transition(prev_obs=obs, action=action)
+            transition = timestep.transition(obs=obs)
             alg_state.env_state = env_state
             alg_state.timestep = timestep
             alg_state.info["step"] += self.args["n_envs"]

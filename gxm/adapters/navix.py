@@ -32,6 +32,7 @@ class NavixAdapter(Environment[NavixState]):
         timestep = Timestep(
             next_obs=navix_state.observation,
             true_next_obs=navix_state.observation,
+            action=self.action_space.sample(key),
             reward=jnp.float32(0.0),
             terminated=jnp.bool(True),
             truncated=jnp.bool(False),
@@ -50,6 +51,7 @@ class NavixAdapter(Environment[NavixState]):
         timestep = Timestep(
             next_obs=navix_state.observation,
             true_next_obs=navix_state.observation,
+            action=action,
             reward=navix_state.reward,
             terminated=navix_state.is_done(),
             truncated=jnp.bool(False),

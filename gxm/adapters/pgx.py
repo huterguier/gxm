@@ -34,6 +34,7 @@ class PgxAdapter(Environment[PgxState]):
         timestep = Timestep(
             next_obs=pgx_state.observation,
             true_next_obs=pgx_state.observation,
+            action=self.action_space.sample(key),
             reward=pgx_state.rewards[pgx_state.current_player],
             terminated=pgx_state.terminated,
             truncated=pgx_state.truncated,
@@ -51,6 +52,7 @@ class PgxAdapter(Environment[PgxState]):
         timestep = Timestep(
             next_obs=pgx_state.observation,
             true_next_obs=pgx_state.observation,
+            action=action,
             reward=pgx_state.rewards[pgx_state.current_player],
             terminated=pgx_state.terminated,
             truncated=pgx_state.truncated,

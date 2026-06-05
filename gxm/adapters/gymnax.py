@@ -60,6 +60,7 @@ class GymnaxAdapter(Environment[GymnaxState]):
         timestep = Timestep(
             next_obs=obs,
             true_next_obs=obs,
+            action=self.action_space.sample(key),
             reward=jnp.float32(0.0),
             terminated=jnp.bool(True),
             truncated=jnp.bool(False),
@@ -78,6 +79,7 @@ class GymnaxAdapter(Environment[GymnaxState]):
         timestep = Timestep(
             next_obs=obs,
             true_next_obs=obs,
+            action=action,
             reward=reward,
             terminated=done,
             truncated=jnp.bool(False),
@@ -102,12 +104,12 @@ class _GymnaxToGxm(Environment[_WrappedGymnaxState]):
 
     def init(self, key: Key) -> tuple[_WrappedGymnaxState, Timestep]:
         obs, state = self._env.reset(key, self._params)
-        _, _, _, _, info = self._env.step(
-            key, state, self._env.action_space(self._params).sample(key), self._params
-        )
+        sentinel_action = self._env.action_space(self._params).sample(key)
+        _, _, _, _, info = self._env.step(key, state, sentinel_action, self._params)
         timestep = Timestep(
             next_obs=obs,
             true_next_obs=obs,
+            action=self.action_space.sample(key),
             reward=jnp.float32(0.0),
             terminated=jnp.bool(True),
             truncated=jnp.bool(False),
@@ -126,6 +128,7 @@ class _GymnaxToGxm(Environment[_WrappedGymnaxState]):
         timestep = Timestep(
             next_obs=obs,
             true_next_obs=obs,
+            action=action,
             reward=reward,
             terminated=done,
             truncated=jnp.bool(False),

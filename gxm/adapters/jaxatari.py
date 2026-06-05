@@ -40,6 +40,7 @@ class JAXAtariAdapter(Environment[JAXAtariState]):
         timestep = Timestep(
             next_obs=obs,
             true_next_obs=obs,
+            action=self.action_space.sample(key),
             reward=jnp.float32(0.0),
             terminated=jnp.bool(False),
             truncated=jnp.bool(False),
@@ -60,6 +61,7 @@ class JAXAtariAdapter(Environment[JAXAtariState]):
         timestep = Timestep(
             next_obs=obs,
             true_next_obs=obs,
+            action=action,
             reward=jnp.float32(reward),
             terminated=jnp.bool(done),
             truncated=jnp.bool(done),

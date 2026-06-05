@@ -37,6 +37,7 @@ class CraftaxAdapter(Environment[CraftaxState]):
         timestep = Timestep(
             next_obs=obs,
             true_next_obs=obs,
+            action=self.action_space.sample(key),
             reward=jnp.float32(0.0),
             terminated=jnp.bool(True),
             truncated=jnp.bool(False),
@@ -57,6 +58,7 @@ class CraftaxAdapter(Environment[CraftaxState]):
         timestep = Timestep(
             next_obs=obs,
             true_next_obs=obs,
+            action=action,
             reward=reward,
             terminated=done,
             truncated=done,

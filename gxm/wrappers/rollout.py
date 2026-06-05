@@ -44,14 +44,14 @@ class Rollout(Wrapper):
                 prev_obs,
             )
             env_state, timestep = self.step(key_step, env_state, action)
-            return (env_state, timestep.next_obs), (env_state.timestep, action)
+            return (env_state, timestep.next_obs), timestep
 
         first_obs = env_state.obs
         keys = jax.random.split(key, num_steps)
-        env_state, (timesteps, actions) = jax.lax.scan(
+        env_state, timesteps = jax.lax.scan(
             _step,
             env_state,
             keys,
         )
-        trajectory = timesteps.trajectory(first_obs, actions)
+        trajectory = timesteps.trajectory(first_obs)
         return env_state, trajectory
