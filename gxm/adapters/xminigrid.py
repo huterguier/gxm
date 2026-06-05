@@ -36,6 +36,7 @@ class XMiniGridAdapter(Environment[XMiniGridState]):
         timestep = Timestep(
             next_obs=xminigrid_state.observation,
             true_next_obs=xminigrid_state.observation,
+            action=self.action_space.sample(key),
             reward=jnp.float32(0.0),
             terminated=jnp.bool(False),
             truncated=jnp.bool(False),
@@ -54,6 +55,7 @@ class XMiniGridAdapter(Environment[XMiniGridState]):
         timestep = Timestep(
             next_obs=xminigrid_state.observation,
             true_next_obs=xminigrid_state.observation,
+            action=action,
             reward=xminigrid_state.reward,
             terminated=xminigrid_state.last(),
             truncated=jnp.bool(False),

@@ -30,6 +30,8 @@ class Timestep:
     """The observation :math:`S_{i+1}` at this timestep :math:`i`."""
     true_next_obs: PyTree
     """The true observation :math:`\hat{S}_{i+1}` at this timestep. This may differ from ``next_obs`` in environments that allow truncation, if and only if truncation is True. """
+    action: PyTree
+    """The action :math:`A_i` taken at this timestep. Undefined (sentinel value) on the first timestep returned by ``init``."""
     info: dict[str, PyTree]
     """Additional information about the timestep."""
 
@@ -41,20 +43,17 @@ class Timestep:
     def transition(
         self,
         obs: PyTree,
-        action: Array,
     ) -> "Transition":
         """Convert the current timestep :math:`(R_t, S_{t+1})` into a transition
-        :math:`(S_t, A_t, R_t, S_{t+1})` given the previous observation :math:`S_t`
-        and the action :math:`A_t`.
+        :math:`(S_t, A_t, R_t, S_{t+1})` given the previous observation :math:`S_t`.
         Args:
             obs: The observation at the previous timestep.
-            action: The action taken at the current timestep.
         Returns:
             A Transition object containing the current and next timesteps.
         """
         return Transition(
             obs=obs,
-            action=action,
+            action=self.action,
             reward=self.reward,
             terminated=self.terminated,
             truncated=self.truncated,
@@ -62,23 +61,16 @@ class Timestep:
             info=self.info,
         )
 
-    def trajectory(
-        self, first_obs: PyTree, action: Array, first_info: dict[str, PyTree] = {}
-    ) -> "Trajectory":
+    def trajectory(self, first_obs: PyTree) -> "Trajectory":
         r"""
         Convert a sequence of timesteps :math:`(R_0, S_1, ..., S_n)` with
-        the first observation :math:`S_0` and the actions :math:`(A_0, A_1, ..., A_{n-1})`
-        into a trajectory :math:`(S_0, A_0, R_0, S_1, ..., S_n)`.
+        the first observation :math:`S_0` into a trajectory :math:`(S_0, A_0, R_0, S_1, ..., S_n)`.
 
         Args:
             first_obs: The observation at the first timestep.
-            action: The action taken at each timestep.
         Returns:
             A Trajectory object containing the sequence of timesteps.
         """
-        assert (
-            self.next_obs.shape[0] == action.shape[0]
-        ), "The number of observations must match the number of actions."
         return Trajectory(
             obs=jnp.concatenate([first_obs[None], self.next_obs], axis=0),
             true_obs=jnp.concatenate([first_obs[None], self.true_next_obs], axis=0),
@@ -86,7 +78,7 @@ class Timestep:
             terminated=self.terminated,
             truncated=self.truncated,
             info=self.info,
-            action=action,
+            action=self.action,
         )
 
 
@@ -298,6 +290,7 @@ class AutoResetEnvironment(Generic[TEnvironmentState], Environment[TEnvironmentS
         return env_state, Timestep(
             next_obs=obs,
             true_next_obs=true_obs,
+            action=action,
             reward=timestep_step.reward,
             terminated=timestep_step.terminated,
             truncated=timestep_step.truncated,

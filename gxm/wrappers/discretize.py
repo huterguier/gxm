@@ -1,3 +1,5 @@
+import dataclasses
+
 import jax
 
 from gxm.core import Environment, EnvironmentState, Timestep
@@ -52,5 +54,6 @@ class Discretize(Wrapper):
         env_state: EnvironmentState,
         action: PyTree,
     ) -> tuple[EnvironmentState, Timestep]:
-        action = jax.tree.map(lambda x: x[action], self.actions)
-        return self.env.step(key, env_state, action)
+        continuous_action = jax.tree.map(lambda x: x[action], self.actions)
+        env_state, timestep = self.env.step(key, env_state, continuous_action)
+        return env_state, dataclasses.replace(timestep, action=action)

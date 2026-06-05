@@ -39,6 +39,7 @@ class GymnasiumAdapter(Environment[GymnasiumState]):
         timestep = Timestep(
             next_obs=jnp.array(obs),
             true_next_obs=jnp.array(obs),
+            action=jnp.array(action),
             reward=jnp.array(reward, dtype=jnp.float32),
             terminated=jnp.array(terminated, dtype=jnp.bool),
             truncated=jnp.array(truncated, dtype=jnp.bool),
@@ -66,10 +67,13 @@ class GymnasiumAdapter(Environment[GymnasiumState]):
                 )
             env_id = len(_envs_gymnasium)
             _envs_gymnasium[env_id] = envs
+            action_spec = self.return_shape_dtype[1].action
+            action_sentinel = jnp.zeros((num_envs,) + action_spec.shape, action_spec.dtype)
             env_state = GymnasiumState(env_id=jnp.full(shape, env_id, dtype=jnp.int32))
             timestep = Timestep(
                 next_obs=jnp.reshape(obs, shape + obs.shape[1:]),
                 true_next_obs=jnp.reshape(obs, shape + obs.shape[1:]),
+                action=jnp.reshape(action_sentinel, shape + action_spec.shape),
                 reward=jnp.zeros(shape, dtype=jnp.float32),
                 terminated=jnp.zeros(shape, dtype=jnp.bool),
                 truncated=jnp.zeros(shape, dtype=jnp.bool),
@@ -99,10 +103,13 @@ class GymnasiumAdapter(Environment[GymnasiumState]):
                     lambda x: jnp.zeros((num_envs,) + x.shape[1:], x.dtype),
                     self.return_shape_dtype[1].info,
                 )
+            action_spec = self.return_shape_dtype[1].action
+            action_sentinel = jnp.zeros((num_envs,) + action_spec.shape, action_spec.dtype)
             env_state = GymnasiumState(env_id=jnp.full(shape, env_id, dtype=jnp.int32))
             timestep = Timestep(
                 next_obs=jnp.reshape(obs, shape + obs.shape[1:]),
                 true_next_obs=jnp.reshape(obs, shape + obs.shape[1:]),
+                action=jnp.reshape(action_sentinel, shape + action_spec.shape),
                 reward=jnp.zeros(shape, dtype=jnp.float32),
                 terminated=jnp.zeros(shape, dtype=jnp.bool),
                 truncated=jnp.zeros(shape, dtype=jnp.bool),
@@ -133,6 +140,7 @@ class GymnasiumAdapter(Environment[GymnasiumState]):
             timestep = Timestep(
                 next_obs=jnp.reshape(obs, shape + obs.shape[1:]),
                 true_next_obs=jnp.reshape(obs, shape + obs.shape[1:]),
+                action=jnp.reshape(action, shape + action.shape[len(shape):]),
                 reward=jnp.reshape(reward, shape).astype(jnp.float32),
                 terminated=jnp.reshape(terminated, shape).astype(jnp.bool),
                 truncated=jnp.reshape(truncated, shape).astype(jnp.bool),
