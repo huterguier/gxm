@@ -27,7 +27,7 @@ class EpisodicLife(Wrapper[EpisodicLifeState]):
         Args:
             env: The environment to wrap.
         """
-        self.env = env
+        super().__init__(env)
 
     def init(self, key: Key) -> tuple[EpisodicLifeState, Timestep]:
         env_state, timestep = self.env.init(key)
