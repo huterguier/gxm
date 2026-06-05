@@ -27,7 +27,7 @@ class StackObservations(Wrapper[StackObservationsState]):
     padding: str
 
     def __init__(self, env: Environment, n_stack: int, padding: str = "reset"):
-        self.env = env
+        super().__init__(env)
         self.num_stack = n_stack
         self.padding = padding
 
