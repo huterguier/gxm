@@ -1,3 +1,4 @@
+import dataclasses
 from dataclasses import dataclass
 from typing import Sequence
 
@@ -40,8 +41,7 @@ class StackObservations(Wrapper[StackObservationsState]):
         if self.padding == "reset":
             obss = stack(self.num_stack * [timestep.next_obs])
             true_obss = stack(self.num_stack * [timestep.true_next_obs])
-            timestep.next_obs = obss
-            timestep.true_next_obs = true_obss
+            timestep = dataclasses.replace(timestep, next_obs=obss, true_next_obs=true_obss)
         else:
             raise ValueError(f"Unknown padding method: {self.padding}")
 
@@ -62,8 +62,7 @@ class StackObservations(Wrapper[StackObservationsState]):
         if self.padding == "reset":
             obss = stack(self.num_stack * [timestep.next_obs])
             true_obss = stack(self.num_stack * [timestep.true_next_obs])
-            timestep.next_obs = obss
-            timestep.true_next_obs = true_obss
+            timestep = dataclasses.replace(timestep, next_obs=obss, true_next_obs=true_obss)
         else:
             raise ValueError(f"Unknown padding method: {self.padding}")
 
@@ -94,8 +93,7 @@ class StackObservations(Wrapper[StackObservationsState]):
         true_obss = jax.tree.map(lambda tos: tos[1:], true_obss)
         true_obss = concatenate([true_obss, expand_dims(timestep.true_next_obs)])
 
-        timestep.next_obs = obss
-        timestep.true_next_obs = true_obss
+        timestep = dataclasses.replace(timestep, next_obs=obss, true_next_obs=true_obss)
 
         stack_observations_state = StackObservationsState(
             env_state=env_state,
