@@ -28,7 +28,7 @@ def rollout(
     def step(carry, _):
         key, env_state, pi_state, timestep = carry
         key, key_pi, key_step = jax.random.split(key, 3)
-        action, pi_state = pi(key_pi, pi_state, timestep.observation)
+        action, pi_state = pi(key_pi, pi_state, timestep.next_obs)
         env_state, timestep = env.step(key_step, env_state, action)
         carry = (key, env_state, pi_state, timestep)
         return carry, timestep
