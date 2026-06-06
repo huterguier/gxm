@@ -1,3 +1,4 @@
+import dataclasses
 from dataclasses import dataclass
 
 import jax
@@ -53,5 +54,7 @@ class EpisodicLife(Wrapper[EpisodicLifeState]):
         env_state, timestep = self.env.step(key, env_state.env_state, action)
         lives = timestep.info["lives"]
         episodic_life_state = EpisodicLifeState(env_state=env_state, lives=lives)
-        timestep.terminated = jnp.logical_or(timestep.terminated, lives < prev_lives)
+        timestep = dataclasses.replace(
+            timestep, terminated=jnp.logical_or(timestep.terminated, lives < prev_lives)
+        )
         return episodic_life_state, timestep

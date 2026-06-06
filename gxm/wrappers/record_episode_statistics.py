@@ -1,3 +1,4 @@
+import dataclasses
 from dataclasses import dataclass
 
 import jax
@@ -101,12 +102,14 @@ class RecordEpisodeStatistics(Wrapper[RecordEpisodeStatisticsState]):
             current_stats=current_stats,
             episode_stats=episode_stats,
         )
-        timestep.info |= {
-            "current_length": current_stats.current_length,
-            "current_return": current_stats.current_return,
-            "current_discounted_return": current_stats.current_discounted_return,
-        }
-        timestep.info |= self.get_averaged_stats(episode_stats)
+        timestep = dataclasses.replace(
+            timestep,
+            info=timestep.info | {
+                "current_length": current_stats.current_length,
+                "current_return": current_stats.current_return,
+                "current_discounted_return": current_stats.current_discounted_return,
+            } | self.get_averaged_stats(episode_stats),
+        )
         return record_episode_stats_state, timestep
 
     def reset(
@@ -129,12 +132,14 @@ class RecordEpisodeStatistics(Wrapper[RecordEpisodeStatisticsState]):
             current_stats=current_stats,
             episode_stats=episode_stats,
         )
-        timestep.info |= {
-            "current_length": current_stats.current_length,
-            "episode_length": episode_stats.episode_length,
-            "current_return": current_stats.current_return,
-        }
-        timestep.info |= self.get_averaged_stats(episode_stats)
+        timestep = dataclasses.replace(
+            timestep,
+            info=timestep.info | {
+                "current_length": current_stats.current_length,
+                "episode_length": episode_stats.episode_length,
+                "current_return": current_stats.current_return,
+            } | self.get_averaged_stats(episode_stats),
+        )
         return record_episode_stats_state, timestep
 
     def step(
@@ -202,11 +207,13 @@ class RecordEpisodeStatistics(Wrapper[RecordEpisodeStatisticsState]):
             current_stats=current_stats,
             episode_stats=episode_stats,
         )
-        timestep.info |= {
-            "current_length": current_stats.current_length,
-            "current_return": current_stats.current_return,
-            "current_discounted_return": current_stats.current_discounted_return,
-        }
-        timestep.info |= self.get_averaged_stats(episode_stats)
+        timestep = dataclasses.replace(
+            timestep,
+            info=timestep.info | {
+                "current_length": current_stats.current_length,
+                "current_return": current_stats.current_return,
+                "current_discounted_return": current_stats.current_discounted_return,
+            } | self.get_averaged_stats(episode_stats),
+        )
 
         return wrapper_state, timestep
