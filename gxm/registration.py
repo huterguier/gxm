@@ -6,7 +6,7 @@ _builtin = {
     "Pgx": "gxm.adapters.pgx",
     "Gymnasium": "gxm.adapters.gymnasium",
     "Craftax": "gxm.adapters.craftax",
-"JAXAtari": "gxm.adapters.jaxatari",
+    "JAXAtari": "gxm.adapters.jaxatari",
     "Navix": "gxm.adapters.navix",
     "XMiniGrid": "gxm.adapters.xminigrid",
 }
