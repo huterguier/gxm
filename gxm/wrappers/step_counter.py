@@ -1,3 +1,4 @@
+import dataclasses
 from dataclasses import dataclass
 
 import jax
@@ -26,7 +27,7 @@ class StepCounter(Wrapper):
             env_state=env_state,
             n_steps=jnp.int32(0),
         )
-        timestep.info["n_steps"] = step_counter_state.n_steps
+        timestep = dataclasses.replace(timestep, info=timestep.info | {"n_steps": step_counter_state.n_steps})
         return step_counter_state, timestep
 
     def reset(
@@ -38,7 +39,7 @@ class StepCounter(Wrapper):
             env_state=env_state,
             n_steps=step_counter_state.n_steps,
         )
-        timestep.info["n_steps"] = step_counter_state.n_steps
+        timestep = dataclasses.replace(timestep, info=timestep.info | {"n_steps": step_counter_state.n_steps})
         return step_counter_state, timestep
 
     def step(
@@ -53,5 +54,5 @@ class StepCounter(Wrapper):
             env_state=env_state,
             n_steps=step_counter_state.n_steps + 1,
         )
-        timestep.info["n_steps"] = step_counter_state.n_steps
+        timestep = dataclasses.replace(timestep, info=timestep.info | {"n_steps": step_counter_state.n_steps})
         return step_counter_state, timestep
