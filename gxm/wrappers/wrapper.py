@@ -46,4 +46,4 @@ class Wrapper(Generic[TWrapperState], Environment[TWrapperState]):
     def __getattr__(self, name: str) -> Any:
         if hasattr(self.env, name):
             return getattr(self.env, name)
-        return getattr(self.env, name)
+        raise AttributeError(name)
