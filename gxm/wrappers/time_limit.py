@@ -25,8 +25,7 @@ class TimeLimit(Wrapper):
         """
         Args:
             env: The environment to wrap.
-            min: Minimum reward value.
-            max: Maximum reward value.
+            time_limit: Maximum number of steps before the episode is truncated.
         """
         super().__init__(env, unwrap=unwrap)
         self.time_limit = time_limit
