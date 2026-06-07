@@ -55,12 +55,13 @@ class TimeLimit(Wrapper):
         env_state: TimeLimitState,
         action: PyTree,
     ) -> tuple[TimeLimitState, Timestep]:
-        step_env_state, timestep = self.env.step(key, env_state.env_state, action)
+        key_step, key_reset = jax.random.split(key)
+        step_env_state, timestep = self.env.step(key_step, env_state.env_state, action)
         time_limit_state = TimeLimitState(
             env_state=step_env_state,
             time=env_state.time + 1,
         )
-        reset_env_state, reset_timestep = self.env.reset(key, env_state.env_state)
+        reset_env_state, reset_timestep = self.env.reset(key_reset, env_state.env_state)
         reset_time_limit_state = TimeLimitState(
             env_state=reset_env_state,
             time=jnp.array(0, dtype=jnp.int32),
