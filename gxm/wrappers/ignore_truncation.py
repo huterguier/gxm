@@ -1,3 +1,5 @@
+import dataclasses
+
 import jax.numpy as jnp
 from jax import Array
 
@@ -7,48 +9,37 @@ from gxm.wrappers.wrapper import Wrapper
 
 class IgnoreTruncation(Wrapper):
     """
-    A wrapper that treats truncation as termination and removes the corresponding obsercation from the timestep.
+    A wrapper that treats truncation as termination.
 
-    >>> import gxm
-    >>> from gxm.wrappers import IgnoreTruncation
-    >>> env = make("Gymnax/CartPole-v1")
-    >>> env = IgnoreTruncation(env)
-
+    Truncation is folded into the terminated flag and ``true_next_obs`` is set
+    equal to ``next_obs``, so downstream code sees a plain termination with no
+    distinction between the two episode-ending conditions.
     """
 
-    env: Environment
+    def __init__(self, env: Environment):
+        super().__init__(env)
 
-    def __init__(self, env: Environment, actions: Array):
-        """
-        Args:
-            env: The environment to wrap.
-        """
-        self.env = env
+    @staticmethod
+    def _remove_truncation(timestep: Timestep) -> Timestep:
+        return dataclasses.replace(
+            timestep,
+            terminated=jnp.logical_or(timestep.terminated, timestep.truncated),
+            truncated=jnp.zeros_like(timestep.truncated),
+            true_next_obs=timestep.next_obs,
+        )
 
     def init(self, key: Array) -> tuple[EnvironmentState, Timestep]:
         env_state, timestep = self.env.init(key)
-        timestep.truncated = None  # type: ignore
-        timestep.true_next_obs = None  # type: ignore
-
-        return env_state, timestep
+        return env_state, self._remove_truncation(timestep)
 
     def reset(
         self, key: Array, env_state: EnvironmentState
     ) -> tuple[EnvironmentState, Timestep]:
         env_state, timestep = self.env.reset(key, env_state)
-        timestep.truncated = None  # type: ignore
-        timestep.true_next_obs = None  # type: ignore
-        return env_state, timestep
+        return env_state, self._remove_truncation(timestep)
 
     def step(
-        self,
-        key: Array,
-        env_state: EnvironmentState,
-        action: Array,
+        self, key: Array, env_state: EnvironmentState, action: Array
     ) -> tuple[EnvironmentState, Timestep]:
-
         env_state, timestep = self.env.step(key, env_state, action)
-        timestep.terminated = jnp.logical_or(timestep.terminated, timestep.truncated)
-        timestep.truncated = None  # type: ignore
-        timestep.true_next_obs = None  # type: ignore
-        return env_state, timestep
+        return env_state, self._remove_truncation(timestep)
