@@ -270,8 +270,9 @@ class AutoResetEnvironment(Generic[TEnvironmentState], Environment[TEnvironmentS
     def step(
         self, key: Key, env_state: TEnvironmentState, action: PyTree
     ) -> tuple[TEnvironmentState, Timestep]:
-        env_state_step, timestep_step = self._step(key, env_state, action)
-        env_state_reset, timestep_reset = self._reset(key)
+        key_step, key_reset = jax.random.split(key)
+        env_state_step, timestep_step = self._step(key_step, env_state, action)
+        env_state_reset, timestep_reset = self._reset(key_reset)
         env_state = jax.tree.map(
             lambda x_step, x_reset: jnp.where(timestep_step.done, x_reset, x_step),
             env_state_step,
