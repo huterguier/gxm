@@ -1,3 +1,4 @@
+import dataclasses
 from dataclasses import dataclass
 
 import jax
@@ -26,7 +27,7 @@ class EpisodeCounter(Wrapper):
             env_state=env_state,
             n_episodes=jnp.int32(0),
         )
-        timestep.info["n_episodes"] = episode_counter_state.n_episodes
+        timestep = dataclasses.replace(timestep, info=timestep.info | {"n_episodes": episode_counter_state.n_episodes})
         return episode_counter_state, timestep
 
     def reset(
@@ -38,7 +39,7 @@ class EpisodeCounter(Wrapper):
             env_state=env_state,
             n_episodes=episode_counter_state.n_episodes,
         )
-        timestep.info["n_episodes"] = episode_counter_state.n_episodes
+        timestep = dataclasses.replace(timestep, info=timestep.info | {"n_episodes": episode_counter_state.n_episodes})
         return episode_counter_state, timestep
 
     def step(
@@ -57,5 +58,5 @@ class EpisodeCounter(Wrapper):
                 episode_counter_state.n_episodes,
             ),
         )
-        timestep.info["n_episodes"] = episode_counter_state.n_episodes
+        timestep = dataclasses.replace(timestep, info=timestep.info | {"n_episodes": episode_counter_state.n_episodes})
         return episode_counter_state, timestep
