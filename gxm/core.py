@@ -72,8 +72,8 @@ class Timestep:
             A Trajectory object containing the sequence of timesteps.
         """
         return Trajectory(
-            obs=jnp.concatenate([first_obs[None], self.next_obs], axis=0),
-            true_obs=jnp.concatenate([first_obs[None], self.true_next_obs], axis=0),
+            obs=jax.tree.map(lambda f, n: jnp.concatenate([f[None], n], axis=0), first_obs, self.next_obs),
+            true_obs=jax.tree.map(lambda f, n: jnp.concatenate([f[None], n], axis=0), first_obs, self.true_next_obs),
             reward=self.reward,
             terminated=self.terminated,
             truncated=self.truncated,
@@ -284,9 +284,9 @@ class AutoResetEnvironment(Generic[TEnvironmentState], Environment[TEnvironmentS
             timestep_reset.next_obs,
         )
         true_obs = jax.tree.map(
-            lambda x_step, x_reset: jnp.where(timestep_step.truncated, x_reset, x_step),
+            lambda x_step, x_obs: jnp.where(timestep_step.truncated, x_step, x_obs),
             timestep_step.next_obs,
-            timestep_reset.next_obs,
+            obs,
         )
         return env_state, Timestep(
             next_obs=obs,
