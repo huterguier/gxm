@@ -1,12 +1,10 @@
-from typing import Any, Tuple
+from typing import Any
 
 import jax
 import jax.numpy as jnp
-from jax import Array
 
-from .space import Space
-
-Shape = Tuple[int, ...]
+from gxm.typing import Array
+from .space import Shape, Space
 
 
 class Box(Space):

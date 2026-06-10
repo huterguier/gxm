@@ -14,7 +14,7 @@ class TimeLimitState(WrapperState):
     time: Array
 
 
-class TimeLimit(Wrapper):
+class TimeLimit(Wrapper[TimeLimitState]):
     """
     Wrapper that terminates an episode after a fixed number of steps.
     """

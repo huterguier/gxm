@@ -15,7 +15,7 @@ class EpisodeCounterState(WrapperState):
     n_episodes: Array
 
 
-class EpisodeCounter(Wrapper):
+class EpisodeCounter(Wrapper[EpisodeCounterState]):
     """A wrapper that counts the number of episodes completed in the environment."""
 
     def __init__(self, env: Environment, unwrap: bool = True):

@@ -7,7 +7,7 @@ import xminigrid.environment
 
 from gxm.core import Environment, EnvironmentState, Timestep
 from gxm.spaces import Discrete, Tree
-from gxm.typing import Key
+from gxm.typing import Array, Key
 
 
 @jax.tree_util.register_dataclass
@@ -44,11 +44,11 @@ class XMiniGridAdapter(Environment[XMiniGridState]):
         )
         return env_state, timestep
 
-    def reset(self, key: jax.Array, env_state: XMiniGridState) -> tuple[XMiniGridState, Timestep]:
+    def reset(self, key: Key, env_state: XMiniGridState) -> tuple[XMiniGridState, Timestep]:
         del env_state
         return self.init(key)
 
-    def step(self, key: jax.Array, env_state: XMiniGridState, action: jax.Array) -> tuple[XMiniGridState, Timestep]:
+    def step(self, key: Key, env_state: XMiniGridState, action: Array) -> tuple[XMiniGridState, Timestep]:
         del key
         xminigrid_state = self.env.step(self.env_params, env_state.xminigrid_state, action)
         env_state = XMiniGridState(xminigrid_state=xminigrid_state)

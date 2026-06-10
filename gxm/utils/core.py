@@ -46,7 +46,7 @@ def evaluate(
     pi: Policy,
     pi_state: PolicyState,
     n_steps: int,
-):
+) -> jax.Array:
     """
     Evaluate a policy in the environment by performing a rollout and computing the mean return.
 
