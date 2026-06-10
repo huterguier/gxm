@@ -66,7 +66,7 @@ class RecordEpisodeStatistics(Wrapper[RecordEpisodeStatisticsState]):
         self.n_episodes = n_episodes
 
     @staticmethod
-    def get_averaged_stats(episode_stats: EpisodeStatistics) -> dict[str, jax.Array]:
+    def get_averaged_stats(episode_stats: EpisodeStatistics) -> dict[str, Array]:
         valid_episodes = jnp.maximum(jnp.sum(episode_stats.mask), 1.0)
         episode_length = (
             jnp.sum(episode_stats.episode_length * episode_stats.mask) / valid_episodes
