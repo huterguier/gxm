@@ -1,3 +1,5 @@
+import dataclasses
+
 import jax
 import jax.numpy as jnp
 
@@ -18,15 +20,19 @@ class FlattenObservation(Wrapper):
         obs_flat = jnp.concatenate([jnp.ravel(leaf) for leaf in obs_leaves])
         return obs_flat
 
+    def _flatten_timestep(self, timestep: Timestep) -> Timestep:
+        return dataclasses.replace(
+            timestep,
+            next_obs=self.flatten(timestep.next_obs),
+        )
+
     def init(self, key: Key) -> tuple[EnvironmentState, Timestep]:
         env_state, timestep = self.env.init(key)
-        timestep.next_obs = self.flatten(timestep.next_obs)
-        return env_state, timestep
+        return env_state, self._flatten_timestep(timestep)
 
     def reset(self, key: Key, env_state: EnvironmentState) -> tuple[EnvironmentState, Timestep]:
         env_state, timestep = self.env.reset(key, env_state)
-        timestep.next_obs = self.flatten(timestep.next_obs)
-        return env_state, timestep
+        return env_state, self._flatten_timestep(timestep)
 
     def step(
         self,
@@ -35,5 +41,4 @@ class FlattenObservation(Wrapper):
         action: PyTree,
     ) -> tuple[EnvironmentState, Timestep]:
         env_state, timestep = self.env.step(key, env_state, action)
-        timestep.next_obs = self.flatten(timestep.next_obs)
-        return env_state, timestep
+        return env_state, self._flatten_timestep(timestep)

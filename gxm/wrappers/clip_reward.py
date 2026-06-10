@@ -1,3 +1,5 @@
+import dataclasses
+
 import jax.numpy as jnp
 
 from gxm.core import Environment, EnvironmentState, Timestep
@@ -28,19 +30,23 @@ class ClipReward(Wrapper):
     def clip(self, reward: Array) -> Array:
         return jnp.clip(reward, self.min, self.max)
 
+    def _clip_timestep(self, timestep: Timestep) -> Timestep:
+        clipped = self.clip(timestep.reward)
+        return dataclasses.replace(
+            timestep,
+            reward=clipped,
+            info=timestep.info | {"true_reward": clipped},
+        )
+
     def init(self, key: Key) -> tuple[EnvironmentState, Timestep]:
         env_state, timestep = self.env.init(key)
-        timestep.reward = self.clip(timestep.reward)
-        timestep.info["true_reward"] = timestep.reward
-        return env_state, timestep
+        return env_state, self._clip_timestep(timestep)
 
     def reset(
         self, key: Key, env_state: EnvironmentState
     ) -> tuple[EnvironmentState, Timestep]:
         env_state, timestep = self.env.reset(key, env_state)
-        timestep.reward = self.clip(timestep.reward)
-        timestep.info["true_reward"] = timestep.reward
-        return env_state, timestep
+        return env_state, self._clip_timestep(timestep)
 
     def step(
         self,
@@ -49,6 +55,4 @@ class ClipReward(Wrapper):
         action: PyTree,
     ) -> tuple[EnvironmentState, Timestep]:
         env_state, timestep = self.env.step(key, env_state, action)
-        timestep.reward = self.clip(timestep.reward)
-        timestep.info["true_reward"] = timestep.reward
-        return env_state, timestep
+        return env_state, self._clip_timestep(timestep)
