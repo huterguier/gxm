@@ -14,7 +14,7 @@ class StickyActionState(WrapperState):
     prev_action: PyTree
 
 
-class StickyAction(Wrapper):
+class StickyAction(Wrapper[StickyActionState]):
     """A wrapper that makes actions sticky with a given probability."""
 
     def __init__(self, env: Environment, unwrap: bool = True, stickiness: float = 0.25):

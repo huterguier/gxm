@@ -1,9 +1,9 @@
 import jax
 import jax.numpy as jnp
 
-from gxm.core import Environment, Timestep
+from gxm.core import Environment, EnvironmentState, Timestep
 from gxm.typing import Array, Key, PyTree
-from gxm.wrappers.wrapper import Wrapper, WrapperState
+from gxm.wrappers.wrapper import Wrapper
 
 
 class FlattenObservation(Wrapper):
@@ -18,12 +18,12 @@ class FlattenObservation(Wrapper):
         obs_flat = jnp.concatenate([jnp.ravel(leaf) for leaf in obs_leaves])
         return obs_flat
 
-    def init(self, key: Key) -> tuple[WrapperState, Timestep]:
+    def init(self, key: Key) -> tuple[EnvironmentState, Timestep]:
         env_state, timestep = self.env.init(key)
         timestep.next_obs = self.flatten(timestep.next_obs)
         return env_state, timestep
 
-    def reset(self, key: Key, env_state: WrapperState) -> tuple[WrapperState, Timestep]:
+    def reset(self, key: Key, env_state: EnvironmentState) -> tuple[EnvironmentState, Timestep]:
         env_state, timestep = self.env.reset(key, env_state)
         timestep.next_obs = self.flatten(timestep.next_obs)
         return env_state, timestep
@@ -31,9 +31,9 @@ class FlattenObservation(Wrapper):
     def step(
         self,
         key: Key,
-        env_state: WrapperState,
+        env_state: EnvironmentState,
         action: PyTree,
-    ) -> tuple[WrapperState, Timestep]:
+    ) -> tuple[EnvironmentState, Timestep]:
         env_state, timestep = self.env.step(key, env_state, action)
         timestep.next_obs = self.flatten(timestep.next_obs)
         return env_state, timestep

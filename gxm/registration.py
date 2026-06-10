@@ -1,4 +1,7 @@
 import importlib
+from typing import Callable
+
+from gxm.core import Environment
 
 _builtin = {
     "Gymnax": "gxm.adapters.gymnax",
@@ -11,10 +14,10 @@ _builtin = {
     "XMiniGrid": "gxm.adapters.xminigrid",
 }
 
-_registry: dict[str, callable] = {}
+_registry: dict[str, Callable[..., Environment]] = {}
 
 
-def register(library: str, make_fn):
+def register(library: str, make_fn: Callable[..., Environment]):
     """
     Register a make function for a new environment library.
 
@@ -26,7 +29,7 @@ def register(library: str, make_fn):
     _registry[library] = make_fn
 
 
-def make(id: str, **kwargs):
+def make(id: str, **kwargs) -> Environment:
     """
     Create an environment given its ID.
 

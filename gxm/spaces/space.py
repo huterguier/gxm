@@ -1,8 +1,8 @@
-from typing import Any, Tuple
+from typing import Any
 
-from jax import Array
+from gxm.typing import Array
 
-Shape = Tuple[int, ...]
+Shape = tuple[int, ...]
 
 
 class Space:

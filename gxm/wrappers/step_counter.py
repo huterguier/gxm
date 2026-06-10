@@ -15,7 +15,7 @@ class StepCounterState(WrapperState):
     n_steps: Array
 
 
-class StepCounter(Wrapper):
+class StepCounter(Wrapper[StepCounterState]):
     """A wrapper that counts the number of steps taken in the environment."""
 
     def __init__(self, env: Environment, unwrap: bool = True):

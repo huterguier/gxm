@@ -1,11 +1,10 @@
-from typing import Any, Tuple
+from typing import Any
 
 import jax
 import jax.numpy as jnp
 
-from .space import Space
-
-Shape = Tuple[int, ...]
+from gxm.typing import Array
+from .space import Shape, Space
 
 
 class Tree(Space):
@@ -14,7 +13,7 @@ class Tree(Space):
     def __init__(self, spaces: Any):
         self.spaces = spaces
 
-    def sample(self, key: jax.Array, shape: Shape = ()) -> Any:
+    def sample(self, key: Array, shape: Shape = ()) -> Any:
         """
         Sample random action from all subspaces, retaining the original structure.
 
@@ -33,7 +32,7 @@ class Tree(Space):
             lambda space, k: space.sample(k, shape), self.spaces, key_tree
         )
 
-    def contains(self, x: jax.Array) -> bool:
+    def contains(self, x: Array) -> bool:
         """
         Check whether dimensions of object are within subspace.
 
