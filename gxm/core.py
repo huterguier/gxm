@@ -1,3 +1,4 @@
+import functools
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Generic, TypeVar
@@ -11,29 +12,49 @@ from gxm.typing import Array, Key, PyTree
 
 @jax.tree_util.register_dataclass
 @dataclass
-class Timestep:
+class Step:
     """
-    Class representing a single timestep :math:`(R_i, S_{i+1})` in an environment.
-    Where :math:`R_i` is the reward received after taking an action at timestep
-    :math:`i` and :math:`S_{i+1}` is the observation at the next timestep.
-    In case of truncation, ``true_next_obs`` represents the observation :math:`\hat{S}_{i+1}` that would have been
-    observed if the episode had not been truncated.
+    Output of a single model step: a pure dynamics transition.
+
+    Contains the next observation, the action taken, and any auxiliary info,
+    but no episodic metadata (reward, termination, truncation).
+    """
+
+    next_obs: PyTree
+    """The observation at the next state."""
+    action: PyTree
+    """The action taken at this step."""
+    info: dict[str, PyTree]
+    """Additional information about the step."""
+
+
+@functools.partial(
+    jax.tree_util.register_dataclass,
+    data_fields=["next_obs", "true_next_obs", "action", "reward", "terminated", "truncated", "info"],
+    meta_fields=[],
+)
+@dataclass
+class Timestep(Step):
+    """
+    Extends :class:`Step` with episodic metadata.
+
+    The "time" refers to *episodic* time: reward, termination, and truncation
+    signals only exist in the context of an episode, and are meaningless for a
+    pure world model. :class:`Timestep` represents one unit of time
+    :math:`(R_i, S_{i+1})` within a bounded episode.
+
+    In case of truncation, ``true_next_obs`` holds the observation
+    :math:`\\hat{S}_{i+1}` that would have been seen had the episode not been cut.
     """
 
     reward: Array
-    """The reward :math:`R_i` received at this timestep :math:`i`."""
+    """The reward :math:`R_i` received at this timestep."""
     terminated: Array
     """Whether the episode has terminated at this timestep."""
     truncated: Array
     """Whether the episode has been truncated at this timestep."""
-    next_obs: PyTree
-    """The observation :math:`S_{i+1}` at this timestep :math:`i`."""
     true_next_obs: PyTree
-    """The true observation :math:`\hat{S}_{i+1}` at this timestep. This may differ from ``next_obs`` in environments that allow truncation, if and only if truncation is True. """
-    action: PyTree
-    """The action :math:`A_i` taken at this timestep. Undefined (sentinel value) on the first timestep returned by ``init``."""
-    info: dict[str, PyTree]
-    """Additional information about the timestep."""
+    """The true next observation before any auto-reset. Differs from ``next_obs`` only when ``truncated`` is True."""
 
     @property
     def done(self) -> Array:
@@ -109,7 +130,7 @@ class Trajectory:
     obs: PyTree
     """The observations :math:`(S_0, S_1, ..., S_n)` in the trajectory."""
     true_obs: PyTree
-    """The true observations :math:`(\hat{S}_0, \hat{S}_1, ..., \hat{S}_n)` in the trajectory. These may differ from ``obs`` in environments that allow truncation."""
+    """The true observations :math:`(\\hat{S}_0, \\hat{S}_1, ..., \\hat{S}_n)` in the trajectory. These may differ from ``obs`` in environments that allow truncation."""
     action: PyTree
     """The actions :math:`(A_0, A_1, ..., A_{n-1})` taken in the trajectory."""
     reward: Array
@@ -136,29 +157,82 @@ class Trajectory:
 
 class EnvironmentState:
     """
-    A placeholder class for environment state.
+    A placeholder class for model/environment state.
     This can be replaced with a more specific implementation as needed.
     """
 
     pass
 
 
+TModelState = TypeVar("TModelState", bound=EnvironmentState)
 TEnvironmentState = TypeVar("TEnvironmentState", bound=EnvironmentState)
 
 
-class Environment(Generic[TEnvironmentState], ABC):
+class Model(Generic[TModelState], ABC):
     """
-    Base class for environments in ``gxm``.
-    Environments should inherit from this class and implement the
-    ``init``, ``step``, ``reset``, and ``num_actions`` methods.
+    Base class for world models in ``gxm``.
+
+    A model defines dynamics: given an action, it transitions to a new state and
+    produces a next observation. It has no notion of episodes, rewards, or
+    termination — those are added by :class:`Environment`.
+
+    All :class:`Environment` instances are also ``Model`` instances, so any
+    function typed ``model: Model`` can accept an environment directly.
     """
 
     id: str
-    """The unique identifier of the environment."""
+    """The unique identifier of the model."""
     action_space: Space
-    """The action space of the environment."""
+    """The action space of the model."""
     observation_space: Space
-    """The observation space of the environment."""
+    """The observation space of the model."""
+
+    @abstractmethod
+    def init(self, key: Key) -> tuple[TModelState, Step]:
+        """
+        Initialize the model and return the initial state.
+
+        Args:
+            key: A JAX random key for any stochastic initialization.
+        Returns:
+            A tuple of the initial model state and the initial step output.
+        """
+
+    @abstractmethod
+    def reset(self, key: Key, state: TModelState) -> tuple[TModelState, Step]:
+        """
+        Reset the model to an initial state.
+
+        Args:
+            key: A JAX random key for any stochasticity.
+            state: The current model state.
+        Returns:
+            A tuple of the reset model state and the initial step output.
+        """
+
+    @abstractmethod
+    def step(self, key: Key, state: TModelState, action: PyTree) -> tuple[TModelState, Step]:
+        """
+        Advance the model by one step given an action.
+
+        Args:
+            key: A JAX random key for any stochasticity.
+            state: The current model state.
+            action: The action to apply.
+        Returns:
+            A tuple of the new model state and the resulting step output.
+        """
+
+
+class Environment(Generic[TEnvironmentState], Model[TEnvironmentState], ABC):
+    """
+    Base class for RL environments in ``gxm``.
+
+    Extends :class:`Model` with episode structure: each step returns a
+    :class:`Timestep` that includes reward, termination, and truncation signals.
+    Environments should inherit from this class and implement
+    ``init``, ``step``, and ``reset``.
+    """
 
     @abstractmethod
     def init(self, key: Key) -> tuple[TEnvironmentState, Timestep]:
@@ -184,7 +258,6 @@ class Environment(Generic[TEnvironmentState], ABC):
         Returns:
             A tuple containing the reset environment state and the initial timestep.
         """
-        pass
 
     @abstractmethod
     def step(
@@ -203,7 +276,6 @@ class Environment(Generic[TEnvironmentState], ABC):
         Returns:
             A tuple containing the new environment state and the resulting timestep.
         """
-        pass
 
     def has_wrapper(self, wrapper_type: type["Environment"]) -> bool:
         """
