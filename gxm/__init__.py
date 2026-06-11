@@ -5,6 +5,7 @@ from gxm.core import (
     Environment,
     EnvironmentState,
     Model,
+    ModelState,
     Step,
     Timestep,
     Trajectory,
@@ -48,6 +49,7 @@ def __getattr__(name: str):
 
 __all__ = [
     "Model",
+    "ModelState",
     "Environment",
     "AutoResetEnvironment",
     "EnvironmentState",
