@@ -155,7 +155,7 @@ class Trajectory:
         return self.reward.shape[0]
 
 
-class EnvironmentState:
+class ModelState:
     """
     A placeholder class for model/environment state.
     This can be replaced with a more specific implementation as needed.
@@ -164,8 +164,10 @@ class EnvironmentState:
     pass
 
 
-TModelState = TypeVar("TModelState", bound=EnvironmentState)
-TEnvironmentState = TypeVar("TEnvironmentState", bound=EnvironmentState)
+EnvironmentState = ModelState
+
+TModelState = TypeVar("TModelState", bound=ModelState)
+TEnvironmentState = TypeVar("TEnvironmentState", bound=ModelState)
 
 
 class Model(Generic[TModelState], ABC):
