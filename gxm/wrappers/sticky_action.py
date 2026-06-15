@@ -53,6 +53,6 @@ class StickyAction(Wrapper[StickyActionState]):
         env_state, timestep = self.env.step(key, env_state.env_state, sticky_action)
         sticky_action_state = StickyActionState(
             env_state=env_state,
-            prev_action=action,
+            prev_action=sticky_action,
         )
         return sticky_action_state, timestep
