@@ -55,8 +55,8 @@ class Timestep:
     reward: jax.Array
     terminated: jax.Array
     truncated: jax.Array
-    obs: jax.Array
-    true_obs: jax.Array
+    next_obs: jax.Array
+    next_true_obs: jax.Array
     info: dict[str, Any]
 ```
 
