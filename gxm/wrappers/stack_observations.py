@@ -7,7 +7,7 @@ import jax.numpy as jnp
 
 from gxm.core import Environment, Timestep
 from gxm.typing import Key, PyTree
-from gxm.wrappers.wrapper import Wrapper, WrapperState
+from gxm.wrappers.wrapper import EnvironmentWrapper, WrapperState
 
 
 @jax.tree_util.register_dataclass
@@ -21,7 +21,7 @@ class StackObservationsState(WrapperState):
     """The history of true observations."""
 
 
-class StackObservations(Wrapper[StackObservationsState]):
+class StackObservations(EnvironmentWrapper[StackObservationsState]):
     """Wrapper that stacks the observation along a new axis."""
 
     num_stack: int

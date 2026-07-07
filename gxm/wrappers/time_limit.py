@@ -5,7 +5,7 @@ import jax.numpy as jnp
 
 from gxm.core import Environment, Timestep
 from gxm.typing import Array, Key, PyTree
-from gxm.wrappers.wrapper import Wrapper, WrapperState
+from gxm.wrappers.wrapper import EnvironmentWrapper, WrapperState
 
 
 @jax.tree_util.register_dataclass
@@ -14,7 +14,7 @@ class TimeLimitState(WrapperState):
     time: Array
 
 
-class TimeLimit(Wrapper[TimeLimitState]):
+class TimeLimit(EnvironmentWrapper[TimeLimitState]):
     """
     Wrapper that terminates an episode after a fixed number of steps.
     """

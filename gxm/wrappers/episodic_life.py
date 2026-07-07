@@ -6,7 +6,7 @@ from jax import numpy as jnp
 
 from gxm.core import Environment, Timestep
 from gxm.typing import Array, Key, PyTree
-from gxm.wrappers.wrapper import Wrapper, WrapperState
+from gxm.wrappers.wrapper import EnvironmentWrapper, WrapperState
 
 
 @jax.tree_util.register_dataclass
@@ -15,7 +15,7 @@ class EpisodicLifeState(WrapperState):
     lives: Array
 
 
-class EpisodicLife(Wrapper[EpisodicLifeState]):
+class EpisodicLife(EnvironmentWrapper[EpisodicLifeState]):
     """
     A wrapper that makes losing a life in an environment (like Atari games) count as the end of an episode.
     It assumes that the environment's timestep info dictionary contains a "lives" key indicating the number of lives remaining.

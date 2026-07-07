@@ -1,9 +1,10 @@
 from dataclasses import dataclass
+from typing import Any
 
 import jax
 import jax.numpy as jnp
 
-from gxm.core import Environment, Timestep
+from gxm.core import Model, TStep
 from gxm.typing import Key, PyTree
 from gxm.wrappers.wrapper import Wrapper, WrapperState
 
@@ -14,45 +15,45 @@ class StickyActionState(WrapperState):
     prev_action: PyTree
 
 
-class StickyAction(Wrapper[StickyActionState]):
+class StickyAction(Wrapper[StickyActionState, TStep]):
     """A wrapper that makes actions sticky with a given probability."""
 
-    def __init__(self, env: Environment, unwrap: bool = True, stickiness: float = 0.25):
+    def __init__(self, env: Model[Any, TStep], unwrap: bool = True, stickiness: float = 0.25):
         super().__init__(env, unwrap=unwrap)
         self.stickiness = stickiness
 
-    def init(self, key: Key) -> tuple[StickyActionState, Timestep]:
-        env_state, timestep = self.env.init(key)
+    def init(self, key: Key) -> tuple[StickyActionState, TStep]:
+        env_state, step = self.env.init(key)
         sticky_action_state = StickyActionState(
             env_state=env_state,
             prev_action=self.env.action_space.sample(key),
         )
-        return sticky_action_state, timestep
+        return sticky_action_state, step
 
     def reset(
         self, key: Key, env_state: StickyActionState
-    ) -> tuple[StickyActionState, Timestep]:
-        env_state, timestep = self.env.reset(key, env_state)
+    ) -> tuple[StickyActionState, TStep]:
+        env_state, step = self.env.reset(key, env_state)
         sticky_action_state = StickyActionState(
             env_state=env_state,
             prev_action=self.env.action_space.sample(key),
         )
-        return sticky_action_state, timestep
+        return sticky_action_state, step
 
     def step(
         self,
         key: Key,
         env_state: StickyActionState,
         action: PyTree,
-    ) -> tuple[StickyActionState, Timestep]:
+    ) -> tuple[StickyActionState, TStep]:
         sticky_action = jnp.where(
             jax.random.uniform(key) < self.stickiness,
             env_state.prev_action,
             action,
         )
-        env_state, timestep = self.env.step(key, env_state.env_state, sticky_action)
+        env_state, step = self.env.step(key, env_state.env_state, sticky_action)
         sticky_action_state = StickyActionState(
             env_state=env_state,
             prev_action=sticky_action,
         )
-        return sticky_action_state, timestep
+        return sticky_action_state, step

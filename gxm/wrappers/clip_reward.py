@@ -1,13 +1,14 @@
 import dataclasses
+from typing import Any
 
 import jax.numpy as jnp
 
 from gxm.core import Environment, EnvironmentState, Timestep
 from gxm.typing import Array, Key, PyTree
-from gxm.wrappers.wrapper import Wrapper
+from gxm.wrappers.wrapper import EnvironmentWrapper
 
 
-class ClipReward(Wrapper):
+class ClipReward(EnvironmentWrapper[Any]):
     """
     Wrapper that clips the reward to a specified range.
     """

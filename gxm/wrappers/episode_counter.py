@@ -6,7 +6,7 @@ import jax.numpy as jnp
 
 from gxm.core import Environment, Timestep
 from gxm.typing import Array, Key, PyTree
-from gxm.wrappers.wrapper import Wrapper, WrapperState
+from gxm.wrappers.wrapper import EnvironmentWrapper, WrapperState
 
 
 @jax.tree_util.register_dataclass
@@ -15,7 +15,7 @@ class EpisodeCounterState(WrapperState):
     n_episodes: Array
 
 
-class EpisodeCounter(Wrapper[EpisodeCounterState]):
+class EpisodeCounter(EnvironmentWrapper[EpisodeCounterState]):
     """A wrapper that counts the number of episodes completed in the environment."""
 
     def __init__(self, env: Environment, unwrap: bool = True):

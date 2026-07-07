@@ -1,13 +1,14 @@
 import dataclasses
+from typing import Any
 
 import jax.numpy as jnp
 
 from gxm.core import Environment, EnvironmentState, Timestep
 from gxm.typing import Key, PyTree
-from gxm.wrappers.wrapper import Wrapper
+from gxm.wrappers.wrapper import EnvironmentWrapper
 
 
-class IgnoreTruncation(Wrapper):
+class IgnoreTruncation(EnvironmentWrapper[Any]):
     """
     A wrapper that treats truncation as termination.
 

@@ -1,17 +1,20 @@
 import dataclasses
+from typing import Any, TypeVar
 
 import jax
 import jax.numpy as jnp
 
-from gxm.core import Environment, EnvironmentState, Timestep
+from gxm.core import Model, ModelState, Step, TStep
 from gxm.typing import Array, Key, PyTree
 from gxm.wrappers.wrapper import Wrapper
 
+_TStep = TypeVar("_TStep", bound=Step)
 
-class FlattenObservation(Wrapper):
+
+class FlattenObservation(Wrapper[Any, TStep]):
     """Wrapper that adds a rollout method to the environment."""
 
-    def __init__(self, env: Environment, unwrap: bool = True):
+    def __init__(self, env: Model[Any, TStep], unwrap: bool = True):
         super().__init__(env, unwrap=unwrap)
 
     @classmethod
@@ -20,25 +23,25 @@ class FlattenObservation(Wrapper):
         obs_flat = jnp.concatenate([jnp.ravel(leaf) for leaf in obs_leaves])
         return obs_flat
 
-    def _flatten_timestep(self, timestep: Timestep) -> Timestep:
+    def _flatten_step(self, step: _TStep) -> _TStep:
         return dataclasses.replace(
-            timestep,
-            next_obs=self.flatten(timestep.next_obs),
+            step,
+            next_obs=self.flatten(step.next_obs),
         )
 
-    def init(self, key: Key) -> tuple[EnvironmentState, Timestep]:
-        env_state, timestep = self.env.init(key)
-        return env_state, self._flatten_timestep(timestep)
+    def init(self, key: Key) -> tuple[ModelState, TStep]:
+        env_state, step = self.env.init(key)
+        return env_state, self._flatten_step(step)
 
-    def reset(self, key: Key, env_state: EnvironmentState) -> tuple[EnvironmentState, Timestep]:
-        env_state, timestep = self.env.reset(key, env_state)
-        return env_state, self._flatten_timestep(timestep)
+    def reset(self, key: Key, env_state: ModelState) -> tuple[ModelState, TStep]:
+        env_state, step = self.env.reset(key, env_state)
+        return env_state, self._flatten_step(step)
 
     def step(
         self,
         key: Key,
-        env_state: EnvironmentState,
+        env_state: ModelState,
         action: PyTree,
-    ) -> tuple[EnvironmentState, Timestep]:
-        env_state, timestep = self.env.step(key, env_state, action)
-        return env_state, self._flatten_timestep(timestep)
+    ) -> tuple[ModelState, TStep]:
+        env_state, step = self.env.step(key, env_state, action)
+        return env_state, self._flatten_step(step)

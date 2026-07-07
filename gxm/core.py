@@ -1,7 +1,7 @@
 import functools
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from dataclasses import dataclass
-from typing import Generic, TypeVar
+from typing import Generic, Protocol, TypeVar
 
 import jax
 import jax.numpy as jnp
@@ -168,14 +168,15 @@ EnvironmentState = ModelState
 
 TModelState = TypeVar("TModelState", bound=ModelState)
 TEnvironmentState = TypeVar("TEnvironmentState", bound=ModelState)
+TStep = TypeVar("TStep", bound=Step, covariant=True)
 
 
-class Model(Generic[TModelState], ABC):
+class Model(Protocol[TModelState, TStep]):
     """
     Base class for world models in ``gxm``.
 
     A model defines dynamics: given an action, it transitions to a new state and
-    produces a next observation. It has no notion of episodes, rewards, or
+    produces a step output. It has no notion of episodes, rewards, or
     termination — those are added by :class:`Environment`.
 
     All :class:`Environment` instances are also ``Model`` instances, so any
@@ -190,7 +191,7 @@ class Model(Generic[TModelState], ABC):
     """The observation space of the model."""
 
     @abstractmethod
-    def init(self, key: Key) -> tuple[TModelState, Step]:
+    def init(self, key: Key) -> tuple[TModelState, TStep]:
         """
         Initialize the model and return the initial state.
 
@@ -201,7 +202,7 @@ class Model(Generic[TModelState], ABC):
         """
 
     @abstractmethod
-    def reset(self, key: Key, state: TModelState) -> tuple[TModelState, Step]:
+    def reset(self, key: Key, state: TModelState) -> tuple[TModelState, TStep]:
         """
         Reset the model to an initial state.
 
@@ -213,7 +214,7 @@ class Model(Generic[TModelState], ABC):
         """
 
     @abstractmethod
-    def step(self, key: Key, state: TModelState, action: PyTree) -> tuple[TModelState, Step]:
+    def step(self, key: Key, state: TModelState, action: PyTree) -> tuple[TModelState, TStep]:
         """
         Advance the model by one step given an action.
 
@@ -225,8 +226,44 @@ class Model(Generic[TModelState], ABC):
             A tuple of the new model state and the resulting step output.
         """
 
+    def has_wrapper(self, wrapper_type: type["Model"]) -> bool:
+        """
+        Check if the model or any of its wrappers is of a specific type.
 
-class Environment(Generic[TEnvironmentState], Model[TEnvironmentState], ABC):
+        Args:
+            wrapper_type: The type to check for.
+        Returns:
+            True if the model or any of its wrappers is of the specified type, False otherwise.
+        """
+        return isinstance(self, wrapper_type)
+
+    def get_wrapper(self, wrapper_type: type["Model"]) -> "Model":
+        """
+        Retrieve the first wrapper of a specific type from the model.
+
+        Args:
+            wrapper_type: The type of the wrapper to retrieve.
+        Returns:
+            The first wrapper of the specified type.
+        Raises:
+            ValueError: If no wrapper of the specified type is found.
+        """
+        if isinstance(self, wrapper_type):
+            return self
+        raise ValueError(f"No wrapper of type {wrapper_type} found in the model.")
+
+    @property
+    def unwrapped(self) -> "Model":
+        """
+        Retrieve the base model by unwrapping all wrappers.
+
+        Returns:
+            The base model without any wrappers.
+        """
+        return self
+
+
+class Environment(Model[TEnvironmentState, Timestep], Protocol[TEnvironmentState]):
     """
     Base class for RL environments in ``gxm``.
 
@@ -278,42 +315,6 @@ class Environment(Generic[TEnvironmentState], Model[TEnvironmentState], ABC):
         Returns:
             A tuple containing the new environment state and the resulting timestep.
         """
-
-    def has_wrapper(self, wrapper_type: type["Environment"]) -> bool:
-        """
-        Check if the environment or any of its wrappers is of a specific type.
-
-        Args:
-            wrapper_type: The type to check for.
-        Returns:
-            True if the environment or any of its wrappers is of the specified type, False otherwise.
-        """
-        return isinstance(self, wrapper_type)
-
-    def get_wrapper(self, wrapper_type: type["Environment"]) -> "Environment":
-        """
-        Retrieve the first wrapper of a specific type from the environment.
-
-        Args:
-            wrapper_type: The type of the wrapper to retrieve.
-        Returns:
-            The first wrapper of the specified type.
-        Raises:
-            ValueError: If no wrapper of the specified type is found.
-        """
-        if isinstance(self, wrapper_type):
-            return self
-        raise ValueError(f"No wrapper of type {wrapper_type} found in the environment.")
-
-    @property
-    def unwrapped(self) -> "Environment":
-        """
-        Retrieve the base environment by unwrapping all wrappers.
-
-        Returns:
-            The base environment without any wrappers.
-        """
-        return self
 
 
 class AutoResetEnvironment(Generic[TEnvironmentState], Environment[TEnvironmentState]):

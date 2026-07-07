@@ -5,7 +5,7 @@ import jax.numpy as jnp
 
 from gxm.core import Environment, Timestep
 from gxm.typing import Array, Key, PyTree
-from gxm.wrappers.wrapper import Wrapper, WrapperState
+from gxm.wrappers.wrapper import EnvironmentWrapper, WrapperState
 
 
 @jax.tree_util.register_dataclass
@@ -20,7 +20,7 @@ class EvaluateState(WrapperState):
         return self.cumulative_return / self.n_episodes
 
 
-class Evaluate(Wrapper[EvaluateState]):
+class Evaluate(EnvironmentWrapper[EvaluateState]):
     env: Environment
 
     def __init__(self, env: Environment, unwrap: bool = True):

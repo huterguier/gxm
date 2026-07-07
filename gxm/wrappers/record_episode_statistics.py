@@ -6,7 +6,7 @@ import jax.numpy as jnp
 
 from gxm.core import Environment, Timestep
 from gxm.typing import Array, Key, PyTree
-from gxm.wrappers.wrapper import Wrapper, WrapperState
+from gxm.wrappers.wrapper import EnvironmentWrapper, WrapperState
 
 
 @jax.tree_util.register_dataclass
@@ -38,7 +38,7 @@ class RecordEpisodeStatisticsState(WrapperState):
         yield self.episode_stats
 
 
-class RecordEpisodeStatistics(Wrapper[RecordEpisodeStatisticsState]):
+class RecordEpisodeStatistics(EnvironmentWrapper[RecordEpisodeStatisticsState]):
     """
     A wrapper that records the episode length :math:`T` , episodic return
     :math:`J(\\tau) = \\sum_{t=0}^{T} r_t` , and discounted episodic return
