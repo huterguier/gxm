@@ -38,10 +38,8 @@ class TimeLimit(EnvironmentWrapper[TimeLimitState]):
         )
         return time_limit_state, timestep
 
-    def reset(
-        self, key: Key, env_state: TimeLimitState
-    ) -> tuple[TimeLimitState, Timestep]:
-        env_state, timestep = self.env.reset(key, env_state)
+    def reset(self, key: Key, state: TimeLimitState) -> tuple[TimeLimitState, Timestep]:
+        env_state, timestep = self.env.reset(key, state)
         time_limit_state = TimeLimitState(
             env_state=env_state,
             time=jnp.array(0, dtype=jnp.int32),
@@ -51,16 +49,16 @@ class TimeLimit(EnvironmentWrapper[TimeLimitState]):
     def step(
         self,
         key: Key,
-        env_state: TimeLimitState,
+        state: TimeLimitState,
         action: PyTree,
     ) -> tuple[TimeLimitState, Timestep]:
         key_step, key_reset = jax.random.split(key)
-        step_env_state, timestep = self.env.step(key_step, env_state.env_state, action)
+        step_env_state, timestep = self.env.step(key_step, state.env_state, action)
         time_limit_state = TimeLimitState(
             env_state=step_env_state,
-            time=env_state.time + 1,
+            time=state.time + 1,
         )
-        reset_env_state, reset_timestep = self.env.reset(key_reset, env_state.env_state)
+        reset_env_state, reset_timestep = self.env.reset(key_reset, state.env_state)
         reset_time_limit_state = TimeLimitState(
             env_state=reset_env_state,
             time=jnp.array(0, dtype=jnp.int32),
@@ -75,7 +73,7 @@ class TimeLimit(EnvironmentWrapper[TimeLimitState]):
             info=timestep.info,
         )
         time_limit_state, timestep = jax.lax.cond(
-            jnp.logical_and(env_state.time + 1 >= self.time_limit, ~timestep.done),
+            jnp.logical_and(state.time + 1 >= self.time_limit, ~timestep.done),
             lambda: (reset_time_limit_state, reset_timestep),
             lambda: (time_limit_state, timestep),
         )

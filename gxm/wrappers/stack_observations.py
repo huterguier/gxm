@@ -41,7 +41,9 @@ class StackObservations(EnvironmentWrapper[StackObservationsState]):
         if self.padding == "reset":
             obss = stack(self.num_stack * [timestep.next_obs])
             true_obss = stack(self.num_stack * [timestep.true_next_obs])
-            timestep = dataclasses.replace(timestep, next_obs=obss, true_next_obs=true_obss)
+            timestep = dataclasses.replace(
+                timestep, next_obs=obss, true_next_obs=true_obss
+            )
         else:
             raise ValueError(f"Unknown padding method: {self.padding}")
 
@@ -52,17 +54,19 @@ class StackObservations(EnvironmentWrapper[StackObservationsState]):
         return stack_observations_state, timestep
 
     def reset(
-        self, key: Key, env_state: StackObservationsState
+        self, key: Key, state: StackObservationsState
     ) -> tuple[StackObservationsState, Timestep]:
         def stack(obss):
             return jax.tree.map(lambda *os: jnp.stack(os, axis=0), *obss)
 
-        env_state, timestep = self.env.reset(key, env_state.env_state)
+        env_state, timestep = self.env.reset(key, state.env_state)
 
         if self.padding == "reset":
             obss = stack(self.num_stack * [timestep.next_obs])
             true_obss = stack(self.num_stack * [timestep.true_next_obs])
-            timestep = dataclasses.replace(timestep, next_obs=obss, true_next_obs=true_obss)
+            timestep = dataclasses.replace(
+                timestep, next_obs=obss, true_next_obs=true_obss
+            )
         else:
             raise ValueError(f"Unknown padding method: {self.padding}")
 
@@ -75,7 +79,7 @@ class StackObservations(EnvironmentWrapper[StackObservationsState]):
     def step(
         self,
         key: Key,
-        env_state: StackObservationsState,
+        state: StackObservationsState,
         action: PyTree,
     ) -> tuple[StackObservationsState, Timestep]:
         def concatenate(obss: Sequence[PyTree]) -> PyTree:
@@ -84,9 +88,9 @@ class StackObservations(EnvironmentWrapper[StackObservationsState]):
         def expand_dims(obs: PyTree) -> PyTree:
             return jax.tree.map(lambda o: jnp.expand_dims(o, axis=0), obs)
 
-        obss = env_state.obss
-        true_obss = env_state.true_obss
-        env_state, timestep = self.env.step(key, env_state.env_state, action)
+        obss = state.obss
+        true_obss = state.true_obss
+        env_state, timestep = self.env.step(key, state.env_state, action)
 
         obss = jax.tree.map(lambda os: os[1:], obss)
         obss = concatenate([obss, expand_dims(timestep.next_obs)])

@@ -34,9 +34,9 @@ class StepCounter(Wrapper[StepCounterState, TStep]):
         return step_counter_state, step_output
 
     def reset(
-        self, key: Key, env_state: StepCounterState
+        self, key: Key, state: StepCounterState
     ) -> tuple[StepCounterState, TStep]:
-        step_counter_state = env_state
+        step_counter_state = state
         env_state, step_output = self.env.reset(key, step_counter_state.env_state)
         step_counter_state = StepCounterState(
             env_state=env_state,
@@ -50,11 +50,11 @@ class StepCounter(Wrapper[StepCounterState, TStep]):
     def step(
         self,
         key: Key,
-        env_state: StepCounterState,
+        state: StepCounterState,
         action: PyTree,
     ) -> tuple[StepCounterState, TStep]:
-        step_counter_state = env_state
-        env_state, step_output = self.env.step(key, env_state.env_state, action)
+        step_counter_state = state
+        env_state, step_output = self.env.step(key, state.env_state, action)
         step_counter_state = StepCounterState(
             env_state=env_state,
             n_steps=step_counter_state.n_steps + 1,

@@ -37,9 +37,9 @@ class EpisodicLife(EnvironmentWrapper[EpisodicLifeState]):
         return episodic_life_state, timestep
 
     def reset(
-        self, key: Key, env_state: EpisodicLifeState
+        self, key: Key, state: EpisodicLifeState
     ) -> tuple[EpisodicLifeState, Timestep]:
-        env_state, timestep = self.env.reset(key, env_state.env_state)
+        env_state, timestep = self.env.reset(key, state.env_state)
         lives = timestep.info["lives"]
         episodic_life_state = EpisodicLifeState(env_state=env_state, lives=lives)
         return episodic_life_state, timestep
@@ -47,11 +47,11 @@ class EpisodicLife(EnvironmentWrapper[EpisodicLifeState]):
     def step(
         self,
         key: Key,
-        env_state: EpisodicLifeState,
+        state: EpisodicLifeState,
         action: PyTree,
     ) -> tuple[EpisodicLifeState, Timestep]:
-        prev_lives = env_state.lives
-        env_state, timestep = self.env.step(key, env_state.env_state, action)
+        prev_lives = state.lives
+        env_state, timestep = self.env.step(key, state.env_state, action)
         lives = timestep.info["lives"]
         episodic_life_state = EpisodicLifeState(env_state=env_state, lives=lives)
         timestep = dataclasses.replace(

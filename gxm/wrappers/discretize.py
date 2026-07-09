@@ -44,15 +44,15 @@ class Discretize(Wrapper[Any, TStep]):
     def init(self, key: Key) -> tuple[DynamicsState, TStep]:
         return self.env.init(key)
 
-    def reset(self, key: Key, env_state: DynamicsState) -> tuple[DynamicsState, TStep]:
-        return self.env.reset(key, env_state)
+    def reset(self, key: Key, state: DynamicsState) -> tuple[DynamicsState, TStep]:
+        return self.env.reset(key, state)
 
     def step(
         self,
         key: Key,
-        env_state: DynamicsState,
+        state: DynamicsState,
         action: PyTree,
     ) -> tuple[DynamicsState, TStep]:
         continuous_action = jax.tree.map(lambda x: x[action], self.actions)
-        env_state, step = self.env.step(key, env_state, continuous_action)
-        return env_state, dataclasses.replace(step, action=action)
+        state, step = self.env.step(key, state, continuous_action)
+        return state, dataclasses.replace(step, action=action)

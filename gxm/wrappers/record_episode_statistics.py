@@ -104,18 +104,20 @@ class RecordEpisodeStatistics(EnvironmentWrapper[RecordEpisodeStatisticsState]):
         )
         timestep = dataclasses.replace(
             timestep,
-            info=timestep.info | {
+            info=timestep.info
+            | {
                 "current_length": current_stats.current_length,
                 "current_return": current_stats.current_return,
                 "current_discounted_return": current_stats.current_discounted_return,
-            } | self.get_averaged_stats(episode_stats),
+            }
+            | self.get_averaged_stats(episode_stats),
         )
         return record_episode_stats_state, timestep
 
     def reset(
-        self, key: Key, env_state: RecordEpisodeStatisticsState
+        self, key: Key, state: RecordEpisodeStatisticsState
     ) -> tuple[RecordEpisodeStatisticsState, Timestep]:
-        env_state, timestep = self.env.reset(key, env_state.env_state)
+        env_state, timestep = self.env.reset(key, state.env_state)
         current_stats = CurrentStatistics(
             current_return=jnp.float32(0.0),
             current_length=jnp.int32(0.0),
@@ -134,21 +136,23 @@ class RecordEpisodeStatistics(EnvironmentWrapper[RecordEpisodeStatisticsState]):
         )
         timestep = dataclasses.replace(
             timestep,
-            info=timestep.info | {
+            info=timestep.info
+            | {
                 "current_length": current_stats.current_length,
                 "episode_length": episode_stats.episode_length,
                 "current_return": current_stats.current_return,
-            } | self.get_averaged_stats(episode_stats),
+            }
+            | self.get_averaged_stats(episode_stats),
         )
         return record_episode_stats_state, timestep
 
     def step(
         self,
         key: Key,
-        env_state: RecordEpisodeStatisticsState,
+        state: RecordEpisodeStatisticsState,
         action: PyTree,
     ) -> tuple[RecordEpisodeStatisticsState, Timestep]:
-        wrapper_state = env_state
+        wrapper_state = state
         current_stats = wrapper_state.current_stats
         episode_stats = wrapper_state.episode_stats
 
@@ -209,11 +213,13 @@ class RecordEpisodeStatistics(EnvironmentWrapper[RecordEpisodeStatisticsState]):
         )
         timestep = dataclasses.replace(
             timestep,
-            info=timestep.info | {
+            info=timestep.info
+            | {
                 "current_length": current_stats.current_length,
                 "current_return": current_stats.current_return,
                 "current_discounted_return": current_stats.current_discounted_return,
-            } | self.get_averaged_stats(episode_stats),
+            }
+            | self.get_averaged_stats(episode_stats),
         )
 
         return wrapper_state, timestep

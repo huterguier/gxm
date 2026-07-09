@@ -40,7 +40,7 @@ class BraxAdapter(Environment[BraxState]):
 
     def init(self, key: Key) -> tuple[BraxState, Timestep]:
         brax_state = self.env.reset(key)
-        env_state = BraxState(brax_state=brax_state)
+        state = BraxState(brax_state=brax_state)
         timestep = Timestep(
             next_obs=brax_state.obs,
             true_next_obs=brax_state.obs,
@@ -50,16 +50,18 @@ class BraxAdapter(Environment[BraxState]):
             truncated=jnp.bool(False),
             info={},
         )
-        return env_state, timestep
+        return state, timestep
 
-    def reset(self, key: Key, env_state: BraxState) -> tuple[BraxState, Timestep]:
-        del env_state
+    def reset(self, key: Key, state: BraxState) -> tuple[BraxState, Timestep]:
+        del state
         return self.init(key)
 
-    def step(self, key: Key, env_state: BraxState, action: Array) -> tuple[BraxState, Timestep]:
+    def step(
+        self, key: Key, state: BraxState, action: Array
+    ) -> tuple[BraxState, Timestep]:
         del key
-        brax_state = self.env.step(env_state.brax_state, action)
-        env_state = BraxState(brax_state=brax_state)
+        brax_state = self.env.step(state.brax_state, action)
+        state = BraxState(brax_state=brax_state)
         timestep = Timestep(
             next_obs=brax_state.obs,
             true_next_obs=brax_state.obs,
@@ -69,7 +71,7 @@ class BraxAdapter(Environment[BraxState]):
             truncated=jnp.bool(False),
             info={},
         )
-        return env_state, timestep
+        return state, timestep
 
 
 def make(id: str, **kwargs) -> Environment:

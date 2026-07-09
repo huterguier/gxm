@@ -30,18 +30,18 @@ class FlattenObservation(Wrapper[Any, TStep]):
         )
 
     def init(self, key: Key) -> tuple[DynamicsState, TStep]:
-        env_state, step = self.env.init(key)
-        return env_state, self._flatten_step(step)
+        state, step = self.env.init(key)
+        return state, self._flatten_step(step)
 
-    def reset(self, key: Key, env_state: DynamicsState) -> tuple[DynamicsState, TStep]:
-        env_state, step = self.env.reset(key, env_state)
-        return env_state, self._flatten_step(step)
+    def reset(self, key: Key, state: DynamicsState) -> tuple[DynamicsState, TStep]:
+        state, step = self.env.reset(key, state)
+        return state, self._flatten_step(step)
 
     def step(
         self,
         key: Key,
-        env_state: DynamicsState,
+        state: DynamicsState,
         action: PyTree,
     ) -> tuple[DynamicsState, TStep]:
-        env_state, step = self.env.step(key, env_state, action)
-        return env_state, self._flatten_step(step)
+        state, step = self.env.step(key, state, action)
+        return state, self._flatten_step(step)

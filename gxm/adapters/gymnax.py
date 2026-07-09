@@ -64,7 +64,7 @@ class GymnaxAdapter(Environment[GymnaxState]):
 
     def init(self, key: Key) -> tuple[GymnaxState, Timestep]:
         obs, gymnax_state = self.env.reset(key, self.env_params)
-        env_state = GymnaxState(gymnax_state=gymnax_state)
+        state = GymnaxState(gymnax_state=gymnax_state)
         timestep = Timestep(
             next_obs=obs,
             true_next_obs=obs,
@@ -74,20 +74,20 @@ class GymnaxAdapter(Environment[GymnaxState]):
             truncated=jnp.bool(False),
             info={},
         )
-        return env_state, timestep
+        return state, timestep
 
-    def reset(self, key: Key, env_state: GymnaxState) -> tuple[GymnaxState, Timestep]:
-        del env_state
+    def reset(self, key: Key, state: GymnaxState) -> tuple[GymnaxState, Timestep]:
+        del state
         return self.init(key)
 
     def step(
-        self, key: Key, env_state: GymnaxState, action: Array
+        self, key: Key, state: GymnaxState, action: Array
     ) -> tuple[GymnaxState, Timestep]:
-        gymnax_state = env_state.gymnax_state
+        gymnax_state = state.gymnax_state
         obs, gymnax_state, reward, done, _ = self.env.step(
             key, gymnax_state, action, self.env_params
         )
-        env_state = GymnaxState(gymnax_state=gymnax_state)
+        state = GymnaxState(gymnax_state=gymnax_state)
         timestep = Timestep(
             next_obs=obs,
             true_next_obs=obs,
@@ -97,7 +97,7 @@ class GymnaxAdapter(Environment[GymnaxState]):
             truncated=jnp.bool(False),
             info={},
         )
-        return env_state, timestep
+        return state, timestep
 
 
 @jax.tree_util.register_dataclass
@@ -117,9 +117,11 @@ class _GymnaxToGxm(Environment[_WrappedGymnaxState]):
         )
 
     def init(self, key: Key) -> tuple[_WrappedGymnaxState, Timestep]:
-        obs, state = self._env.reset(key, self._params)
+        obs, gymnax_state = self._env.reset(key, self._params)
         sentinel_action = self._env.action_space(self._params).sample(key)
-        _, _, _, _, info = self._env.step(key, state, sentinel_action, self._params)
+        _, _, _, _, info = self._env.step(
+            key, gymnax_state, sentinel_action, self._params
+        )
         timestep = Timestep(
             next_obs=obs,
             true_next_obs=obs,
@@ -129,19 +131,19 @@ class _GymnaxToGxm(Environment[_WrappedGymnaxState]):
             truncated=jnp.bool(False),
             info=info,
         )
-        return _WrappedGymnaxState(gymnax_state=state), timestep
+        return _WrappedGymnaxState(gymnax_state=gymnax_state), timestep
 
     def reset(
-        self, key: Key, env_state: _WrappedGymnaxState
+        self, key: Key, state: _WrappedGymnaxState
     ) -> tuple[_WrappedGymnaxState, Timestep]:
-        del env_state
+        del state
         return self.init(key)
 
     def step(
-        self, key: Key, env_state: _WrappedGymnaxState, action: Array
+        self, key: Key, state: _WrappedGymnaxState, action: Array
     ) -> tuple[_WrappedGymnaxState, Timestep]:
-        obs, state, reward, done, info = self._env.step(
-            key, env_state.gymnax_state, action, self._params
+        obs, gymnax_state, reward, done, info = self._env.step(
+            key, state.gymnax_state, action, self._params
         )
         timestep = Timestep(
             next_obs=obs,
@@ -152,7 +154,7 @@ class _GymnaxToGxm(Environment[_WrappedGymnaxState]):
             truncated=jnp.bool(False),
             info=info,
         )
-        return _WrappedGymnaxState(gymnax_state=state), timestep
+        return _WrappedGymnaxState(gymnax_state=gymnax_state), timestep
 
 
 class _GxmToGymnax:

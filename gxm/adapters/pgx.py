@@ -30,7 +30,7 @@ class PgxAdapter(Environment[PgxState]):
 
     def init(self, key: Key) -> tuple[PgxState, Timestep]:
         pgx_state = self.env.init(key)
-        env_state = PgxState(pgx_state=pgx_state)
+        state = PgxState(pgx_state=pgx_state)
         timestep = Timestep(
             next_obs=pgx_state.observation,
             true_next_obs=pgx_state.observation,
@@ -40,15 +40,19 @@ class PgxAdapter(Environment[PgxState]):
             truncated=pgx_state.truncated,
             info={},
         )
-        return env_state, timestep
+        return state, timestep
 
-    def reset(self, key: Key, env_state: PgxState) -> tuple[PgxState, Timestep]:
-        del env_state
+    def reset(self, key: Key, state: PgxState) -> tuple[PgxState, Timestep]:
+        del state
         return self.init(key)
 
-    def step(self, key: Key, env_state: PgxState, action: Array) -> tuple[PgxState, Timestep]:
-        pgx_state = auto_reset(self.env.step, self.env.init)(env_state.pgx_state, action, key)
-        env_state = PgxState(pgx_state=pgx_state)
+    def step(
+        self, key: Key, state: PgxState, action: Array
+    ) -> tuple[PgxState, Timestep]:
+        pgx_state = auto_reset(self.env.step, self.env.init)(
+            state.pgx_state, action, key
+        )
+        state = PgxState(pgx_state=pgx_state)
         timestep = Timestep(
             next_obs=pgx_state.observation,
             true_next_obs=pgx_state.observation,
@@ -58,7 +62,7 @@ class PgxAdapter(Environment[PgxState]):
             truncated=pgx_state.truncated,
             info={},
         )
-        return env_state, timestep
+        return state, timestep
 
     @property
     def num_actions(self) -> int:

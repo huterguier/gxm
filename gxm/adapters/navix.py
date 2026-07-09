@@ -28,7 +28,7 @@ class NavixAdapter(Environment[NavixState]):
 
     def init(self, key: Key) -> tuple[NavixState, Timestep]:
         navix_state = self.env.reset(key)
-        env_state = NavixState(navix_state=navix_state)
+        state = NavixState(navix_state=navix_state)
         timestep = Timestep(
             next_obs=navix_state.observation,
             true_next_obs=navix_state.observation,
@@ -38,16 +38,18 @@ class NavixAdapter(Environment[NavixState]):
             truncated=jnp.bool(False),
             info={},
         )
-        return env_state, timestep
+        return state, timestep
 
-    def reset(self, key: Key, env_state: NavixState) -> tuple[NavixState, Timestep]:
-        del env_state
+    def reset(self, key: Key, state: NavixState) -> tuple[NavixState, Timestep]:
+        del state
         return self.init(key)
 
-    def step(self, key: Key, env_state: NavixState, action: Action) -> tuple[NavixState, Timestep]:
+    def step(
+        self, key: Key, state: NavixState, action: Action
+    ) -> tuple[NavixState, Timestep]:
         del key
-        navix_state = self.env.step(env_state.navix_state, action)
-        env_state = NavixState(navix_state=navix_state)
+        navix_state = self.env.step(state.navix_state, action)
+        state = NavixState(navix_state=navix_state)
         timestep = Timestep(
             next_obs=navix_state.observation,
             true_next_obs=navix_state.observation,
@@ -57,7 +59,7 @@ class NavixAdapter(Environment[NavixState]):
             truncated=jnp.bool(False),
             info={},
         )
-        return env_state, timestep
+        return state, timestep
 
     @property
     def num_actions(self) -> int:
@@ -68,7 +70,9 @@ def _navix_to_gxm_space(navix_space) -> Space:
     if isinstance(navix_space, navix.spaces.Discrete):
         return Discrete(int(navix_space.n))
     if isinstance(navix_space, navix.spaces.Continuous):
-        return Box(low=navix_space.minimum, high=navix_space.maximum, shape=navix_space.shape)
+        return Box(
+            low=navix_space.minimum, high=navix_space.maximum, shape=navix_space.shape
+        )
     raise NotImplementedError(f"Navix space type {type(navix_space)} not supported.")
 
 

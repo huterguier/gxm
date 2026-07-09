@@ -41,10 +41,8 @@ class Evaluate(EnvironmentWrapper[EvaluateState]):
         )
         return evaluate_state, timestep
 
-    def reset(
-        self, key: Key, env_state: EvaluateState
-    ) -> tuple[EvaluateState, Timestep]:
-        evaluate_state = env_state
+    def reset(self, key: Key, state: EvaluateState) -> tuple[EvaluateState, Timestep]:
+        evaluate_state = state
         env_state, timestep = self.env.reset(key, evaluate_state.env_state)
         evaluate_state = EvaluateState(
             env_state=env_state,
@@ -57,10 +55,10 @@ class Evaluate(EnvironmentWrapper[EvaluateState]):
     def step(
         self,
         key: Key,
-        env_state: EvaluateState,
+        state: EvaluateState,
         action: PyTree,
     ) -> tuple[EvaluateState, Timestep]:
-        evaluate_state = env_state
+        evaluate_state = state
         env_state, timestep = self.env.step(key, evaluate_state.env_state, action)
         current_return = evaluate_state.current_return + timestep.reward
         cumulative_return = jnp.where(

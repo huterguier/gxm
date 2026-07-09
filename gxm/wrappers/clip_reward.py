@@ -40,20 +40,20 @@ class ClipReward(EnvironmentWrapper[Any]):
         )
 
     def init(self, key: Key) -> tuple[EnvironmentState, Timestep]:
-        env_state, timestep = self.env.init(key)
-        return env_state, self._clip_timestep(timestep)
+        state, timestep = self.env.init(key)
+        return state, self._clip_timestep(timestep)
 
     def reset(
-        self, key: Key, env_state: EnvironmentState
+        self, key: Key, state: EnvironmentState
     ) -> tuple[EnvironmentState, Timestep]:
-        env_state, timestep = self.env.reset(key, env_state)
-        return env_state, self._clip_timestep(timestep)
+        state, timestep = self.env.reset(key, state)
+        return state, self._clip_timestep(timestep)
 
     def step(
         self,
         key: Key,
-        env_state: EnvironmentState,
+        state: EnvironmentState,
         action: PyTree,
     ) -> tuple[EnvironmentState, Timestep]:
-        env_state, timestep = self.env.step(key, env_state, action)
-        return env_state, self._clip_timestep(timestep)
+        state, timestep = self.env.step(key, state, action)
+        return state, self._clip_timestep(timestep)

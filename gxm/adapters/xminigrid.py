@@ -32,7 +32,7 @@ class XMiniGridAdapter(Environment[XMiniGridState]):
 
     def init(self, key: Key) -> tuple[XMiniGridState, Timestep]:
         xminigrid_state = self.env.reset(self.env_params, key)
-        env_state = XMiniGridState(xminigrid_state=xminigrid_state)
+        state = XMiniGridState(xminigrid_state=xminigrid_state)
         timestep = Timestep(
             next_obs=xminigrid_state.observation,
             true_next_obs=xminigrid_state.observation,
@@ -42,16 +42,18 @@ class XMiniGridAdapter(Environment[XMiniGridState]):
             truncated=jnp.bool(False),
             info={},
         )
-        return env_state, timestep
+        return state, timestep
 
-    def reset(self, key: Key, env_state: XMiniGridState) -> tuple[XMiniGridState, Timestep]:
-        del env_state
+    def reset(self, key: Key, state: XMiniGridState) -> tuple[XMiniGridState, Timestep]:
+        del state
         return self.init(key)
 
-    def step(self, key: Key, env_state: XMiniGridState, action: Array) -> tuple[XMiniGridState, Timestep]:
+    def step(
+        self, key: Key, state: XMiniGridState, action: Array
+    ) -> tuple[XMiniGridState, Timestep]:
         del key
-        xminigrid_state = self.env.step(self.env_params, env_state.xminigrid_state, action)
-        env_state = XMiniGridState(xminigrid_state=xminigrid_state)
+        xminigrid_state = self.env.step(self.env_params, state.xminigrid_state, action)
+        state = XMiniGridState(xminigrid_state=xminigrid_state)
         timestep = Timestep(
             next_obs=xminigrid_state.observation,
             true_next_obs=xminigrid_state.observation,
@@ -61,7 +63,7 @@ class XMiniGridAdapter(Environment[XMiniGridState]):
             truncated=jnp.bool(False),
             info={},
         )
-        return env_state, timestep
+        return state, timestep
 
 
 def make(id: str, **kwargs) -> Environment:

@@ -36,7 +36,7 @@ class JAXAtariAdapter(Environment[JAXAtariState]):
         obs, jaxatari_state = self.env.reset(key)
         obs = _to_grayscale(obs)
         obs = _resize(obs)
-        env_state = JAXAtariState(jaxatari_state=jaxatari_state)
+        state = JAXAtariState(jaxatari_state=jaxatari_state)
         timestep = Timestep(
             next_obs=obs,
             true_next_obs=obs,
@@ -46,18 +46,22 @@ class JAXAtariAdapter(Environment[JAXAtariState]):
             truncated=jnp.bool(False),
             info={},
         )
-        return env_state, timestep
+        return state, timestep
 
-    def reset(self, key: Key, env_state: JAXAtariState) -> tuple[JAXAtariState, Timestep]:
-        del env_state
+    def reset(self, key: Key, state: JAXAtariState) -> tuple[JAXAtariState, Timestep]:
+        del state
         return self.init(key)
 
-    def step(self, key: Key, env_state: JAXAtariState, action: Array) -> tuple[JAXAtariState, Timestep]:
+    def step(
+        self, key: Key, state: JAXAtariState, action: Array
+    ) -> tuple[JAXAtariState, Timestep]:
         del key
-        obs, jaxatari_state, reward, done, _ = self.env.step(env_state.jaxatari_state, action)
+        obs, jaxatari_state, reward, done, _ = self.env.step(
+            state.jaxatari_state, action
+        )
         obs = _to_grayscale(obs)
         obs = _resize(obs)
-        env_state = JAXAtariState(jaxatari_state=jaxatari_state)
+        state = JAXAtariState(jaxatari_state=jaxatari_state)
         timestep = Timestep(
             next_obs=obs,
             true_next_obs=obs,
@@ -67,7 +71,7 @@ class JAXAtariAdapter(Environment[JAXAtariState]):
             truncated=jnp.bool(done),
             info={},
         )
-        return env_state, timestep
+        return state, timestep
 
 
 def _to_grayscale(obs: Array) -> Array:
@@ -82,10 +86,16 @@ def _jaxatari_to_gxm_space(jaxatari_space) -> Space:
     if isinstance(jaxatari_space, jaxatari.spaces.Discrete):
         return Discrete(jaxatari_space.n)
     if isinstance(jaxatari_space, jaxatari.spaces.Box):
-        return Box(low=jaxatari_space.low, high=jaxatari_space.high, shape=jaxatari_space.shape)
+        return Box(
+            low=jaxatari_space.low, high=jaxatari_space.high, shape=jaxatari_space.shape
+        )
     if isinstance(jaxatari_space, jaxatari.spaces.Dict):
-        return Tree({k: _jaxatari_to_gxm_space(v) for k, v in jaxatari_space.spaces.items()})
-    raise NotImplementedError(f"JAXAtari space type {type(jaxatari_space)} not supported.")
+        return Tree(
+            {k: _jaxatari_to_gxm_space(v) for k, v in jaxatari_space.spaces.items()}
+        )
+    raise NotImplementedError(
+        f"JAXAtari space type {type(jaxatari_space)} not supported."
+    )
 
 
 def make(id: str, **kwargs) -> Environment:

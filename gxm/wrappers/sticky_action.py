@@ -33,9 +33,9 @@ class StickyAction(Wrapper[StickyActionState, TStep]):
         return sticky_action_state, step
 
     def reset(
-        self, key: Key, env_state: StickyActionState
+        self, key: Key, state: StickyActionState
     ) -> tuple[StickyActionState, TStep]:
-        env_state, step = self.env.reset(key, env_state)
+        env_state, step = self.env.reset(key, state)
         sticky_action_state = StickyActionState(
             env_state=env_state,
             prev_action=self.env.action_space.sample(key),
@@ -45,15 +45,15 @@ class StickyAction(Wrapper[StickyActionState, TStep]):
     def step(
         self,
         key: Key,
-        env_state: StickyActionState,
+        state: StickyActionState,
         action: PyTree,
     ) -> tuple[StickyActionState, TStep]:
         sticky_action = jnp.where(
             jax.random.uniform(key) < self.stickiness,
-            env_state.prev_action,
+            state.prev_action,
             action,
         )
-        env_state, step = self.env.step(key, env_state.env_state, sticky_action)
+        env_state, step = self.env.step(key, state.env_state, sticky_action)
         sticky_action_state = StickyActionState(
             env_state=env_state,
             prev_action=sticky_action,
