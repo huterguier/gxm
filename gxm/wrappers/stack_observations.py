@@ -27,8 +27,8 @@ class StackObservations(EnvironmentWrapper[StackObservationsState]):
     num_stack: int
     padding: str
 
-    def __init__(self, env: Environment, n_stack: int, padding: str = "reset"):
-        super().__init__(env)
+    def __init__(self, wrapped: Environment, n_stack: int, padding: str = "reset"):
+        super().__init__(wrapped)
         self.num_stack = n_stack
         self.padding = padding
 
@@ -36,7 +36,7 @@ class StackObservations(EnvironmentWrapper[StackObservationsState]):
         def stack(obss):
             return jax.tree.map(lambda *os: jnp.stack(os, axis=0), *obss)
 
-        env_state, timestep = self.env.init(key)
+        wrapped_state, timestep = self.wrapped.init(key)
 
         if self.padding == "reset":
             obss = stack(self.num_stack * [timestep.next_obs])
@@ -48,7 +48,7 @@ class StackObservations(EnvironmentWrapper[StackObservationsState]):
             raise ValueError(f"Unknown padding method: {self.padding}")
 
         stack_observations_state = StackObservationsState(
-            env_state=env_state, obss=obss, true_obss=true_obss
+            wrapped_state=wrapped_state, obss=obss, true_obss=true_obss
         )
 
         return stack_observations_state, timestep
@@ -59,7 +59,7 @@ class StackObservations(EnvironmentWrapper[StackObservationsState]):
         def stack(obss):
             return jax.tree.map(lambda *os: jnp.stack(os, axis=0), *obss)
 
-        env_state, timestep = self.env.reset(key, state.env_state)
+        wrapped_state, timestep = self.wrapped.reset(key, state.wrapped_state)
 
         if self.padding == "reset":
             obss = stack(self.num_stack * [timestep.next_obs])
@@ -71,7 +71,7 @@ class StackObservations(EnvironmentWrapper[StackObservationsState]):
             raise ValueError(f"Unknown padding method: {self.padding}")
 
         stack_observations_state = StackObservationsState(
-            env_state=env_state, obss=obss, true_obss=true_obss
+            wrapped_state=wrapped_state, obss=obss, true_obss=true_obss
         )
 
         return stack_observations_state, timestep
@@ -90,7 +90,7 @@ class StackObservations(EnvironmentWrapper[StackObservationsState]):
 
         obss = state.obss
         true_obss = state.true_obss
-        env_state, timestep = self.env.step(key, state.env_state, action)
+        wrapped_state, timestep = self.wrapped.step(key, state.wrapped_state, action)
 
         obss = jax.tree.map(lambda os: os[1:], obss)
         obss = concatenate([obss, expand_dims(timestep.next_obs)])
@@ -100,7 +100,7 @@ class StackObservations(EnvironmentWrapper[StackObservationsState]):
         timestep = dataclasses.replace(timestep, next_obs=obss, true_next_obs=true_obss)
 
         stack_observations_state = StackObservationsState(
-            env_state=env_state,
+            wrapped_state=wrapped_state,
             obss=obss,
             true_obss=true_obss,
         )

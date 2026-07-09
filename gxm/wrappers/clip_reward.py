@@ -13,18 +13,22 @@ class ClipReward(EnvironmentWrapper[Any]):
     Wrapper that clips the reward to a specified range.
     """
 
-    env: Environment
+    wrapped: Environment
 
     def __init__(
-        self, env: Environment, unwrap: bool = True, min: float = -1.0, max: float = 1.0
+        self,
+        wrapped: Environment,
+        unwrap: bool = True,
+        min: float = -1.0,
+        max: float = 1.0,
     ):
         """
         Args:
-            env: The environment to wrap.
+            wrapped: The environment to wrap.
             min: Minimum reward value.
             max: Maximum reward value.
         """
-        super().__init__(env, unwrap=unwrap)
+        super().__init__(wrapped, unwrap=unwrap)
         self.min = min
         self.max = max
 
@@ -40,13 +44,13 @@ class ClipReward(EnvironmentWrapper[Any]):
         )
 
     def init(self, key: Key) -> tuple[EnvironmentState, Timestep]:
-        state, timestep = self.env.init(key)
+        state, timestep = self.wrapped.init(key)
         return state, self._clip_timestep(timestep)
 
     def reset(
         self, key: Key, state: EnvironmentState
     ) -> tuple[EnvironmentState, Timestep]:
-        state, timestep = self.env.reset(key, state)
+        state, timestep = self.wrapped.reset(key, state)
         return state, self._clip_timestep(timestep)
 
     def step(
@@ -55,5 +59,5 @@ class ClipReward(EnvironmentWrapper[Any]):
         state: EnvironmentState,
         action: PyTree,
     ) -> tuple[EnvironmentState, Timestep]:
-        state, timestep = self.env.step(key, state, action)
+        state, timestep = self.wrapped.step(key, state, action)
         return state, self._clip_timestep(timestep)

@@ -21,20 +21,20 @@ class EvaluateState(WrapperState):
 
 
 class Evaluate(EnvironmentWrapper[EvaluateState]):
-    env: Environment
+    wrapped: Environment
 
-    def __init__(self, env: Environment, unwrap: bool = True):
+    def __init__(self, wrapped: Environment, unwrap: bool = True):
         """
         Args:
-            env: The environment to wrap.
+            wrapped: The environment to wrap.
             unwrap: Whether to unwrap the environment or treat it as part of the base environment.
         """
-        super().__init__(env, unwrap=unwrap)
+        super().__init__(wrapped, unwrap=unwrap)
 
     def init(self, key: Key) -> tuple[EvaluateState, Timestep]:
-        env_state, timestep = self.env.init(key)
+        wrapped_state, timestep = self.wrapped.init(key)
         evaluate_state = EvaluateState(
-            env_state=env_state,
+            wrapped_state=wrapped_state,
             current_return=jax.numpy.zeros(timestep.reward.shape),
             cumulative_return=jax.numpy.zeros(timestep.reward.shape),
             n_episodes=jax.numpy.zeros(timestep.reward.shape),
@@ -43,9 +43,9 @@ class Evaluate(EnvironmentWrapper[EvaluateState]):
 
     def reset(self, key: Key, state: EvaluateState) -> tuple[EvaluateState, Timestep]:
         evaluate_state = state
-        env_state, timestep = self.env.reset(key, evaluate_state.env_state)
+        wrapped_state, timestep = self.wrapped.reset(key, evaluate_state.wrapped_state)
         evaluate_state = EvaluateState(
-            env_state=env_state,
+            wrapped_state=wrapped_state,
             current_return=jax.numpy.zeros(timestep.reward.shape),
             cumulative_return=jax.numpy.zeros(timestep.reward.shape),
             n_episodes=jax.numpy.zeros(timestep.reward.shape),
@@ -59,7 +59,9 @@ class Evaluate(EnvironmentWrapper[EvaluateState]):
         action: PyTree,
     ) -> tuple[EvaluateState, Timestep]:
         evaluate_state = state
-        env_state, timestep = self.env.step(key, evaluate_state.env_state, action)
+        wrapped_state, timestep = self.wrapped.step(
+            key, evaluate_state.wrapped_state, action
+        )
         current_return = evaluate_state.current_return + timestep.reward
         cumulative_return = jnp.where(
             timestep.done,
@@ -77,7 +79,7 @@ class Evaluate(EnvironmentWrapper[EvaluateState]):
             current_return,
         )
         evaluate_state = EvaluateState(
-            env_state=env_state,
+            wrapped_state=wrapped_state,
             current_return=current_return,
             cumulative_return=cumulative_return,
             n_episodes=n_episodes,

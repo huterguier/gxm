@@ -19,29 +19,31 @@ class TimeLimit(EnvironmentWrapper[TimeLimitState]):
     Wrapper that terminates an episode after a fixed number of steps.
     """
 
-    env: Environment
+    wrapped: Environment
 
-    def __init__(self, env: Environment, unwrap: bool = True, time_limit: int = 1000):
+    def __init__(
+        self, wrapped: Environment, unwrap: bool = True, time_limit: int = 1000
+    ):
         """
         Args:
-            env: The environment to wrap.
+            wrapped: The environment to wrap.
             time_limit: Maximum number of steps before the episode is truncated.
         """
-        super().__init__(env, unwrap=unwrap)
+        super().__init__(wrapped, unwrap=unwrap)
         self.time_limit = time_limit
 
     def init(self, key: Key) -> tuple[TimeLimitState, Timestep]:
-        env_state, timestep = self.env.init(key)
+        wrapped_state, timestep = self.wrapped.init(key)
         time_limit_state = TimeLimitState(
-            env_state=env_state,
+            wrapped_state=wrapped_state,
             time=jnp.array(0, dtype=jnp.int32),
         )
         return time_limit_state, timestep
 
     def reset(self, key: Key, state: TimeLimitState) -> tuple[TimeLimitState, Timestep]:
-        env_state, timestep = self.env.reset(key, state)
+        wrapped_state, timestep = self.wrapped.reset(key, state)
         time_limit_state = TimeLimitState(
-            env_state=env_state,
+            wrapped_state=wrapped_state,
             time=jnp.array(0, dtype=jnp.int32),
         )
         return time_limit_state, timestep
@@ -53,14 +55,18 @@ class TimeLimit(EnvironmentWrapper[TimeLimitState]):
         action: PyTree,
     ) -> tuple[TimeLimitState, Timestep]:
         key_step, key_reset = jax.random.split(key)
-        step_env_state, timestep = self.env.step(key_step, state.env_state, action)
+        step_wrapped_state, timestep = self.wrapped.step(
+            key_step, state.wrapped_state, action
+        )
         time_limit_state = TimeLimitState(
-            env_state=step_env_state,
+            wrapped_state=step_wrapped_state,
             time=state.time + 1,
         )
-        reset_env_state, reset_timestep = self.env.reset(key_reset, state.env_state)
+        reset_wrapped_state, reset_timestep = self.wrapped.reset(
+            key_reset, state.wrapped_state
+        )
         reset_time_limit_state = TimeLimitState(
-            env_state=reset_env_state,
+            wrapped_state=reset_wrapped_state,
             time=jnp.array(0, dtype=jnp.int32),
         )
         reset_timestep = Timestep(

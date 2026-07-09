@@ -18,13 +18,13 @@ class EpisodeCounterState(WrapperState):
 class EpisodeCounter(EnvironmentWrapper[EpisodeCounterState]):
     """A wrapper that counts the number of episodes completed in the environment."""
 
-    def __init__(self, env: Environment, unwrap: bool = True):
-        super().__init__(env, unwrap=unwrap)
+    def __init__(self, wrapped: Environment, unwrap: bool = True):
+        super().__init__(wrapped, unwrap=unwrap)
 
     def init(self, key: Key) -> tuple[EpisodeCounterState, Timestep]:
-        env_state, timestep = self.env.init(key)
+        wrapped_state, timestep = self.wrapped.init(key)
         episode_counter_state = EpisodeCounterState(
-            env_state=env_state,
+            wrapped_state=wrapped_state,
             n_episodes=jnp.int32(0),
         )
         timestep = dataclasses.replace(
@@ -37,9 +37,11 @@ class EpisodeCounter(EnvironmentWrapper[EpisodeCounterState]):
         self, key: Key, state: EpisodeCounterState
     ) -> tuple[EpisodeCounterState, Timestep]:
         episode_counter_state = state
-        env_state, timestep = self.env.reset(key, episode_counter_state.env_state)
+        wrapped_state, timestep = self.wrapped.reset(
+            key, episode_counter_state.wrapped_state
+        )
         episode_counter_state = EpisodeCounterState(
-            env_state=env_state,
+            wrapped_state=wrapped_state,
             n_episodes=episode_counter_state.n_episodes,
         )
         timestep = dataclasses.replace(
@@ -55,9 +57,9 @@ class EpisodeCounter(EnvironmentWrapper[EpisodeCounterState]):
         action: PyTree,
     ) -> tuple[EpisodeCounterState, Timestep]:
         episode_counter_state = state
-        env_state, timestep = self.env.step(key, state.env_state, action)
+        wrapped_state, timestep = self.wrapped.step(key, state.wrapped_state, action)
         episode_counter_state = EpisodeCounterState(
-            env_state=env_state,
+            wrapped_state=wrapped_state,
             n_episodes=jnp.where(
                 timestep.done,
                 episode_counter_state.n_episodes + 1,

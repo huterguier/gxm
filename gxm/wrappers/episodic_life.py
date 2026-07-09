@@ -21,27 +21,31 @@ class EpisodicLife(EnvironmentWrapper[EpisodicLifeState]):
     It assumes that the environment's timestep info dictionary contains a "lives" key indicating the number of lives remaining.
     """
 
-    env: Environment
+    wrapped: Environment
 
-    def __init__(self, env: Environment):
+    def __init__(self, wrapped: Environment):
         """
         Args:
-            env: The environment to wrap.
+            wrapped: The environment to wrap.
         """
-        super().__init__(env)
+        super().__init__(wrapped)
 
     def init(self, key: Key) -> tuple[EpisodicLifeState, Timestep]:
-        env_state, timestep = self.env.init(key)
+        wrapped_state, timestep = self.wrapped.init(key)
         lives = timestep.info["lives"]
-        episodic_life_state = EpisodicLifeState(env_state=env_state, lives=lives)
+        episodic_life_state = EpisodicLifeState(
+            wrapped_state=wrapped_state, lives=lives
+        )
         return episodic_life_state, timestep
 
     def reset(
         self, key: Key, state: EpisodicLifeState
     ) -> tuple[EpisodicLifeState, Timestep]:
-        env_state, timestep = self.env.reset(key, state.env_state)
+        wrapped_state, timestep = self.wrapped.reset(key, state.wrapped_state)
         lives = timestep.info["lives"]
-        episodic_life_state = EpisodicLifeState(env_state=env_state, lives=lives)
+        episodic_life_state = EpisodicLifeState(
+            wrapped_state=wrapped_state, lives=lives
+        )
         return episodic_life_state, timestep
 
     def step(
@@ -51,9 +55,11 @@ class EpisodicLife(EnvironmentWrapper[EpisodicLifeState]):
         action: PyTree,
     ) -> tuple[EpisodicLifeState, Timestep]:
         prev_lives = state.lives
-        env_state, timestep = self.env.step(key, state.env_state, action)
+        wrapped_state, timestep = self.wrapped.step(key, state.wrapped_state, action)
         lives = timestep.info["lives"]
-        episodic_life_state = EpisodicLifeState(env_state=env_state, lives=lives)
+        episodic_life_state = EpisodicLifeState(
+            wrapped_state=wrapped_state, lives=lives
+        )
         timestep = dataclasses.replace(
             timestep, terminated=jnp.logical_or(timestep.terminated, lives < prev_lives)
         )

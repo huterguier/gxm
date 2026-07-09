@@ -27,25 +27,27 @@ class Discretize(Wrapper[Any, TStep]):
     continuous action space of the wrapped environment.
     """
 
-    env: Dynamics[Any, TStep]
+    wrapped: Dynamics[Any, TStep]
     actions: PyTree
 
-    def __init__(self, env: Dynamics[Any, TStep], actions: PyTree, unwrap: bool = True):
+    def __init__(
+        self, wrapped: Dynamics[Any, TStep], actions: PyTree, unwrap: bool = True
+    ):
         """
         Args:
-            env: The dynamics to wrap.
+            wrapped: The dynamics to wrap.
             actions: The discrete set of actions to map to.
             unwrap: Whether to unwrap the environment or treat it as part of the base environment.
         """
-        super().__init__(env, unwrap=unwrap)
+        super().__init__(wrapped, unwrap=unwrap)
         self.actions = actions
         self.action_space = Discrete(len(actions))
 
     def init(self, key: Key) -> tuple[DynamicsState, TStep]:
-        return self.env.init(key)
+        return self.wrapped.init(key)
 
     def reset(self, key: Key, state: DynamicsState) -> tuple[DynamicsState, TStep]:
-        return self.env.reset(key, state)
+        return self.wrapped.reset(key, state)
 
     def step(
         self,
@@ -54,5 +56,5 @@ class Discretize(Wrapper[Any, TStep]):
         action: PyTree,
     ) -> tuple[DynamicsState, TStep]:
         continuous_action = jax.tree.map(lambda x: x[action], self.actions)
-        state, step = self.env.step(key, state, continuous_action)
+        state, step = self.wrapped.step(key, state, continuous_action)
         return state, dataclasses.replace(step, action=action)

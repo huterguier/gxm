@@ -33,7 +33,7 @@ class RecordEpisodeStatisticsState(WrapperState):
     episode_stats: EpisodeStatistics
 
     def __iter__(self):
-        yield self.env_state
+        yield self.wrapped_state
         yield self.current_stats
         yield self.episode_stats
 
@@ -56,12 +56,12 @@ class RecordEpisodeStatistics(EnvironmentWrapper[RecordEpisodeStatisticsState]):
 
     def __init__(
         self,
-        env: Environment,
+        wrapped: Environment,
         unwrap: bool = True,
         gamma: float = 1.0,
         n_episodes: int = 1,
     ):
-        super().__init__(env, unwrap=unwrap)
+        super().__init__(wrapped, unwrap=unwrap)
         self.gamma = gamma
         self.n_episodes = n_episodes
 
@@ -85,7 +85,7 @@ class RecordEpisodeStatistics(EnvironmentWrapper[RecordEpisodeStatisticsState]):
         }
 
     def init(self, key: Key) -> tuple[RecordEpisodeStatisticsState, Timestep]:
-        env_state, timestep = self.env.init(key)
+        wrapped_state, timestep = self.wrapped.init(key)
         current_stats = CurrentStatistics(
             current_return=jnp.float32(0.0),
             current_length=jnp.int32(0.0),
@@ -98,7 +98,7 @@ class RecordEpisodeStatistics(EnvironmentWrapper[RecordEpisodeStatisticsState]):
             mask=jnp.zeros(self.n_episodes, dtype=jnp.int32),
         )
         record_episode_stats_state = RecordEpisodeStatisticsState(
-            env_state=env_state,
+            wrapped_state=wrapped_state,
             current_stats=current_stats,
             episode_stats=episode_stats,
         )
@@ -117,7 +117,7 @@ class RecordEpisodeStatistics(EnvironmentWrapper[RecordEpisodeStatisticsState]):
     def reset(
         self, key: Key, state: RecordEpisodeStatisticsState
     ) -> tuple[RecordEpisodeStatisticsState, Timestep]:
-        env_state, timestep = self.env.reset(key, state.env_state)
+        wrapped_state, timestep = self.wrapped.reset(key, state.wrapped_state)
         current_stats = CurrentStatistics(
             current_return=jnp.float32(0.0),
             current_length=jnp.int32(0.0),
@@ -130,7 +130,7 @@ class RecordEpisodeStatistics(EnvironmentWrapper[RecordEpisodeStatisticsState]):
             mask=jnp.zeros(self.n_episodes, dtype=jnp.int32),
         )
         record_episode_stats_state = RecordEpisodeStatisticsState(
-            env_state=env_state,
+            wrapped_state=wrapped_state,
             current_stats=current_stats,
             episode_stats=episode_stats,
         )
@@ -156,7 +156,9 @@ class RecordEpisodeStatistics(EnvironmentWrapper[RecordEpisodeStatisticsState]):
         current_stats = wrapper_state.current_stats
         episode_stats = wrapper_state.episode_stats
 
-        env_state, timestep = self.env.step(key, wrapper_state.env_state, action)
+        wrapped_state, timestep = self.wrapped.step(
+            key, wrapper_state.wrapped_state, action
+        )
 
         done = timestep.done
         reward = timestep.reward
@@ -207,7 +209,7 @@ class RecordEpisodeStatistics(EnvironmentWrapper[RecordEpisodeStatisticsState]):
             mask=mask,
         )
         wrapper_state = RecordEpisodeStatisticsState(
-            env_state=env_state,
+            wrapped_state=wrapped_state,
             current_stats=current_stats,
             episode_stats=episode_stats,
         )

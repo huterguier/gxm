@@ -17,8 +17,8 @@ class IgnoreTruncation(EnvironmentWrapper[Any]):
     distinction between the two episode-ending conditions.
     """
 
-    def __init__(self, env: Environment):
-        super().__init__(env)
+    def __init__(self, wrapped: Environment):
+        super().__init__(wrapped)
 
     @staticmethod
     def _remove_truncation(timestep: Timestep) -> Timestep:
@@ -30,17 +30,17 @@ class IgnoreTruncation(EnvironmentWrapper[Any]):
         )
 
     def init(self, key: Key) -> tuple[EnvironmentState, Timestep]:
-        state, timestep = self.env.init(key)
+        state, timestep = self.wrapped.init(key)
         return state, self._remove_truncation(timestep)
 
     def reset(
         self, key: Key, state: EnvironmentState
     ) -> tuple[EnvironmentState, Timestep]:
-        state, timestep = self.env.reset(key, state)
+        state, timestep = self.wrapped.reset(key, state)
         return state, self._remove_truncation(timestep)
 
     def step(
         self, key: Key, state: EnvironmentState, action: PyTree
     ) -> tuple[EnvironmentState, Timestep]:
-        state, timestep = self.env.step(key, state, action)
+        state, timestep = self.wrapped.step(key, state, action)
         return state, self._remove_truncation(timestep)

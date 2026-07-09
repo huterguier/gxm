@@ -19,13 +19,13 @@ class StepCounterState(WrapperState):
 class StepCounter(Wrapper[StepCounterState, TStep]):
     """A wrapper that counts the number of steps taken in the environment."""
 
-    def __init__(self, env: Dynamics[Any, TStep], unwrap: bool = True):
-        super().__init__(env, unwrap=unwrap)
+    def __init__(self, wrapped: Dynamics[Any, TStep], unwrap: bool = True):
+        super().__init__(wrapped, unwrap=unwrap)
 
     def init(self, key: Key) -> tuple[StepCounterState, TStep]:
-        env_state, step_output = self.env.init(key)
+        wrapped_state, step_output = self.wrapped.init(key)
         step_counter_state = StepCounterState(
-            env_state=env_state,
+            wrapped_state=wrapped_state,
             n_steps=jnp.int32(0),
         )
         step_output = dataclasses.replace(
@@ -37,9 +37,11 @@ class StepCounter(Wrapper[StepCounterState, TStep]):
         self, key: Key, state: StepCounterState
     ) -> tuple[StepCounterState, TStep]:
         step_counter_state = state
-        env_state, step_output = self.env.reset(key, step_counter_state.env_state)
+        wrapped_state, step_output = self.wrapped.reset(
+            key, step_counter_state.wrapped_state
+        )
         step_counter_state = StepCounterState(
-            env_state=env_state,
+            wrapped_state=wrapped_state,
             n_steps=step_counter_state.n_steps,
         )
         step_output = dataclasses.replace(
@@ -54,9 +56,9 @@ class StepCounter(Wrapper[StepCounterState, TStep]):
         action: PyTree,
     ) -> tuple[StepCounterState, TStep]:
         step_counter_state = state
-        env_state, step_output = self.env.step(key, state.env_state, action)
+        wrapped_state, step_output = self.wrapped.step(key, state.wrapped_state, action)
         step_counter_state = StepCounterState(
-            env_state=env_state,
+            wrapped_state=wrapped_state,
             n_steps=step_counter_state.n_steps + 1,
         )
         step_output = dataclasses.replace(
