@@ -91,11 +91,11 @@ pip install gxm[gymnax, pgx, navix, envpool, craftax, gymnasium]
 If you use ``gxm`` in your research, please cite it as follows.
 Please also cite the underlying environment libraries that you used. Their Githubs are linked above.
 ```bibtex
-@software{gxm2025github,
+@software{gxm2026github,
   author = {Henrik Metternich},
   title = {{gxm}: Unified Functional Interface for RL Environments in JAX},
   url = {https://github.com/huterguier/gxm},
-  version = {0.1.3},
-  year = {2025},
+  version = {0.4.0},
+  year = {2026},
 }
 ```
