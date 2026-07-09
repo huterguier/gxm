@@ -146,6 +146,9 @@ venv.bak/
 .dmypy.json
 dmypy.json
 
+# ruff
+.ruff_cache/
+
 # Pyre type checker
 .pyre/
 
@@ -162,6 +165,13 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
+# Experiment tracking output
 runs/
 wandb/
+
+# Library, not an application: dependents may need a different resolution
+# than what's pinned here, so the lockfile isn't committed.
 uv.lock
+
+# Claude Code project instructions (local-only, not part of the public repo)
+CLAUDE.md
