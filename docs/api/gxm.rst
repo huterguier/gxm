@@ -7,11 +7,15 @@ Core API
 .. autosummary::
    :toctree: _autosummary
 
+   gxm.Dynamics
+   gxm.DynamicsState
+   gxm.Step
+   gxm.Environment
+   gxm.EnvironmentState
+   gxm.AutoResetEnvironment
    gxm.Timestep
    gxm.Transition
    gxm.Trajectory
-   gxm.EnvironmentState
-   gxm.Environment
 
 Modules
 --------

@@ -198,3 +198,33 @@ All fields live at the same level, access is ergonomic, and the semantics are co
 **Cons of flat inheritance:**
 - Dataclass inheritance requires care with field ordering and `register_dataclass`.
 - The relationship between `Timestep` and `Transition` is not immediately obvious to new users.
+
+---
+
+## The `Dynamics` / `Environment` / `Wrapper` hierarchy
+
+### Why is `Environment` built on a separate `Dynamics` class?
+
+`Dynamics` is the base interface: given an action, transition to a new state and produce
+a `Step` (`next_obs`, `action`, `info`) — no reward, no termination. It exists for world
+models, which predict transitions but have no notion of episodes.
+
+`Environment` extends `Dynamics`, fixing the output to `Timestep` instead of `Step` (adding
+`reward`/`terminated`/`truncated`). Every `Environment` **is-a** `Dynamics`, so any function
+typed to accept a `Dynamics` accepts an `Environment` directly.
+
+The class was originally called `Model`, which collided with the far more common RL usage
+of "model" — the agent's own policy/value network. `Dynamics` says exactly what it does,
+without that ambiguity.
+
+### Why is there only one `Wrapper` class instead of two?
+
+Because `Environment` is-a `Dynamics`, a single `Wrapper`, generic over the step-output
+type, can wrap either. Wrappers touching only `Step`-level fields (`StickyAction`,
+`Discretize`, `FlattenObservation`, `StepCounter`) stay generic and work on both; wrappers
+needing `reward`/`terminated`/`truncated` fix that type parameter to `Timestep` via
+`EnvironmentWrapper`, a thin `Wrapper` subclass. Neither case duplicates wrapper logic.
+
+For the same reason, the wrapped object is stored as `wrapped` (not `env`) and its state
+as `wrapped_state` (not `env_state`): `env` implies an `Environment` specifically, which
+isn't true when wrapping a bare `Dynamics`.

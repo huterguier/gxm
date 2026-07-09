@@ -51,11 +51,11 @@ Handling truncation is not problematic when handling resets manually, but become
 While on CPU-based environments the true observation can be returned conditionally, in JAX this is not possible as the returned structure must be known at compile time.
 This means that the only way to handle truncation correctly is to always return the true observation, even if there was no truncation at that step.
 
-In the example below, the `IgnoreTruncation` wrapper will treat truncation as termination, setting the `terminated` flag to `True` when truncation occurs. In addition it will set `true_next_obs` to `None` for all timesteps to save memory.
+In the example below, the `IgnoreTruncation` wrapper will treat truncation as termination, setting the `terminated` flag to `True` when truncation occurs. In addition it sets `true_next_obs` equal to `next_obs` for all timesteps, since the truncation/termination distinction is no longer meaningful once truncation is folded into termination.
 
 ```python
 import gxm
-from gxm.wrappers import IgnoreTruncation, Rollout
+from gxm.wrappers import IgnoreTruncation
 env = IgnoreTruncation(gxm.make("Envpool/Breakout-v5"))
 ```
 
