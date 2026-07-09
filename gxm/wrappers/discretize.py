@@ -3,7 +3,7 @@ from typing import Any
 
 import jax
 
-from gxm.core import Model, ModelState, TStep
+from gxm.core import Dynamics, DynamicsState, TStep
 from gxm.spaces import Discrete
 from gxm.typing import Key, PyTree
 from gxm.wrappers.wrapper import Wrapper
@@ -27,13 +27,13 @@ class Discretize(Wrapper[Any, TStep]):
     continuous action space of the wrapped environment.
     """
 
-    env: Model[Any, TStep]
+    env: Dynamics[Any, TStep]
     actions: PyTree
 
-    def __init__(self, env: Model[Any, TStep], actions: PyTree, unwrap: bool = True):
+    def __init__(self, env: Dynamics[Any, TStep], actions: PyTree, unwrap: bool = True):
         """
         Args:
-            env: The model to wrap.
+            env: The dynamics to wrap.
             actions: The discrete set of actions to map to.
             unwrap: Whether to unwrap the environment or treat it as part of the base environment.
         """
@@ -41,20 +41,18 @@ class Discretize(Wrapper[Any, TStep]):
         self.actions = actions
         self.action_space = Discrete(len(actions))
 
-    def init(self, key: Key) -> tuple[ModelState, TStep]:
+    def init(self, key: Key) -> tuple[DynamicsState, TStep]:
         return self.env.init(key)
 
-    def reset(
-        self, key: Key, env_state: ModelState
-    ) -> tuple[ModelState, TStep]:
+    def reset(self, key: Key, env_state: DynamicsState) -> tuple[DynamicsState, TStep]:
         return self.env.reset(key, env_state)
 
     def step(
         self,
         key: Key,
-        env_state: ModelState,
+        env_state: DynamicsState,
         action: PyTree,
-    ) -> tuple[ModelState, TStep]:
+    ) -> tuple[DynamicsState, TStep]:
         continuous_action = jax.tree.map(lambda x: x[action], self.actions)
         env_state, step = self.env.step(key, env_state, continuous_action)
         return env_state, dataclasses.replace(step, action=action)

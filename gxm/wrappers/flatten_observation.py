@@ -4,7 +4,7 @@ from typing import Any, TypeVar
 import jax
 import jax.numpy as jnp
 
-from gxm.core import Model, ModelState, Step, TStep
+from gxm.core import Dynamics, DynamicsState, Step, TStep
 from gxm.typing import Array, Key, PyTree
 from gxm.wrappers.wrapper import Wrapper
 
@@ -14,7 +14,7 @@ _TStep = TypeVar("_TStep", bound=Step)
 class FlattenObservation(Wrapper[Any, TStep]):
     """Wrapper that adds a rollout method to the environment."""
 
-    def __init__(self, env: Model[Any, TStep], unwrap: bool = True):
+    def __init__(self, env: Dynamics[Any, TStep], unwrap: bool = True):
         super().__init__(env, unwrap=unwrap)
 
     @classmethod
@@ -29,19 +29,19 @@ class FlattenObservation(Wrapper[Any, TStep]):
             next_obs=self.flatten(step.next_obs),
         )
 
-    def init(self, key: Key) -> tuple[ModelState, TStep]:
+    def init(self, key: Key) -> tuple[DynamicsState, TStep]:
         env_state, step = self.env.init(key)
         return env_state, self._flatten_step(step)
 
-    def reset(self, key: Key, env_state: ModelState) -> tuple[ModelState, TStep]:
+    def reset(self, key: Key, env_state: DynamicsState) -> tuple[DynamicsState, TStep]:
         env_state, step = self.env.reset(key, env_state)
         return env_state, self._flatten_step(step)
 
     def step(
         self,
         key: Key,
-        env_state: ModelState,
+        env_state: DynamicsState,
         action: PyTree,
-    ) -> tuple[ModelState, TStep]:
+    ) -> tuple[DynamicsState, TStep]:
         env_state, step = self.env.step(key, env_state, action)
         return env_state, self._flatten_step(step)

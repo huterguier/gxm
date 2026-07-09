@@ -4,7 +4,7 @@ from typing import Any
 import jax
 import jax.numpy as jnp
 
-from gxm.core import Model, TStep
+from gxm.core import Dynamics, TStep
 from gxm.typing import Key, PyTree
 from gxm.wrappers.wrapper import Wrapper, WrapperState
 
@@ -18,7 +18,9 @@ class StickyActionState(WrapperState):
 class StickyAction(Wrapper[StickyActionState, TStep]):
     """A wrapper that makes actions sticky with a given probability."""
 
-    def __init__(self, env: Model[Any, TStep], unwrap: bool = True, stickiness: float = 0.25):
+    def __init__(
+        self, env: Dynamics[Any, TStep], unwrap: bool = True, stickiness: float = 0.25
+    ):
         super().__init__(env, unwrap=unwrap)
         self.stickiness = stickiness
 

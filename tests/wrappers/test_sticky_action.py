@@ -11,9 +11,9 @@ class TestStickyAction(TestWrapper):
     def wrapper(self, env) -> Wrapper:
         return StickyAction(env, stickiness=0.1)
 
-    def test_wraps_bare_model(self, dummy_model):
+    def test_wraps_bare_dynamics(self, dummy_dynamics):
         key = jax.random.key(0)
-        wrapper = StickyAction(dummy_model, stickiness=0.1)
+        wrapper = StickyAction(dummy_dynamics, stickiness=0.1)
         state, step = wrapper.init(key)
         assert not hasattr(step, "reward")
         action = wrapper.action_space.sample(key)

@@ -30,7 +30,15 @@ class Step:
 
 @functools.partial(
     jax.tree_util.register_dataclass,
-    data_fields=["next_obs", "true_next_obs", "action", "reward", "terminated", "truncated", "info"],
+    data_fields=[
+        "next_obs",
+        "true_next_obs",
+        "action",
+        "reward",
+        "terminated",
+        "truncated",
+        "info",
+    ],
     meta_fields=[],
 )
 @dataclass
@@ -93,8 +101,16 @@ class Timestep(Step):
             A Trajectory object containing the sequence of timesteps.
         """
         return Trajectory(
-            obs=jax.tree.map(lambda f, n: jnp.concatenate([f[None], n], axis=0), first_obs, self.next_obs),
-            true_obs=jax.tree.map(lambda f, n: jnp.concatenate([f[None], n], axis=0), first_obs, self.true_next_obs),
+            obs=jax.tree.map(
+                lambda f, n: jnp.concatenate([f[None], n], axis=0),
+                first_obs,
+                self.next_obs,
+            ),
+            true_obs=jax.tree.map(
+                lambda f, n: jnp.concatenate([f[None], n], axis=0),
+                first_obs,
+                self.true_next_obs,
+            ),
             reward=self.reward,
             terminated=self.terminated,
             truncated=self.truncated,
@@ -155,91 +171,93 @@ class Trajectory:
         return self.reward.shape[0]
 
 
-class ModelState:
+class DynamicsState:
     """
-    A placeholder class for model/environment state.
+    A placeholder class for dynamics/environment state.
     This can be replaced with a more specific implementation as needed.
     """
 
     pass
 
 
-EnvironmentState = ModelState
+EnvironmentState = DynamicsState
 
-TModelState = TypeVar("TModelState", bound=ModelState)
-TEnvironmentState = TypeVar("TEnvironmentState", bound=ModelState)
+TDynamicsState = TypeVar("TDynamicsState", bound=DynamicsState)
+TEnvironmentState = TypeVar("TEnvironmentState", bound=DynamicsState)
 TStep = TypeVar("TStep", bound=Step, covariant=True)
 
 
-class Model(Protocol[TModelState, TStep]):
+class Dynamics(Protocol[TDynamicsState, TStep]):
     """
     Base class for world models in ``gxm``.
 
-    A model defines dynamics: given an action, it transitions to a new state and
-    produces a step output. It has no notion of episodes, rewards, or
+    Dynamics define state transitions: given an action, they transition to a new
+    state and produce a step output. They have no notion of episodes, rewards, or
     termination — those are added by :class:`Environment`.
 
-    All :class:`Environment` instances are also ``Model`` instances, so any
-    function typed ``model: Model`` can accept an environment directly.
+    All :class:`Environment` instances are also ``Dynamics`` instances, so any
+    function typed ``dynamics: Dynamics`` can accept an environment directly.
     """
 
     id: str
-    """The unique identifier of the model."""
+    """The unique identifier of the dynamics."""
     action_space: Space
-    """The action space of the model."""
+    """The action space of the dynamics."""
     observation_space: Space
-    """The observation space of the model."""
+    """The observation space of the dynamics."""
 
     @abstractmethod
-    def init(self, key: Key) -> tuple[TModelState, TStep]:
+    def init(self, key: Key) -> tuple[TDynamicsState, TStep]:
         """
-        Initialize the model and return the initial state.
+        Initialize the dynamics and return the initial state.
 
         Args:
             key: A JAX random key for any stochastic initialization.
         Returns:
-            A tuple of the initial model state and the initial step output.
+            A tuple of the initial state and the initial step output.
         """
 
     @abstractmethod
-    def reset(self, key: Key, state: TModelState) -> tuple[TModelState, TStep]:
+    def reset(self, key: Key, state: TDynamicsState) -> tuple[TDynamicsState, TStep]:
         """
-        Reset the model to an initial state.
+        Reset the dynamics to an initial state.
 
         Args:
             key: A JAX random key for any stochasticity.
-            state: The current model state.
+            state: The current state.
         Returns:
-            A tuple of the reset model state and the initial step output.
+            A tuple of the reset state and the initial step output.
         """
 
     @abstractmethod
-    def step(self, key: Key, state: TModelState, action: PyTree) -> tuple[TModelState, TStep]:
+    def step(
+        self, key: Key, state: TDynamicsState, action: PyTree
+    ) -> tuple[TDynamicsState, TStep]:
         """
-        Advance the model by one step given an action.
+        Advance the dynamics by one step given an action.
 
         Args:
             key: A JAX random key for any stochasticity.
-            state: The current model state.
+            state: The current state.
             action: The action to apply.
         Returns:
-            A tuple of the new model state and the resulting step output.
+            A tuple of the new state and the resulting step output.
         """
 
-    def has_wrapper(self, wrapper_type: type["Model"]) -> bool:
+    def has_wrapper(self, wrapper_type: type["Dynamics"]) -> bool:
         """
-        Check if the model or any of its wrappers is of a specific type.
+        Check if the dynamics or any of its wrappers is of a specific type.
 
         Args:
             wrapper_type: The type to check for.
         Returns:
-            True if the model or any of its wrappers is of the specified type, False otherwise.
+            True if the dynamics or any of its wrappers is of the specified type, False otherwise.
         """
         return isinstance(self, wrapper_type)
 
-    def get_wrapper(self, wrapper_type: type["Model"]) -> "Model":
+    def get_wrapper(self, wrapper_type: type["Dynamics"]) -> "Dynamics":
         """
-        Retrieve the first wrapper of a specific type from the model.
+        Retrieve the first wrapper of a specific type from the dynamics.
 
         Args:
             wrapper_type: The type of the wrapper to retrieve.
@@ -250,24 +268,24 @@ class Model(Protocol[TModelState, TStep]):
         """
         if isinstance(self, wrapper_type):
             return self
-        raise ValueError(f"No wrapper of type {wrapper_type} found in the model.")
+        raise ValueError(f"No wrapper of type {wrapper_type} found in the dynamics.")
 
     @property
-    def unwrapped(self) -> "Model":
+    def unwrapped(self) -> "Dynamics":
         """
-        Retrieve the base model by unwrapping all wrappers.
+        Retrieve the base dynamics by unwrapping all wrappers.
 
         Returns:
-            The base model without any wrappers.
+            The base dynamics without any wrappers.
         """
         return self
 
 
-class Environment(Model[TEnvironmentState, Timestep], Protocol[TEnvironmentState]):
+class Environment(Dynamics[TEnvironmentState, Timestep], Protocol[TEnvironmentState]):
     """
     Base class for RL environments in ``gxm``.
 
-    Extends :class:`Model` with episode structure: each step returns a
+    Extends :class:`Dynamics` with episode structure: each step returns a
     :class:`Timestep` that includes reward, termination, and truncation signals.
     Environments should inherit from this class and implement
     ``init``, ``step``, and ``reset``.

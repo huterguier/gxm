@@ -5,7 +5,7 @@ from typing import Any
 import jax
 import jax.numpy as jnp
 
-from gxm.core import Model, TStep
+from gxm.core import Dynamics, TStep
 from gxm.typing import Array, Key, PyTree
 from gxm.wrappers.wrapper import Wrapper, WrapperState
 
@@ -19,7 +19,7 @@ class StepCounterState(WrapperState):
 class StepCounter(Wrapper[StepCounterState, TStep]):
     """A wrapper that counts the number of steps taken in the environment."""
 
-    def __init__(self, env: Model[Any, TStep], unwrap: bool = True):
+    def __init__(self, env: Dynamics[Any, TStep], unwrap: bool = True):
         super().__init__(env, unwrap=unwrap)
 
     def init(self, key: Key) -> tuple[StepCounterState, TStep]:

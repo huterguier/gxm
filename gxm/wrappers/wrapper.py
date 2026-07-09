@@ -3,7 +3,7 @@ from typing import Any, Generic, TypeVar
 
 import jax
 
-from gxm.core import Environment, EnvironmentState, Model, TStep, Timestep
+from gxm.core import Dynamics, Environment, EnvironmentState, Timestep, TStep
 
 
 @jax.tree_util.register_dataclass
@@ -15,13 +15,13 @@ class WrapperState(EnvironmentState):
 TWrapperState = TypeVar("TWrapperState", bound=WrapperState)
 
 
-class Wrapper(Generic[TWrapperState, TStep], Model[TWrapperState, TStep]):
-    """Base class for wrappers in gxm, over either a bare Model or an Environment."""
+class Wrapper(Generic[TWrapperState, TStep], Dynamics[TWrapperState, TStep]):
+    """Base class for wrappers in gxm, over either bare Dynamics or an Environment."""
 
-    env: Model[Any, TStep]
+    env: Dynamics[Any, TStep]
     unwrap: bool = True
 
-    def __init__(self, env: Model[Any, TStep], unwrap: bool = True):
+    def __init__(self, env: Dynamics[Any, TStep], unwrap: bool = True):
         self.env = env
         self.id = env.id
         self.action_space = env.action_space
@@ -30,18 +30,18 @@ class Wrapper(Generic[TWrapperState, TStep], Model[TWrapperState, TStep]):
             assert not env.unwrap
         self.unwrap = unwrap
 
-    def has_wrapper(self, wrapper_type: type[Model]) -> bool:
+    def has_wrapper(self, wrapper_type: type[Dynamics]) -> bool:
         if isinstance(self, wrapper_type):
             return True
         return self.env.has_wrapper(wrapper_type)
 
-    def get_wrapper(self, wrapper_type: type[Model]) -> Model:
+    def get_wrapper(self, wrapper_type: type[Dynamics]) -> Dynamics:
         if isinstance(self, wrapper_type):
             return self
         return self.env.get_wrapper(wrapper_type)
 
     @property
-    def unwrapped(self) -> Model:
+    def unwrapped(self) -> Dynamics:
         if self.unwrap:
             return self.env.unwrapped
         return self

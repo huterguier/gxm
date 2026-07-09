@@ -2,10 +2,10 @@ from typing import TYPE_CHECKING
 
 from gxm.core import (
     AutoResetEnvironment,
+    Dynamics,
+    DynamicsState,
     Environment,
     EnvironmentState,
-    Model,
-    ModelState,
     Step,
     Timestep,
     Trajectory,
@@ -48,8 +48,8 @@ def __getattr__(name: str):
 
 
 __all__ = [
-    "Model",
-    "ModelState",
+    "Dynamics",
+    "DynamicsState",
     "Environment",
     "AutoResetEnvironment",
     "EnvironmentState",
