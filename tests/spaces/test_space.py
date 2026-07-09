@@ -1,7 +1,6 @@
 import jax
 import pytest
 
-from gxm.core import Environment
 from gxm.spaces import Space
 
 

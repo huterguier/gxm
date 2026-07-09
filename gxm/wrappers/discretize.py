@@ -10,7 +10,7 @@ from gxm.wrappers.wrapper import Wrapper
 
 
 class Discretize(Wrapper[Any, TStep]):
-    """
+    r"""
     Wrapper that discretizes a continuous action space.
     Maps a discrete set of actions to the continuous action space of the environment.
     The actions are specified as a list of continuous actions :math:`A`.

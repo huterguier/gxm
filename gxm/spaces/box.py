@@ -4,6 +4,7 @@ import jax
 import jax.numpy as jnp
 
 from gxm.typing import Array
+
 from .space import Shape, Space
 
 

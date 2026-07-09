@@ -6,7 +6,6 @@ from gxm.wrappers import Discretize, Wrapper
 
 
 class TestDiscretize(TestWrapper):
-
     @pytest.fixture
     def wrapper(self, env) -> Wrapper:
         key = jax.random.key(0)

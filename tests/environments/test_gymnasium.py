@@ -1,4 +1,5 @@
 import pytest
+
 pytest.importorskip("gymnasium")
 pytest.importorskip("ale_py")
 import gymnasium

@@ -1,4 +1,5 @@
 import pytest
+
 pytest.importorskip("gymnax")
 import gymnax
 import jax

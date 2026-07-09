@@ -6,7 +6,6 @@ from gxm.wrappers import StickyAction, Wrapper
 
 
 class TestStickyAction(TestWrapper):
-
     @pytest.fixture
     def wrapper(self, env) -> Wrapper:
         return StickyAction(env, stickiness=0.1)

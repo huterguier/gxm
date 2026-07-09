@@ -4,11 +4,12 @@ import jax
 import jax.numpy as jnp
 
 from gxm.typing import Array
+
 from .space import Shape, Space
 
 
 class Discrete(Space):
-    """A discrete space consiting of :math:`\{0, 1, ..., n-1\}`."""
+    r"""A discrete space consiting of :math:`\{0, 1, ..., n-1\}`."""
 
     _n: int
 
@@ -17,7 +18,7 @@ class Discrete(Space):
         self._n = n
 
     def sample(self, key: Array, shape: Shape = ()) -> Array:
-        """
+        r"""
         Sample random action uniformly from :math:`\{0, 1, ..., n-1\}`.
 
         Arguments:

@@ -165,9 +165,9 @@ class Trajectory:
 
     def __len__(self):
         """Return the length of the trajectory."""
-        assert (
-            self.reward.ndim == 1
-        ), "Trajectory length is only defined for batch size 1."
+        assert self.reward.ndim == 1, (
+            "Trajectory length is only defined for batch size 1."
+        )
         return self.reward.shape[0]
 
 

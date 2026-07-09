@@ -6,7 +6,6 @@ from gxm.wrappers import Evaluate, Wrapper
 
 
 class TestEvaluate(TestWrapper):
-
     @pytest.fixture
     def wrapper(self, env) -> Wrapper:
         return Evaluate(env)

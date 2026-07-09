@@ -6,7 +6,6 @@ from gxm.spaces import Box, Discrete, Tree
 
 
 class TestDiscrete(TestSpace):
-
     @pytest.fixture(
         params=[
             Tree((Discrete(2), Discrete(3))),

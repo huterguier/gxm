@@ -1,4 +1,4 @@
-import ale_py
+import ale_py  # noqa: F401 -- registers the ALE/* environments with gymnasium on import
 import pytest
 from test_wrapper import TestWrapper
 
@@ -8,7 +8,6 @@ from gxm.wrappers import EpisodicLife, Wrapper
 
 
 class TestEpisodicLife(TestWrapper):
-
     @pytest.fixture(
         params=[
             "Gymnasium/ALE/Breakout-v5",
