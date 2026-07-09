@@ -1,7 +1,6 @@
 from typing import TYPE_CHECKING
 
 from gxm.core import (
-    AutoResetEnvironment,
     Dynamics,
     DynamicsState,
     Environment,
@@ -51,7 +50,6 @@ __all__ = [
     "Dynamics",
     "DynamicsState",
     "Environment",
-    "AutoResetEnvironment",
     "EnvironmentState",
     "Step",
     "Timestep",

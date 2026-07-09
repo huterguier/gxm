@@ -1,5 +1,6 @@
 """Wrappers for ``gxm`` environments."""
 
+from gxm.wrappers.autoreset import AutoReset
 from gxm.wrappers.clip_reward import ClipReward
 from gxm.wrappers.discretize import Discretize
 from gxm.wrappers.episode_counter import EpisodeCounter
@@ -15,6 +16,7 @@ from gxm.wrappers.time_limit import TimeLimit
 from gxm.wrappers.wrapper import EnvironmentWrapper, Wrapper
 
 __all__ = [
+    "AutoReset",
     "ClipReward",
     "Discretize",
     "EnvironmentWrapper",

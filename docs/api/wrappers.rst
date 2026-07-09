@@ -6,6 +6,7 @@
 
    gxm.wrappers.Wrapper
    gxm.wrappers.EnvironmentWrapper
+   gxm.wrappers.AutoReset
    gxm.wrappers.ClipReward
    gxm.wrappers.Discretize
    gxm.wrappers.EpisodeCounter

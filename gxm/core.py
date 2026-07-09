@@ -1,7 +1,7 @@
 import functools
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import Generic, Protocol, TypeVar
+from typing import Protocol, TypeVar
 
 import jax
 import jax.numpy as jnp
@@ -333,60 +333,3 @@ class Environment(Dynamics[TEnvironmentState, Timestep], Protocol[TEnvironmentSt
         Returns:
             A tuple containing the new environment state and the resulting timestep.
         """
-
-
-class AutoResetEnvironment(Generic[TEnvironmentState], Environment[TEnvironmentState]):
-    """
-    Base class for native gxm environments.
-    Subclasses implement ``_reset`` and ``_step``; auto-reset on episode end is
-    handled automatically in ``step``.
-    """
-
-    @abstractmethod
-    def _reset(self, key: Key) -> tuple[TEnvironmentState, Timestep]:
-        pass
-
-    @abstractmethod
-    def _step(
-        self, key: Key, state: TEnvironmentState, action: PyTree
-    ) -> tuple[TEnvironmentState, Timestep]:
-        pass
-
-    def init(self, key: Key) -> tuple[TEnvironmentState, Timestep]:
-        return self._reset(key)
-
-    def reset(
-        self, key: Key, state: TEnvironmentState
-    ) -> tuple[TEnvironmentState, Timestep]:
-        return self._reset(key)
-
-    def step(
-        self, key: Key, state: TEnvironmentState, action: PyTree
-    ) -> tuple[TEnvironmentState, Timestep]:
-        key_step, key_reset = jax.random.split(key)
-        state_step, timestep_step = self._step(key_step, state, action)
-        state_reset, timestep_reset = self._reset(key_reset)
-        state = jax.tree.map(
-            lambda x_step, x_reset: jnp.where(timestep_step.done, x_reset, x_step),
-            state_step,
-            state_reset,
-        )
-        obs = jax.tree.map(
-            lambda x_step, x_reset: jnp.where(timestep_step.done, x_reset, x_step),
-            timestep_step.next_obs,
-            timestep_reset.next_obs,
-        )
-        true_obs = jax.tree.map(
-            lambda x_step, x_obs: jnp.where(timestep_step.truncated, x_step, x_obs),
-            timestep_step.next_obs,
-            obs,
-        )
-        return state, Timestep(
-            next_obs=obs,
-            true_next_obs=true_obs,
-            action=action,
-            reward=timestep_step.reward,
-            terminated=timestep_step.terminated,
-            truncated=timestep_step.truncated,
-            info=timestep_step.info,
-        )

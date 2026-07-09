@@ -12,7 +12,6 @@ Core API
    gxm.Step
    gxm.Environment
    gxm.EnvironmentState
-   gxm.AutoResetEnvironment
    gxm.Timestep
    gxm.Transition
    gxm.Trajectory

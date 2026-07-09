@@ -6,6 +6,10 @@ version carries breaking changes.
 
 ## [Unreleased]
 
+### Changed
+- **Breaking:** `AutoResetEnvironment` (subclass, implement `_reset`/`_step`) replaced by
+  `AutoReset` (compose over an existing `Environment`), a wrapper like any other.
+
 ## [0.4.0] - 2026-07-09
 
 ### Added
