@@ -88,8 +88,10 @@ class TestAutoReset(TestWrapper):
 
         assert counts == [1, 2, 0, 1, 2, 0]
         assert terminated == [False, False, True, False, False, True]
-        # Termination (not truncation): true_next_obs is just the reset next_obs.
-        assert int(timestep.true_next_obs) == int(timestep.next_obs)
+        # On termination the agent acts on the reset obs, but true_next_obs
+        # preserves the terminal observation the environment actually produced.
+        assert int(timestep.next_obs) == 0
+        assert int(timestep.true_next_obs) == 3
 
     def test_true_next_obs_on_truncation(self):
         key = jax.random.key(0)

@@ -17,8 +17,8 @@ class AutoReset(EnvironmentWrapper[Any]):
     ``jit``/``vmap``/``scan``.
     """
 
-    def __init__(self, wrapped: Environment, unwrap: bool = True):
-        super().__init__(wrapped, unwrap=unwrap)
+    def __init__(self, wrapped: Environment):
+        super().__init__(wrapped)
 
     def init(self, key: Key) -> tuple[EnvironmentState, Timestep]:
         return self.wrapped.init(key)
@@ -44,14 +44,13 @@ class AutoReset(EnvironmentWrapper[Any]):
             timestep_step.next_obs,
             timestep_reset.next_obs,
         )
-        true_obs = jax.tree.map(
-            lambda x_step, x_obs: jnp.where(timestep_step.truncated, x_step, x_obs),
-            timestep_step.next_obs,
-            obs,
-        )
+        # true_next_obs is the observation the environment actually produced,
+        # before any auto-reset blending — on done steps this preserves the
+        # final observation of the ending episode (for bootstrapping on
+        # truncation and for model learning on termination).
         return state, Timestep(
             next_obs=obs,
-            true_next_obs=true_obs,
+            true_next_obs=timestep_step.next_obs,
             action=action,
             reward=timestep_step.reward,
             terminated=timestep_step.terminated,

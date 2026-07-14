@@ -51,8 +51,11 @@ class Timestep(Step):
     pure world model. :class:`Timestep` represents one unit of time
     :math:`(R_i, S_{i+1})` within a bounded episode.
 
-    In case of truncation, ``true_next_obs`` holds the observation
-    :math:`\\hat{S}_{i+1}` that would have been seen had the episode not been cut.
+    When an episode ends under auto-reset, ``next_obs`` is the first observation
+    of the *next* episode, while ``true_next_obs`` holds the observation
+    :math:`\\hat{S}_{i+1}` the environment actually produced before the reset.
+    On all other steps the two are identical. Bootstrap values and learn models
+    from ``true_next_obs``; act on ``next_obs``.
     """
 
     reward: Array
@@ -62,7 +65,7 @@ class Timestep(Step):
     truncated: Array
     """Whether the episode has been truncated at this timestep."""
     true_next_obs: PyTree
-    """The true next observation before any auto-reset. Differs from ``next_obs`` only when ``truncated`` is True."""
+    """The true next observation before any auto-reset. Differs from ``next_obs`` only when ``done`` is True."""
 
     @property
     def done(self) -> Array:
@@ -75,6 +78,13 @@ class Timestep(Step):
     ) -> "Transition":
         """Convert the current timestep :math:`(R_t, S_{t+1})` into a transition
         :math:`(S_t, A_t, R_t, S_{t+1})` given the previous observation :math:`S_t`.
+
+        The transition's ``next_obs`` is ``true_next_obs``, so it always lies
+        within the same episode as ``obs`` — even when auto-reset has already
+        replaced the observation stream with the next episode's first
+        observation. This is what makes bootstrapping on truncated transitions
+        correct.
+
         Args:
             obs: The observation at the previous timestep.
         Returns:
@@ -86,7 +96,7 @@ class Timestep(Step):
             reward=self.reward,
             terminated=self.terminated,
             truncated=self.truncated,
-            next_obs=self.next_obs,
+            next_obs=self.true_next_obs,
             info=self.info,
         )
 
@@ -173,11 +183,13 @@ class Trajectory:
 
 class DynamicsState:
     """
-    A placeholder class for dynamics/environment state.
-    This can be replaced with a more specific implementation as needed.
-    """
+    Marker base class for dynamics/environment state.
 
-    pass
+    Concrete dynamics define their state as a
+    ``@jax.tree_util.register_dataclass`` dataclass subclassing this, so state
+    types can be identified and used as generic bounds (``TDynamicsState``).
+    The class itself carries no fields or behavior.
+    """
 
 
 EnvironmentState = DynamicsState

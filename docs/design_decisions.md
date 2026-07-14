@@ -127,17 +127,27 @@ unrelated state, which corrupts the value estimate and destabilises training.
 
 `Timestep` exposes two observation fields:
 
-- `next_obs`: the observation returned by the environment after the step, post-reset if truncated.
-- `true_next_obs`: the observation at the state the agent was actually in when truncation occurred.
+- `next_obs`: the observation returned by the environment after the step, post-reset if the
+  episode ended. This is the observation the agent *acts on* next.
+- `true_next_obs`: the observation the environment actually produced before any auto-reset —
+  the final observation of the ending episode.
 
-These two fields are identical in all cases *except* when `truncated` is `True`.
-When writing a training loop, use `true_next_obs` for bootstrapping:
+These two fields are identical in all cases *except* when `done` is `True` (terminated **or**
+truncated). Preserving the final observation on termination as well — not just truncation — costs
+nothing (the value is already computed inside the auto-reset blend) and is required for
+world-model learning, where the dynamics model must be trained on the true
+$(S_t, A_t, S_{t+1})$ even across terminal steps.
+
+When writing a training loop, bootstrap from `true_next_obs`:
 
 ```python
-# Correct bootstrapping under truncation
-bootstrap_obs = jnp.where(timestep.truncated, timestep.true_next_obs, timestep.next_obs)
-value_target = timestep.reward + gamma * (1 - timestep.terminated) * critic(bootstrap_obs)
+# Correct bootstrapping under truncation: true_next_obs is the within-episode
+# next observation; terminated (not done) masks the bootstrap.
+value_target = timestep.reward + gamma * (1 - timestep.terminated) * critic(timestep.true_next_obs)
 ```
+
+`Timestep.transition(obs)` builds its `next_obs` from `true_next_obs` for the same reason:
+a `Transition` is always a within-episode $(S_t, A_t, R_t, S_{t+1})$.
 
 If you do not need truncation handling (e.g. your environments never truncate, or you are
 using `IgnoreTruncation`), `true_next_obs` will equal `next_obs` and can be ignored.
@@ -145,11 +155,12 @@ using `IgnoreTruncation`), `true_next_obs` will equal `next_obs` and can be igno
 **Pros:**
 - Correct value estimation at episode boundaries without any special casing in the environment.
 - The distinction is explicit in the API — it is impossible to accidentally use the wrong observation.
+- Terminal observations are never silently lost, which model-based methods depend on.
 
 **Cons:**
-- Doubles the memory footprint of the observation for every truncated step.
-- `true_next_obs` is a somewhat verbose name. The `IgnoreTruncation` wrapper sets it to `None`
-  if the field is not needed.
+- Doubles the memory footprint of the observation for every episode-ending step.
+- `true_next_obs` is a somewhat verbose name. The `IgnoreTruncation` wrapper sets it equal to
+  `next_obs` if the distinction is not needed.
 
 ---
 
