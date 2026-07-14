@@ -44,6 +44,19 @@ def make_xla(obj):
     pass
 ```
 
+## Brax on CPU
+Brax's physics pipelines are no longer actively maintained (brax itself recommends MJX),
+and repeatedly creating and compiling brax environments in a single long-lived CPU process
+has been observed to intermittently crash inside jaxlib's XLA compiler
+(`Fatal Python error: Segmentation fault` in `backend_compile_and_load`). The crash is
+nondeterministic and unrelated to gxm's adapter; re-running typically succeeds. Prefer
+reusing environment instances over re-creating them, and prefer GPU jaxlib where available.
+
+## Craftax pixel observation spaces
+Craftax's pixel environments declare a transposed `(W, H, C)` observation space while
+actually emitting `(H, W, C)` observations. The gxm adapter corrects the declared space
+from a probe observation at construction time.
+
 ## Termination and Truncation
 Handling termination and truncation correctly is essential for the correctness of many reinforcement learning algorithms.
 Yet most JAX-based environment libraries do not account for this at all.

@@ -81,7 +81,7 @@ class GymnasiumAdapter(Environment[GymnasiumState]):
                 true_next_obs=jnp.reshape(obs, shape + obs.shape[1:]),
                 action=jnp.reshape(action_sentinel, shape + action_spec.shape),
                 reward=jnp.zeros(shape, dtype=jnp.float32),
-                terminated=jnp.zeros(shape, dtype=jnp.bool),
+                terminated=jnp.ones(shape, dtype=jnp.bool),
                 truncated=jnp.zeros(shape, dtype=jnp.bool),
                 info=jax.tree.map(lambda i: jnp.reshape(i, shape + i.shape[1:]), info),
             )
@@ -121,7 +121,7 @@ class GymnasiumAdapter(Environment[GymnasiumState]):
                 true_next_obs=jnp.reshape(obs, shape + obs.shape[1:]),
                 action=jnp.reshape(action_sentinel, shape + action_spec.shape),
                 reward=jnp.zeros(shape, dtype=jnp.float32),
-                terminated=jnp.zeros(shape, dtype=jnp.bool),
+                terminated=jnp.ones(shape, dtype=jnp.bool),
                 truncated=jnp.zeros(shape, dtype=jnp.bool),
                 info=jax.tree.map(lambda i: jnp.reshape(i, shape + i.shape[1:]), info),
             )

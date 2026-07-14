@@ -9,6 +9,7 @@ import jax.numpy as jnp
 from gxm.core import Environment, EnvironmentState, Timestep
 from gxm.spaces import Box, Discrete, Space, Tree
 from gxm.typing import Array, Key
+from gxm.wrappers import AutoReset
 
 
 def _gymnax_to_gxm_space(gymnax_space) -> Space:
@@ -49,6 +50,21 @@ class GymnaxState(EnvironmentState):
 
 
 class GymnaxAdapter(Environment[GymnaxState]):
+    """
+    Adapter over a gymnax environment.
+
+    Uses gymnax's non-resetting ``step_env`` rather than ``step``: gymnax's own
+    ``step`` auto-resets internally, which destroys the terminal observation and
+    makes truncation unrecoverable. Consequently this adapter does *not*
+    auto-reset — stepping past ``done`` is undefined. ``make`` wraps it in
+    :class:`gxm.wrappers.AutoReset` by default.
+
+    Truncation is recovered from the state's step counter: a ``done`` step with
+    ``state.time >= params.max_steps_in_episode`` is labeled truncated (and only
+    truncated, even if the environment also reached a terminal state on that
+    exact step — the coincidence is not distinguishable through gymnax's API).
+    """
+
     gymnax_id: str
     env: gymnax.environments.environment.Environment
     env_params: Any
@@ -61,6 +77,19 @@ class GymnaxAdapter(Environment[GymnaxState]):
         self.observation_space = _gymnax_to_gxm_space(
             self.env.observation_space(self.env_params)
         )
+        # Probe one step eagerly to learn the info structure (so init can
+        # return a structurally identical, zeroed info) and whether the
+        # environment carries a step counter for truncation recovery.
+        key_probe = jax.random.key(0)
+        _, state_probe = self.env.reset(key_probe, self.env_params)
+        action_probe = self.env.action_space(self.env_params).sample(key_probe)
+        *_, info_probe = self.env.step_env(
+            key_probe, state_probe, action_probe, self.env_params
+        )
+        self._init_info = jax.tree.map(jnp.zeros_like, info_probe)
+        self._time_limited = hasattr(state_probe, "time") and hasattr(
+            self.env_params, "max_steps_in_episode"
+        )
 
     def init(self, key: Key) -> tuple[GymnaxState, Timestep]:
         obs, gymnax_state = self.env.reset(key, self.env_params)
@@ -68,11 +97,11 @@ class GymnaxAdapter(Environment[GymnaxState]):
         timestep = Timestep(
             next_obs=obs,
             true_next_obs=obs,
-            action=self.action_space.sample(key),
+            action=jax.tree.map(jnp.zeros_like, self.action_space.sample(key)),
             reward=jnp.float32(0.0),
             terminated=jnp.bool(True),
             truncated=jnp.bool(False),
-            info={},
+            info=self._init_info,
         )
         return state, timestep
 
@@ -84,18 +113,25 @@ class GymnaxAdapter(Environment[GymnaxState]):
         self, key: Key, state: GymnaxState, action: Array
     ) -> tuple[GymnaxState, Timestep]:
         gymnax_state = state.gymnax_state
-        obs, gymnax_state, reward, done, _ = self.env.step(
+        obs, gymnax_state, reward, done, info = self.env.step_env(
             key, gymnax_state, action, self.env_params
         )
+        done = jnp.asarray(done)
+        if self._time_limited:
+            truncated = jnp.logical_and(
+                done, gymnax_state.time >= self.env_params.max_steps_in_episode
+            )
+        else:
+            truncated = jnp.zeros_like(done)
         state = GymnaxState(gymnax_state=gymnax_state)
         timestep = Timestep(
             next_obs=obs,
             true_next_obs=obs,
             action=action,
             reward=reward,
-            terminated=done,
-            truncated=jnp.bool(False),
-            info={},
+            terminated=jnp.logical_and(done, jnp.logical_not(truncated)),
+            truncated=truncated,
+            info=info,
         )
         return state, timestep
 
@@ -107,6 +143,13 @@ class _WrappedGymnaxState(EnvironmentState):
 
 
 class _GymnaxToGxm(Environment[_WrappedGymnaxState]):
+    """Non-resetting gxm view of an existing gymnax environment object.
+
+    Same semantics as :class:`GymnaxAdapter` (``step_env``-based, truncation
+    recovered from the step counter); ``wrap`` adds :class:`AutoReset` on top
+    by default.
+    """
+
     def __init__(self, env: Any, params: Any = None):
         self._env = env
         self._params = params if params is not None else env.default_params
@@ -115,21 +158,27 @@ class _GymnaxToGxm(Environment[_WrappedGymnaxState]):
         self.observation_space = _gymnax_to_gxm_space(
             self._env.observation_space(self._params)
         )
+        key_probe = jax.random.key(0)
+        _, state_probe = self._env.reset(key_probe, self._params)
+        action_probe = self._env.action_space(self._params).sample(key_probe)
+        *_, info_probe = self._env.step_env(
+            key_probe, state_probe, action_probe, self._params
+        )
+        self._init_info = jax.tree.map(jnp.zeros_like, info_probe)
+        self._time_limited = hasattr(state_probe, "time") and hasattr(
+            self._params, "max_steps_in_episode"
+        )
 
     def init(self, key: Key) -> tuple[_WrappedGymnaxState, Timestep]:
         obs, gymnax_state = self._env.reset(key, self._params)
-        sentinel_action = self._env.action_space(self._params).sample(key)
-        _, _, _, _, info = self._env.step(
-            key, gymnax_state, sentinel_action, self._params
-        )
         timestep = Timestep(
             next_obs=obs,
             true_next_obs=obs,
-            action=self.action_space.sample(key),
+            action=jax.tree.map(jnp.zeros_like, self.action_space.sample(key)),
             reward=jnp.float32(0.0),
             terminated=jnp.bool(True),
             truncated=jnp.bool(False),
-            info=info,
+            info=self._init_info,
         )
         return _WrappedGymnaxState(gymnax_state=gymnax_state), timestep
 
@@ -142,16 +191,23 @@ class _GymnaxToGxm(Environment[_WrappedGymnaxState]):
     def step(
         self, key: Key, state: _WrappedGymnaxState, action: Array
     ) -> tuple[_WrappedGymnaxState, Timestep]:
-        obs, gymnax_state, reward, done, info = self._env.step(
+        obs, gymnax_state, reward, done, info = self._env.step_env(
             key, state.gymnax_state, action, self._params
         )
+        done = jnp.asarray(done)
+        if self._time_limited:
+            truncated = jnp.logical_and(
+                done, gymnax_state.time >= self._params.max_steps_in_episode
+            )
+        else:
+            truncated = jnp.zeros_like(done)
         timestep = Timestep(
             next_obs=obs,
             true_next_obs=obs,
             action=action,
             reward=reward,
-            terminated=done,
-            truncated=jnp.bool(False),
+            terminated=jnp.logical_and(done, jnp.logical_not(truncated)),
+            truncated=truncated,
             info=info,
         )
         return _WrappedGymnaxState(gymnax_state=gymnax_state), timestep
@@ -190,13 +246,15 @@ class _GxmToGymnax:
         return _gxm_to_gymnax_space(self._env.observation_space)
 
 
-def make(id: str, **kwargs) -> Environment:
-    return GymnaxAdapter(id, **kwargs)
+def make(id: str, autoreset: bool = True, **kwargs) -> Environment:
+    env = GymnaxAdapter(id, **kwargs)
+    return AutoReset(env).seal() if autoreset else env
 
 
-def wrap(env: Any, params: Any = None) -> Environment:
+def wrap(env: Any, params: Any = None, autoreset: bool = True) -> Environment:
     """Wrap a gymnax environment object as a gxm environment."""
-    return _GymnaxToGxm(env, params)
+    wrapped = _GymnaxToGxm(env, params)
+    return AutoReset(wrapped).seal() if autoreset else wrapped
 
 
 def unwrap(env: Environment) -> _GxmToGymnax:

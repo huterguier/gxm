@@ -29,7 +29,7 @@ class TestCraftax(TestEnvironment):
 
     def test_equality(self, id):
         env_gxm = gxm.make("Craftax/" + id)
-        env_craftax = make_craftax_env_from_name(id, auto_reset=True)
+        env_craftax = make_craftax_env_from_name(id, auto_reset=False)
         env_params_craftax = env_craftax.default_params
 
         key = jax.random.key(0)
@@ -42,6 +42,34 @@ class TestCraftax(TestEnvironment):
             obs, state, reward, done, info = env_craftax.step(
                 key, state, action, env_params_craftax
             )
-            assert jax.numpy.allclose(timestep.next_obs, obs)
             assert jax.numpy.allclose(timestep.reward, reward)
             assert timestep.done == done
+            if bool(timestep.done):
+                # true_next_obs preserves the terminal observation the
+                # non-resetting reference env still shows.
+                assert jax.numpy.allclose(timestep.true_next_obs, obs)
+            else:
+                assert jax.numpy.allclose(timestep.next_obs, obs)
+            # Re-sync so both sides step from identical states even after a
+            # done (gxm auto-resets, the reference does not).
+            state = env_state.craftax_state
+
+    def test_truncation_is_labeled(self):
+        """Random actions do not kill the agent within 5 steps of spawning, so
+        max_timesteps=5 guarantees the episode ends by truncation."""
+        from gxm.adapters.craftax import CraftaxAdapter
+
+        key = jax.random.key(0)
+        env = gxm.make("Craftax/Craftax-Symbolic-v1")
+        adapter = env.get_wrapper(CraftaxAdapter)
+        adapter.env_params = adapter.env_params.replace(max_timesteps=5)
+        env_state, timestep = env.init(key)
+        for _ in range(5):
+            key, key_step = jax.random.split(key)
+            action = env.action_space.sample(key_step)
+            env_state, timestep = env.step(key_step, env_state, action)
+
+        assert bool(timestep.truncated)
+        assert not bool(timestep.terminated)
+        # next_obs is the fresh auto-reset world, true_next_obs the old one.
+        assert not jax.numpy.allclose(timestep.true_next_obs, timestep.next_obs)
