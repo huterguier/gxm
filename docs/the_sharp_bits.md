@@ -52,10 +52,25 @@ has been observed to intermittently crash inside jaxlib's XLA compiler
 nondeterministic and unrelated to gxm's adapter; re-running typically succeeds. Prefer
 reusing environment instances over re-creating them, and prefer GPU jaxlib where available.
 
+## JAXAtari
+JAXAtari's ``PixelObsWrapper`` auto-resets internally on the same step an episode
+ends, with no way to opt out. The pre-reset terminal observation is destroyed
+inside jaxatari, so — unlike every other adapter — ``true_next_obs`` always equals
+``next_obs`` for JAXAtari environments, and bootstrapping across truncated episode
+ends is *not* corrected. In addition, jaxatari requires sprite assets before any
+environment can be created: run ``install-sprites`` once (declining the ROM
+ownership prompt installs the freely distributable replacement sprites).
+
 ## Craftax pixel observation spaces
 Craftax's pixel environments declare a transposed `(W, H, C)` observation space while
 actually emitting `(H, W, C)` observations. The gxm adapter corrects the declared space
 from a probe observation at construction time.
+
+## Navix observation bounds
+Some navix environments declare observation bounds that their observations exceed
+(e.g. `Navix-Empty-5x5-v0` declares a maximum entity id of 8 but emits ids up to 10).
+When a probe observation escapes the declared space, the gxm adapter widens the bound
+to the observation dtype's full range at construction time.
 
 ## Termination and Truncation
 Handling termination and truncation correctly is essential for the correctness of many reinforcement learning algorithms.
