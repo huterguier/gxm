@@ -1,3 +1,4 @@
+import copy
 from dataclasses import dataclass
 from typing import Any, Generic, TypeVar
 
@@ -16,19 +17,39 @@ TWrapperState = TypeVar("TWrapperState", bound=WrapperState)
 
 
 class Wrapper(Generic[TWrapperState, TStep], Dynamics[TWrapperState, TStep]):
-    """Base class for wrappers in gxm, over either bare Dynamics or an Environment."""
+    """Base class for wrappers in gxm, over either bare Dynamics or an Environment.
+
+    Wrappers are *removable* by default: ``unwrapped`` peels them off to reach
+    the base environment. A wrapper stack can instead be marked as part of the
+    environment's definition by calling :meth:`seal` — e.g. Atari-style
+    preprocessing, or the auto-reset layer added by ``gxm.make`` — in which
+    case ``unwrapped`` stops peeling there. Introspection is unaffected:
+    ``has_wrapper`` and ``get_wrapper`` see through sealed wrappers.
+    """
 
     wrapped: Dynamics[Any, TStep]
     unwrap: bool = True
 
-    def __init__(self, wrapped: Dynamics[Any, TStep], unwrap: bool = True):
+    def __init__(self, wrapped: Dynamics[Any, TStep]):
         self.wrapped = wrapped
         self.id = wrapped.id
         self.action_space = wrapped.action_space
         self.observation_space = wrapped.observation_space
-        if isinstance(wrapped, Wrapper) and not unwrap:
-            assert not wrapped.unwrap
-        self.unwrap = unwrap
+
+    def seal(self) -> "Wrapper":
+        """
+        Return a copy of this wrapper stack marked as part of the environment
+        definition: ``unwrapped`` will not peel past it. Wrappers added on top
+        of the sealed stack remain removable as usual.
+
+        Does not mutate ``self``; the wrapper chain is shallow-copied and the
+        base environment is shared.
+        """
+        sealed = copy.copy(self)
+        sealed.unwrap = False
+        if isinstance(sealed.wrapped, Wrapper):
+            sealed.wrapped = sealed.wrapped.seal()
+        return sealed
 
     def has_wrapper(self, wrapper_type: type[Dynamics]) -> bool:
         if isinstance(self, wrapper_type):
@@ -47,9 +68,12 @@ class Wrapper(Generic[TWrapperState, TStep], Dynamics[TWrapperState, TStep]):
         return self
 
     def __getattr__(self, name: str) -> Any:
-        if hasattr(self.wrapped, name):
-            return getattr(self.wrapped, name)
-        raise AttributeError(name)
+        if name == "wrapped":
+            # If ``wrapped`` itself is missing from __dict__ (e.g. during
+            # unpickling or copy, before __init__ has run), delegating the
+            # lookup would recurse infinitely.
+            raise AttributeError(name)
+        return getattr(self.wrapped, name)
 
 
 class EnvironmentWrapper(Generic[TWrapperState], Wrapper[TWrapperState, Timestep]):
@@ -57,5 +81,5 @@ class EnvironmentWrapper(Generic[TWrapperState], Wrapper[TWrapperState, Timestep
 
     wrapped: Environment
 
-    def __init__(self, wrapped: Environment, unwrap: bool = True):
-        super().__init__(wrapped, unwrap=unwrap)
+    def __init__(self, wrapped: Environment):
+        super().__init__(wrapped)

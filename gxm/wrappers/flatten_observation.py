@@ -14,8 +14,8 @@ _TStep = TypeVar("_TStep", bound=Step)
 class FlattenObservation(Wrapper[Any, TStep]):
     """Wrapper that adds a rollout method to the environment."""
 
-    def __init__(self, wrapped: Dynamics[Any, TStep], unwrap: bool = True):
-        super().__init__(wrapped, unwrap=unwrap)
+    def __init__(self, wrapped: Dynamics[Any, TStep]):
+        super().__init__(wrapped)
 
     @classmethod
     def flatten(cls, obs: PyTree) -> Array:

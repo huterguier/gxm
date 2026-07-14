@@ -21,10 +21,9 @@ class StickyAction(Wrapper[StickyActionState, TStep]):
     def __init__(
         self,
         wrapped: Dynamics[Any, TStep],
-        unwrap: bool = True,
         stickiness: float = 0.25,
     ):
-        super().__init__(wrapped, unwrap=unwrap)
+        super().__init__(wrapped)
         self.stickiness = stickiness
 
     def init(self, key: Key) -> tuple[StickyActionState, TStep]:

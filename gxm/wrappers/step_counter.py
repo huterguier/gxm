@@ -19,8 +19,8 @@ class StepCounterState(WrapperState):
 class StepCounter(Wrapper[StepCounterState, TStep]):
     """A wrapper that counts the number of steps taken in the environment."""
 
-    def __init__(self, wrapped: Dynamics[Any, TStep], unwrap: bool = True):
-        super().__init__(wrapped, unwrap=unwrap)
+    def __init__(self, wrapped: Dynamics[Any, TStep]):
+        super().__init__(wrapped)
 
     def init(self, key: Key) -> tuple[StepCounterState, TStep]:
         wrapped_state, step_output = self.wrapped.init(key)

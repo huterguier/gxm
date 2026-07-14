@@ -23,13 +23,12 @@ class EvaluateState(WrapperState):
 class Evaluate(EnvironmentWrapper[EvaluateState]):
     wrapped: Environment
 
-    def __init__(self, wrapped: Environment, unwrap: bool = True):
+    def __init__(self, wrapped: Environment):
         """
         Args:
             wrapped: The environment to wrap.
-            unwrap: Whether to unwrap the environment or treat it as part of the base environment.
         """
-        super().__init__(wrapped, unwrap=unwrap)
+        super().__init__(wrapped)
 
     def init(self, key: Key) -> tuple[EvaluateState, Timestep]:
         wrapped_state, timestep = self.wrapped.init(key)

@@ -30,16 +30,13 @@ class Discretize(Wrapper[Any, TStep]):
     wrapped: Dynamics[Any, TStep]
     actions: PyTree
 
-    def __init__(
-        self, wrapped: Dynamics[Any, TStep], actions: PyTree, unwrap: bool = True
-    ):
+    def __init__(self, wrapped: Dynamics[Any, TStep], actions: PyTree):
         """
         Args:
             wrapped: The dynamics to wrap.
             actions: The discrete set of actions to map to.
-            unwrap: Whether to unwrap the environment or treat it as part of the base environment.
         """
-        super().__init__(wrapped, unwrap=unwrap)
+        super().__init__(wrapped)
         self.actions = actions
         self.action_space = Discrete(len(actions))
 

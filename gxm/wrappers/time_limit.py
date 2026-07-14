@@ -21,15 +21,13 @@ class TimeLimit(EnvironmentWrapper[TimeLimitState]):
 
     wrapped: Environment
 
-    def __init__(
-        self, wrapped: Environment, unwrap: bool = True, time_limit: int = 1000
-    ):
+    def __init__(self, wrapped: Environment, time_limit: int = 1000):
         """
         Args:
             wrapped: The environment to wrap.
             time_limit: Maximum number of steps before the episode is truncated.
         """
-        super().__init__(wrapped, unwrap=unwrap)
+        super().__init__(wrapped)
         self.time_limit = time_limit
 
     def init(self, key: Key) -> tuple[TimeLimitState, Timestep]:
@@ -41,7 +39,7 @@ class TimeLimit(EnvironmentWrapper[TimeLimitState]):
         return time_limit_state, timestep
 
     def reset(self, key: Key, state: TimeLimitState) -> tuple[TimeLimitState, Timestep]:
-        wrapped_state, timestep = self.wrapped.reset(key, state)
+        wrapped_state, timestep = self.wrapped.reset(key, state.wrapped_state)
         time_limit_state = TimeLimitState(
             wrapped_state=wrapped_state,
             time=jnp.array(0, dtype=jnp.int32),

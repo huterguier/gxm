@@ -57,11 +57,10 @@ class RecordEpisodeStatistics(EnvironmentWrapper[RecordEpisodeStatisticsState]):
     def __init__(
         self,
         wrapped: Environment,
-        unwrap: bool = True,
         gamma: float = 1.0,
         n_episodes: int = 1,
     ):
-        super().__init__(wrapped, unwrap=unwrap)
+        super().__init__(wrapped)
         self.gamma = gamma
         self.n_episodes = n_episodes
 

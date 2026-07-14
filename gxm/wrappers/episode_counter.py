@@ -18,8 +18,8 @@ class EpisodeCounterState(WrapperState):
 class EpisodeCounter(EnvironmentWrapper[EpisodeCounterState]):
     """A wrapper that counts the number of episodes completed in the environment."""
 
-    def __init__(self, wrapped: Environment, unwrap: bool = True):
-        super().__init__(wrapped, unwrap=unwrap)
+    def __init__(self, wrapped: Environment):
+        super().__init__(wrapped)
 
     def init(self, key: Key) -> tuple[EpisodeCounterState, Timestep]:
         wrapped_state, timestep = self.wrapped.init(key)
