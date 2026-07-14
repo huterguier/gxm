@@ -36,9 +36,10 @@ class Discrete(Space):
         Arguments:
             x: The object to be checked.
         Returns:
-            Whether the object is contained in the space.
+            Whether the object is contained in the space (a scalar, even for
+            array-valued ``x``).
         """
-        return jnp.logical_and(x >= 0, x < self.n)
+        return jnp.logical_and(jnp.all(x >= 0), jnp.all(x < self.n))
 
     @property
     def n(self) -> int:
