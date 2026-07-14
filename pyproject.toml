@@ -36,6 +36,7 @@ pgx = ["pgx"]
 craftax = ["craftax"]
 navix = ["navix"]
 xminigrid = ["xminigrid"]
+jaxatari = ["jaxatari"]
 
 [project.urls]
 Homepage = "https://github.com/huterguier/gxm"
@@ -55,6 +56,7 @@ ignore = ["E501"]
 
 
 [tool.uv]
+sources = { jaxatari = { git = "https://github.com/k4ntz/JAXAtari" } }
 conflicts = [
     [
       { extra = "envpool" },
