@@ -51,7 +51,6 @@ Currently ``gxm`` supports the following Libraries.
 - [Gymnax](https://github.com/RobertTLange/gymnax) (Classic Control, bsuite and MinAtar)
 - [Pgx](https://github.com/sotetsuk/pgx) (Boardgames and MinAtar)
 - [Navix](https://github.com/epignatelli/navix) (Minigrid in JAX)
-- [Envpool](https://github.com/sail-sg/envpool) (Vectorized Gymnasium Environements)
 - [Craftax](https://github.com/MichaelTMatthews/Craftax) (Crafter in JAX)
 - [Gymnasium](https://github.com/Farama-Foundation/Gymnasium) (Classic Control, Atari, Box2D, MuJoCo, etc.)
 
@@ -69,7 +68,7 @@ pip install gxm
 By default Gxm comes without any of the underlying environment libraries.
 You can install any combination of them by using optional dependencies or all of the at once using ``all``.
 ```
-pip install gxm[gymnax, pgx, navix, envpool, craftax, gymnasium]
+pip install gxm[gymnax, pgx, navix, craftax, gymnasium]
 ```
 
 ## Citation
@@ -109,7 +108,6 @@ api/gxm
 :caption: Environments
 
 environments/gymnax
-environments/envpool
 environments/pgx
 environments/gymnasium
 craftax

@@ -5,14 +5,14 @@ title: 🔪The Sharp Bits🔪
 
 
 ## CPU-based Environments
-CPU-based environemnts like `envpool` and `gymnasium` are not actually functional under the hood.
+CPU-based environments like `gymnasium` are not actually functional under the hood.
 Hence, they can be used for sequential rollouts only.
 Trying to call the step function from the same state twice will result in an error or unexpected behavior.
 
 ```python
 import gxm, jax
 
-env = gxm.make("Envpool/CartPole-v1")
+env = gxm.make("Gymnasium/CartPole-v1")
 key = jax.random.key(0)
 env_state = env.init(key)
 next_env_state = env.step(env_state, key, 0)
@@ -32,17 +32,8 @@ In ``gxm``, there is a clear distinction between `init` and `reset`.
 This distinction is motivated by two key aspects:
 1. **Consistency**: Most JAX libraries use the ``init`` function to initialize states. 
    By using `init` for the initial state, we maintain consistency with other JAX libraries.
-2. **Compatibility**: CPU-based environments like `envpool` and gymnasium maintain a reference to the environment instance on the host.
+2. **Compatibility**: CPU-based environments like gymnasium maintain a reference to the environment instance on the host.
    Calling ``reset`` without this state would lead to an instantiation of a new environment, which is not the intended behavior.
-
-## Using ``envpool``
-Envpool is no longer maintained. The non-optional XLA-interface relies on JAX<0.4.27
-and importing envpool unavoidably leads to a an error due to breaking changes in JAX.
-In order to use ``envpool``, you need to replace the entire content of ``envpool/python/xla_template.py`` with the following two lines.
-```python
-def make_xla(obj):
-    pass
-```
 
 ## Brax on CPU
 Brax's physics pipelines are no longer actively maintained (brax itself recommends MJX),
@@ -84,7 +75,7 @@ In the example below, the `IgnoreTruncation` wrapper will treat truncation as te
 ```python
 import gxm
 from gxm.wrappers import IgnoreTruncation
-env = IgnoreTruncation(gxm.make("Envpool/Breakout-v5"))
+env = IgnoreTruncation(gxm.make("Gymnasium/ALE/Breakout-v5"))
 ```
 
 ## Composite Spaces

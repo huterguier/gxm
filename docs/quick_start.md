@@ -14,14 +14,13 @@ pip install 'gxm[pgx,gymnasium]'
 Use the `gxm.make` function to create an environment. The environment ID must be specified in the format `"Library/EnvironmentName"`.
 ```python
 import gxm
-env = gxm.make("Envpool/Breakout-v5")
+env = gxm.make("Gymnax/CartPole-v1")
 ```
 Below are some example environment IDs for different backends.
 
 | Library Backend | Example ID                             |
 |-----------------|----------------------------------------|
 | Gymnax          | Gymnax/CartPole-v1                     |
-| Envpool         | Envpool/Breakout-v5                    |
 | Gymnasium       | Gymnasium/MountainCarContinuous-v0     |
 | Craftax         | Craftax/Craftax-Classic-v1             |
 
