@@ -39,8 +39,12 @@ class TestCraftax(TestEnvironment):
         for _ in range(1000):
             action = env_gxm.action_space.sample(key)
             env_state, timestep = env_gxm.step(key, env_state, action)
+            # AutoReset splits the key before stepping the wrapped env; craftax
+            # dynamics are key-dependent, so the reference must step with the
+            # same split key to stay in lockstep.
+            key_step, _ = jax.random.split(key)
             obs, state, reward, done, info = env_craftax.step(
-                key, state, action, env_params_craftax
+                key_step, state, action, env_params_craftax
             )
             assert jax.numpy.allclose(timestep.reward, reward)
             assert timestep.done == done
