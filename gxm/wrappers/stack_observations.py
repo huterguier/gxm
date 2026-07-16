@@ -27,9 +27,9 @@ class StackObservations(EnvironmentWrapper[StackObservationsState]):
     num_stack: int
     padding: str
 
-    def __init__(self, wrapped: Environment, n_stack: int, padding: str = "reset"):
+    def __init__(self, wrapped: Environment, num_stack: int, padding: str = "reset"):
         super().__init__(wrapped)
-        self.num_stack = n_stack
+        self.num_stack = num_stack
         self.padding = padding
 
     def init(self, key: Key) -> tuple[StackObservationsState, Timestep]:

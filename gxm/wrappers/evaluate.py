@@ -13,11 +13,11 @@ from gxm.wrappers.wrapper import EnvironmentWrapper, WrapperState
 class EvaluateState(WrapperState):
     current_return: Array
     cumulative_return: Array
-    n_episodes: Array
+    num_episodes: Array
 
     @property
     def mean_return(self) -> Array:
-        return self.cumulative_return / self.n_episodes
+        return self.cumulative_return / self.num_episodes
 
 
 class Evaluate(EnvironmentWrapper[EvaluateState]):
@@ -36,7 +36,7 @@ class Evaluate(EnvironmentWrapper[EvaluateState]):
             wrapped_state=wrapped_state,
             current_return=jax.numpy.zeros(timestep.reward.shape),
             cumulative_return=jax.numpy.zeros(timestep.reward.shape),
-            n_episodes=jax.numpy.zeros(timestep.reward.shape),
+            num_episodes=jax.numpy.zeros(timestep.reward.shape),
         )
         return evaluate_state, timestep
 
@@ -47,7 +47,7 @@ class Evaluate(EnvironmentWrapper[EvaluateState]):
             wrapped_state=wrapped_state,
             current_return=jax.numpy.zeros(timestep.reward.shape),
             cumulative_return=jax.numpy.zeros(timestep.reward.shape),
-            n_episodes=jax.numpy.zeros(timestep.reward.shape),
+            num_episodes=jax.numpy.zeros(timestep.reward.shape),
         )
         return evaluate_state, timestep
 
@@ -67,10 +67,10 @@ class Evaluate(EnvironmentWrapper[EvaluateState]):
             evaluate_state.cumulative_return + current_return,
             evaluate_state.cumulative_return,
         )
-        n_episodes = jnp.where(
+        num_episodes = jnp.where(
             timestep.done,
-            evaluate_state.n_episodes + 1,
-            evaluate_state.n_episodes,
+            evaluate_state.num_episodes + 1,
+            evaluate_state.num_episodes,
         )
         current_return = jnp.where(
             timestep.done,
@@ -81,6 +81,6 @@ class Evaluate(EnvironmentWrapper[EvaluateState]):
             wrapped_state=wrapped_state,
             current_return=current_return,
             cumulative_return=cumulative_return,
-            n_episodes=n_episodes,
+            num_episodes=num_episodes,
         )
         return evaluate_state, timestep

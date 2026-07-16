@@ -13,7 +13,7 @@ from gxm.wrappers.wrapper import Wrapper, WrapperState
 @jax.tree_util.register_dataclass
 @dataclass
 class StepCounterState(WrapperState):
-    n_steps: Array
+    num_steps: Array
 
 
 class StepCounter(Wrapper[StepCounterState, TStep]):
@@ -26,10 +26,11 @@ class StepCounter(Wrapper[StepCounterState, TStep]):
         wrapped_state, step_output = self.wrapped.init(key)
         step_counter_state = StepCounterState(
             wrapped_state=wrapped_state,
-            n_steps=jnp.int32(0),
+            num_steps=jnp.int32(0),
         )
         step_output = dataclasses.replace(
-            step_output, info=step_output.info | {"n_steps": step_counter_state.n_steps}
+            step_output,
+            info=step_output.info | {"num_steps": step_counter_state.num_steps},
         )
         return step_counter_state, step_output
 
@@ -42,10 +43,11 @@ class StepCounter(Wrapper[StepCounterState, TStep]):
         )
         step_counter_state = StepCounterState(
             wrapped_state=wrapped_state,
-            n_steps=step_counter_state.n_steps,
+            num_steps=step_counter_state.num_steps,
         )
         step_output = dataclasses.replace(
-            step_output, info=step_output.info | {"n_steps": step_counter_state.n_steps}
+            step_output,
+            info=step_output.info | {"num_steps": step_counter_state.num_steps},
         )
         return step_counter_state, step_output
 
@@ -59,9 +61,10 @@ class StepCounter(Wrapper[StepCounterState, TStep]):
         wrapped_state, step_output = self.wrapped.step(key, state.wrapped_state, action)
         step_counter_state = StepCounterState(
             wrapped_state=wrapped_state,
-            n_steps=step_counter_state.n_steps + 1,
+            num_steps=step_counter_state.num_steps + 1,
         )
         step_output = dataclasses.replace(
-            step_output, info=step_output.info | {"n_steps": step_counter_state.n_steps}
+            step_output,
+            info=step_output.info | {"num_steps": step_counter_state.num_steps},
         )
         return step_counter_state, step_output

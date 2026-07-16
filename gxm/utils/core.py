@@ -10,7 +10,7 @@ def rollout(
     env: Environment,
     pi: Policy,
     pi_state: PolicyState,
-    n_steps: int,
+    num_steps: int,
 ) -> Trajectory:
     """
     Perform a rollout in the environment using the given policy.
@@ -20,7 +20,7 @@ def rollout(
         env: The environment to perform the rollout in.
         pi: The policy to use for selecting actions.
         pi_state: The initial state of the policy.
-        n_steps: The number of steps to perform in the rollout.
+        num_steps: The number of steps to perform in the rollout.
     Returns:
         A Trajectory object containing the observations, actions, rewards, and other data from the rollout.
     """
@@ -35,7 +35,7 @@ def rollout(
 
     env_state, timestep = env.init(key)
     carry = (key, env_state, pi_state, timestep)
-    carry, timesteps = jax.lax.scan(step, carry, None, length=n_steps)
+    carry, timesteps = jax.lax.scan(step, carry, None, length=num_steps)
     traj = timesteps.trajectory(timestep.next_obs)
     return traj
 
@@ -45,7 +45,7 @@ def evaluate(
     env: Environment,
     pi: Policy,
     pi_state: PolicyState,
-    n_steps: int,
+    num_steps: int,
 ) -> Array:
     """
     Evaluate a policy in the environment by performing a rollout and computing the mean return.
@@ -55,11 +55,11 @@ def evaluate(
         env: The environment to perform the evaluation in.
         pi: The policy to evaluate.
         pi_state: The initial state of the policy.
-        n_steps: The number of steps to perform in the rollout.
+        num_steps: The number of steps to perform in the rollout.
     Returns:
         The mean return of the policy over the rollout.
     """
-    traj = rollout(key, env, pi, pi_state, n_steps=n_steps)
+    traj = rollout(key, env, pi, pi_state, num_steps=num_steps)
 
     def step(carry, x):
         r = carry

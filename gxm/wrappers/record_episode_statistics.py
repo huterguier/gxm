@@ -51,18 +51,18 @@ class RecordEpisodeStatistics(EnvironmentWrapper[RecordEpisodeStatisticsState]):
 
     gamma: float
     """The discount factor :math:`\\gamma` for calculating the discounted episodic return."""
-    n_episodes: int
+    num_episodes: int
     """The number of past episodes to record statistics for."""
 
     def __init__(
         self,
         wrapped: Environment,
         gamma: float = 1.0,
-        n_episodes: int = 1,
+        num_episodes: int = 1,
     ):
         super().__init__(wrapped)
         self.gamma = gamma
-        self.n_episodes = n_episodes
+        self.num_episodes = num_episodes
 
     @staticmethod
     def get_averaged_stats(episode_stats: EpisodeStatistics) -> dict[str, Array]:
@@ -91,10 +91,10 @@ class RecordEpisodeStatistics(EnvironmentWrapper[RecordEpisodeStatisticsState]):
             current_discounted_return=jnp.float32(0.0),
         )
         episode_stats = EpisodeStatistics(
-            episodic_return=jnp.zeros(self.n_episodes, dtype=jnp.float32),
-            episodic_discounted_return=jnp.zeros(self.n_episodes, dtype=jnp.float32),
-            episode_length=jnp.zeros(self.n_episodes, dtype=jnp.int32),
-            mask=jnp.zeros(self.n_episodes, dtype=jnp.int32),
+            episodic_return=jnp.zeros(self.num_episodes, dtype=jnp.float32),
+            episodic_discounted_return=jnp.zeros(self.num_episodes, dtype=jnp.float32),
+            episode_length=jnp.zeros(self.num_episodes, dtype=jnp.int32),
+            mask=jnp.zeros(self.num_episodes, dtype=jnp.int32),
         )
         record_episode_stats_state = RecordEpisodeStatisticsState(
             wrapped_state=wrapped_state,
@@ -123,10 +123,10 @@ class RecordEpisodeStatistics(EnvironmentWrapper[RecordEpisodeStatisticsState]):
             current_discounted_return=jnp.float32(0.0),
         )
         episode_stats = EpisodeStatistics(
-            episodic_return=jnp.zeros(self.n_episodes, dtype=jnp.float32),
-            episodic_discounted_return=jnp.zeros(self.n_episodes, dtype=jnp.float32),
-            episode_length=jnp.zeros(self.n_episodes, dtype=jnp.int32),
-            mask=jnp.zeros(self.n_episodes, dtype=jnp.int32),
+            episodic_return=jnp.zeros(self.num_episodes, dtype=jnp.float32),
+            episodic_discounted_return=jnp.zeros(self.num_episodes, dtype=jnp.float32),
+            episode_length=jnp.zeros(self.num_episodes, dtype=jnp.int32),
+            mask=jnp.zeros(self.num_episodes, dtype=jnp.int32),
         )
         record_episode_stats_state = RecordEpisodeStatisticsState(
             wrapped_state=wrapped_state,

@@ -12,7 +12,7 @@ from gxm.wrappers.wrapper import EnvironmentWrapper, WrapperState
 @jax.tree_util.register_dataclass
 @dataclass
 class EpisodeCounterState(WrapperState):
-    n_episodes: Array
+    num_episodes: Array
 
 
 class EpisodeCounter(EnvironmentWrapper[EpisodeCounterState]):
@@ -25,11 +25,11 @@ class EpisodeCounter(EnvironmentWrapper[EpisodeCounterState]):
         wrapped_state, timestep = self.wrapped.init(key)
         episode_counter_state = EpisodeCounterState(
             wrapped_state=wrapped_state,
-            n_episodes=jnp.int32(0),
+            num_episodes=jnp.int32(0),
         )
         timestep = dataclasses.replace(
             timestep,
-            info=timestep.info | {"n_episodes": episode_counter_state.n_episodes},
+            info=timestep.info | {"num_episodes": episode_counter_state.num_episodes},
         )
         return episode_counter_state, timestep
 
@@ -42,11 +42,11 @@ class EpisodeCounter(EnvironmentWrapper[EpisodeCounterState]):
         )
         episode_counter_state = EpisodeCounterState(
             wrapped_state=wrapped_state,
-            n_episodes=episode_counter_state.n_episodes,
+            num_episodes=episode_counter_state.num_episodes,
         )
         timestep = dataclasses.replace(
             timestep,
-            info=timestep.info | {"n_episodes": episode_counter_state.n_episodes},
+            info=timestep.info | {"num_episodes": episode_counter_state.num_episodes},
         )
         return episode_counter_state, timestep
 
@@ -60,14 +60,14 @@ class EpisodeCounter(EnvironmentWrapper[EpisodeCounterState]):
         wrapped_state, timestep = self.wrapped.step(key, state.wrapped_state, action)
         episode_counter_state = EpisodeCounterState(
             wrapped_state=wrapped_state,
-            n_episodes=jnp.where(
+            num_episodes=jnp.where(
                 timestep.done,
-                episode_counter_state.n_episodes + 1,
-                episode_counter_state.n_episodes,
+                episode_counter_state.num_episodes + 1,
+                episode_counter_state.num_episodes,
             ),
         )
         timestep = dataclasses.replace(
             timestep,
-            info=timestep.info | {"n_episodes": episode_counter_state.n_episodes},
+            info=timestep.info | {"num_episodes": episode_counter_state.num_episodes},
         )
         return episode_counter_state, timestep

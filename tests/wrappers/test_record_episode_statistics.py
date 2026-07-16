@@ -7,4 +7,4 @@ from gxm.wrappers import RecordEpisodeStatistics, Wrapper
 class TestRecordEpisodeStatistics(TestWrapper):
     @pytest.fixture
     def wrapper(self, env) -> Wrapper:
-        return RecordEpisodeStatistics(env, gamma=0.99, n_episodes=5)
+        return RecordEpisodeStatistics(env, gamma=0.99, num_episodes=5)
