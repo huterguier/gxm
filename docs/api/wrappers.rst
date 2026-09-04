@@ -15,6 +15,7 @@
    gxm.wrappers.FlattenObservation
    gxm.wrappers.IgnoreTruncation
    gxm.wrappers.RecordEpisodeStatistics
+   gxm.wrappers.SquashActions
    gxm.wrappers.StackObservations
    gxm.wrappers.StepCounter
    gxm.wrappers.StickyAction
