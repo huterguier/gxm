@@ -18,3 +18,12 @@ class TestDiscretize(TestWrapper):
         action = wrapper.action_space.sample(key)
         state, step = wrapper.step(key, state, action)
         assert not hasattr(step, "reward")
+
+    def test_flattens_true_next_obs(self, wrapper: Wrapper):
+        key = jax.random.key(0)
+        state, timestep = wrapper.init(key)
+        action = wrapper.action_space.sample(key)
+        state, timestep = wrapper.step(key, state, action)
+        # Transitions are built from true_next_obs, so it has to be flattened too.
+        assert timestep.true_next_obs.shape == timestep.next_obs.shape
+        assert timestep.transition(obs=timestep.next_obs).next_obs.ndim == 1

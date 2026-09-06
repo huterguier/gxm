@@ -4,7 +4,7 @@ from typing import Any, TypeVar
 import jax
 import jax.numpy as jnp
 
-from gxm.core import Dynamics, DynamicsState, Step, TStep
+from gxm.core import Dynamics, DynamicsState, Step, Timestep, TStep
 from gxm.typing import Array, Key, PyTree
 from gxm.wrappers.wrapper import Wrapper
 
@@ -24,10 +24,12 @@ class FlattenObservation(Wrapper[Any, TStep]):
         return obs_flat
 
     def _flatten_step(self, step: _TStep) -> _TStep:
-        return dataclasses.replace(
-            step,
-            next_obs=self.flatten(step.next_obs),
-        )
+        obs = {"next_obs": self.flatten(step.next_obs)}
+        if isinstance(step, Timestep):
+            # Transitions are built from true_next_obs, so leaving it unflattened
+            # would hand the agent a differently shaped observation than it acted on.
+            obs["true_next_obs"] = self.flatten(step.true_next_obs)
+        return dataclasses.replace(step, **obs)
 
     def init(self, key: Key) -> tuple[DynamicsState, TStep]:
         state, step = self.wrapped.init(key)
