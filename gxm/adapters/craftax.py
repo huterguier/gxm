@@ -1,10 +1,14 @@
 from dataclasses import dataclass
 from typing import Any
 
-import gymnax.environments.spaces
 import jax
 import jax.numpy as jnp
 from craftax.craftax_env import make_craftax_env_from_name
+
+try:
+    from craftax.environment_base import spaces
+except ImportError:  # craftax < 1.7 uses gymnax spaces
+    from gymnax.environments import spaces
 
 from gxm.core import Environment, EnvironmentState, Timestep
 from gxm.spaces import Box, Discrete, Space, Tree
@@ -117,17 +121,17 @@ class CraftaxAdapter(Environment[CraftaxState]):
 
 
 def _craftax_to_gxm_space(gymnax_space) -> Space:
-    if isinstance(gymnax_space, gymnax.environments.spaces.Discrete):
+    if isinstance(gymnax_space, spaces.Discrete):
         return Discrete(gymnax_space.n)
-    if isinstance(gymnax_space, gymnax.environments.spaces.Box):
+    if isinstance(gymnax_space, spaces.Box):
         return Box(
             low=gymnax_space.low, high=gymnax_space.high, shape=gymnax_space.shape
         )
-    if isinstance(gymnax_space, gymnax.environments.spaces.Dict):
+    if isinstance(gymnax_space, spaces.Dict):
         return Tree(
             {k: _craftax_to_gxm_space(v) for k, v in gymnax_space.spaces.items()}
         )
-    if isinstance(gymnax_space, gymnax.environments.spaces.Tuple):
+    if isinstance(gymnax_space, spaces.Tuple):
         return Tree([_craftax_to_gxm_space(s) for s in gymnax_space.spaces])
     raise NotImplementedError(f"Craftax space type {type(gymnax_space)} not supported.")
 
